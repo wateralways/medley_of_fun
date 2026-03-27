@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸟类飞行空气动力学 | Aerodynamics of Bird Flight</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Sans+3:wght@300;400;600;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-deep: #0d1a12;
+  --bg-primary: #132319;
+  --bg-card: #1a2f23;
+  --bg-card-hover: #213a2c;
+  --bg-elevated: #243d2e;
+  --border: #2d4a38;
+  --border-glow: #4a7c5c;
+  --text-primary: #e8e4dc;
+  --text-secondary: #a8b4a0;
+  --text-dim: #6b7a65;
+  --accent-gold: #d4a03c;
+  --accent-gold-light: #e8c06a;
+  --accent-amber: #c97b2a;
+  --accent-warm: #b85c38;
+  --accent-green: #5ca36e;
+  --accent-teal: #3a9b8f;
+  --accent-sky: #4a8eb5;
+  --lift-color: #4ac29a;
+  --drag-color: #e07a5f;
+  --pressure-low: #3a7bd5;
+  --pressure-high: #d35f5f;
+  --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', 'Noto Serif SC', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--grain);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(74,124,92,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(212,160,60,0.06) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page { position: relative; z-index: 1; }
+
+/* ─── Header ─── */
+.hero {
+  text-align: center;
+  padding: 80px 24px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 80%, rgba(74,124,92,0.08) 0%, transparent 40%);
+  animation: heroGlow 12s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-5%, 5%); }
+}
+
+.hero-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  opacity: 0.7;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-family: 'Noto Serif SC', 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.hero h1 em {
+  font-style: italic;
+  font-family: 'Playfair Display', serif;
+  color: var(--accent-gold);
+}
+
+.hero-sub {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+/* ─── Floating feathers ─── */
+.feather {
+  position: fixed;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--accent-gold), transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  animation: featherFall linear infinite;
+}
+
+@keyframes featherFall {
+  0% { opacity: 0; transform: translateY(-20px) rotate(0deg) translateX(0); }
+  10% { opacity: 0.3; }
+  90% { opacity: 0.15; }
+  100% { opacity: 0; transform: translateY(100vh) rotate(360deg) translateX(80px); }
+}
+
+/* ─── Sections ─── */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.section-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  opacity: 0.5;
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+}
+
+.section h2 {
+  font-family: 'Noto Serif SC', 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.section h2 span {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--text-dim);
+  margin-left: 12px;
+}
+
+.section-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  max-width: 700px;
+}
+
+.divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  margin: 12px 0 24px;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+  opacity: 0.5;
+}
+
+/* ─── Airfoil Section ─── */
+.airfoil-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+}
+
+@media (max-width: 800px) {
+  .airfoil-layout { grid-template-columns: 1fr; }
+}
+
+.airfoil-canvas {
+  position: relative;
+  min-height: 380px;
+}
+
+.airfoil-canvas canvas {
+  width: 100%;
+  height: 380px;
+  display: block;
+  border-radius: 12px;
+}
+
+.airfoil-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.control-group label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.control-group .value-display {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-gold-light);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.control-group .value-display .unit {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--bg-deep);
+  border-radius: 3px;
+  outline: none;
+  border: 1px solid var(--border);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(212,160,60,0.4);
+  border: 2px solid var(--bg-deep);
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(45,74,56,0.3);
+  font-size: 0.88rem;
+}
+
+.data-row .data-label { color: var(--text-dim); }
+.data-row .data-val { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.data-val.lift { color: var(--lift-color); }
+.data-val.drag { color: var(--drag-color); }
+.data-val.stall { color: var(--accent-warm); }
+
+.stall-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: rgba(184,92,56,0.15);
+  color: var(--accent-warm);
+  border: 1px solid rgba(184,92,56,0.3);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.stall-badge.visible { opacity: 1; }
+
+/* ─── Flight Modes ─── */
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .modes-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.mode-tab {
+  padding: 14px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.35s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--accent-gold);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.mode-tab:hover { background: var(--bg-card-hover); border-color: var(--border-glow); }
+.mode-tab.active { background: var(--bg-elevated); border-color: var(--accent-gold); }
+.mode-tab.active::after { transform: scaleX(1); }
+
+.mode-tab .mode-icon { font-size: 1.6rem; margin-bottom: 4px; }
+.mode-tab .mode-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.mode-tab .mode-en {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.mode-content {
+  display: none;
+  animation: fadeSlide 0.5s ease;
+}
+
+.mode-content.active { display: block; }
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mode-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 700px) {
+  .mode-visual { grid-template-columns: 1fr; }
+}
+
+.mode-animation {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 260px;
+  position: relative;
+}
+
+.mode-animation canvas {
+  width: 100%;
+  height: 260px;
+  display: block;
+}
+
+.mode-info {
+  padding: 20px;
+}
+
+.mode-info h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.1rem;
+  color: var(--accent-gold-light);
+  margin-bottom: 10px;
+}
+
+.mode-info p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.8;
+}
+
+.force-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.force-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.force-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ─── Wing Comparison ─── */
+.wings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 700px) {
+  .wings-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.wing-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 16px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  text-align: center;
+  position: relative;
+}
+
+.wing-card:hover { transform: translateY(-4px); border-color: var(--border-glow); }
+.wing-card.selected {
+  border-color: var(--accent-gold);
+  background: var(--bg-elevated);
+  box-shadow: 0 8px 32px rgba(212,160,60,0.1);
+}
+
+.wing-card svg { width: 100%; height: 80px; margin-bottom: 10px; }
+
+.wing-card .wing-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.wing-card .wing-bird {
+  font-size: 0.78rem;
+  color: var(--accent-gold);
+}
+
+.wing-card .wing-en {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.wing-detail {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 700px) {
+  .wing-detail { grid-template-columns: 1fr; }
+}
+
+.wing-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.stat-bar {
+  height: 6px;
+  background: var(--bg-deep);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(45,74,56,0.3);
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── Bernoulli ─── */
+.bernoulli-wrap {
+  position: relative;
+}
+
+.bernoulli-wrap canvas {
+  width: 100%;
+  height: 360px;
+  display: block;
+  border-radius: 12px;
+}
+
+.bernoulli-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.bernoulli-eq {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.bernoulli-eq .highlight { color: var(--accent-gold-light); font-weight: 700; }
+
+/* ─── Reynolds ─── */
+.reynolds-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .reynolds-layout { grid-template-columns: 1fr; }
+}
+
+.reynolds-visual {
+  text-align: center;
+}
+
+.reynolds-bird-icon {
+  font-size: 4rem;
+  transition: font-size 0.5s ease;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.reynolds-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent-gold-light);
+  margin-bottom: 4px;
+}
+
+.reynolds-sci {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.reynolds-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.re-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  line-height: 1;
+}
+
+.re-formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 8px 12px;
+  background: var(--bg-deep);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* ─── Footer ─── */
+.footer {
+  text-align: center;
+  padding: 40px 24px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footer em {
+  font-family: 'Playfair Display', serif;
+  color: var(--accent-gold);
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Floating feathers -->
+  <div id="feathers"></div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-label">Interactive Aerodynamics</div>
+    <h1>鸟类飞行的<em>空气动力学</em></h1>
+    <p class="hero-sub">The Physics of Avian Flight — An Interactive Exploration</p>
+  </header>
+
+  <!-- §1 Airfoil -->
+  <section class="section" id="sec-airfoil">
+    <div class="section-num">— 01</div>
+    <h2>翼型剖面与攻角 <span>Airfoil &amp; Angle of Attack</span></h2>
+    <div class="divider"></div>
+    <p class="section-desc">拖动滑块改变攻角，观察气流、压力分布与升力/阻力的实时变化。攻角超过临界值时将发生失速。</p>
+
+    <div class="airfoil-layout">
+      <div class="card airfoil-canvas">
+        <canvas id="airfoilCanvas"></canvas>
+      </div>
+      <div class="airfoil-controls">
+        <div class="card">
+          <div class="control-group">
+            <label>攻角 Angle of Attack</label>
+            <div class="value-display"><span id="aoaValue">5</span><span class="unit">°</span></div>
+            <input type="range" id="aoaSlider" min="0" max="25" value="5" step="0.5">
+          </div>
+        </div>
+        <div class="card">
+          <div class="control-group">
+            <label>气流速度 Airspeed</label>
+            <div class="value-display"><span id="speedValueAF">15</span><span class="unit"> m/s</span></div>
+            <input type="range" id="speedSliderAF" min="5" max="40" value="15" step="1">
+          </div>
+        </div>
+        <div class="card">
+          <div class="data-row"><span class="data-label">升力系数 C<sub>L</sub></span><span class="data-val lift" id="clValue">0.62</span></div>
+          <div class="data-row"><span class="data-label">阻力系数 C<sub>D</sub></span><span class="data-val drag" id="cdValue">0.03</span></div>
+          <div class="data-row"><span class="data-label">升阻比 L/D</span><span class="data-val" id="ldValue" style="color:var(--accent-teal)">20.7</span></div>
+          <div class="data-row"><span class="data-label">升力 Lift</span><span class="data-val lift" id="liftValue">2.8 N</span></div>
+          <div class="data-row"><span class="data-label">阻力 Drag</span><span class="data-val drag" id="dragValue">0.14 N</span></div>
+          <div style="margin-top:8px"><span class="stall-badge" id="stallBadge">⚠ STALL 失速</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- §2 Flight Modes -->
+  <section class="section" id="sec-modes">
+    <div class="section-num">— 02</div>
+    <h2>四种飞行模式 <span>Flight Modes</span></h2>
+    <div class="divider"></div>
+    <p class="section-desc">鸟类根据需要在不同飞行模式间切换，每种模式的力学原理各不相同。</p>
+
+    <div class="modes-grid">
+      <div class="mode-tab active" data-mode="glide"><div class="mode-icon">🦅</div><div class="mode-name">滑翔</div><div class="mode-en">Gliding</div></div>
+      <div class="mode-tab" data-mode="flap"><div class="mode-icon">🕊️</div><div class="mode-name">拍翅</div><div class="mode-en">Flapping</div></div>
+      <div class="mode-tab" data-mode="soar"><div class="mode-icon">🦤</div><div class="mode-name">翱翔</div><div class="mode-en">Soaring</div></div>
+      <div class="mode-tab" data-mode="hover"><div class="mode-icon">🐦</div><div class="mode-name">悬停</div><div class="mode-en">Hovering</div></div>
+    </div>
+
+    <div class="mode-content active" id="mode-glide">
+      <div class="mode-visual">
+        <div class="mode-animation"><canvas id="canvasGlide"></canvas></div>
+        <div class="card mode-info">
+          <h3>滑翔 Gliding</h3>
+          <p>鸟类展开翅膀，不拍打，利用自身重力势能在空中以平缓角度下降。升力与重力分量平衡，阻力由重力沿飞行方向的分量补偿。</p>
+          <p><strong>关键：</strong>高升阻比翼型可实现最远滑翔距离。信天翁的升阻比可达 25:1。</p>
+          <ul class="force-list">
+            <li><span class="force-dot" style="background:var(--lift-color)"></span>升力 = 重力的垂直分量</li>
+            <li><span class="force-dot" style="background:var(--drag-color)"></span>阻力 = 重力的前进分量</li>
+            <li><span class="force-dot" style="background:var(--accent-gold)"></span>无额外推力</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-content" id="mode-flap">
+      <div class="mode-visual">
+        <div class="mode-animation"><canvas id="canvasFlap"></canvas></div>
+        <div class="card mode-info">
+          <h3>拍翅飞行 Flapping Flight</h3>
+          <p>翅膀下拍时产生升力和前推力，上提时减小翼面积以降低阻力。初级飞羽像螺旋桨一样旋转，提供推力。</p>
+          <p><strong>关键：</strong>下拍行程（power stroke）产生约 80% 的推力。翼尖轨迹在空间中呈「8」字形。</p>
+          <ul class="force-list">
+            <li><span class="force-dot" style="background:var(--lift-color)"></span>下拍产生升力 + 推力</li>
+            <li><span class="force-dot" style="background:var(--accent-sky)"></span>上提回收，减小阻力</li>
+            <li><span class="force-dot" style="background:var(--accent-gold)"></span>翼尖提供主要推力</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-content" id="mode-soar">
+      <div class="mode-visual">
+        <div class="mode-animation"><canvas id="canvasSoar"></canvas></div>
+        <div class="card mode-info">
+          <h3>翱翔 Soaring</h3>
+          <p>利用上升气流（热气流或山脊风）获得高度，无需拍翅即可长时间飞行。鸟类在热气流柱中盘旋上升，然后滑翔至下一个热气流。</p>
+          <p><strong>关键：</strong>热气流上升速度 2-5 m/s，足以补偿鸟类的下沉率。翼展指缝（初级飞羽分叉）可减少诱导阻力。</p>
+          <ul class="force-list">
+            <li><span class="force-dot" style="background:var(--lift-color)"></span>升力来自上升气流</li>
+            <li><span class="force-dot" style="background:var(--accent-amber)"></span>热气流提供能量</li>
+            <li><span class="force-dot" style="background:var(--accent-teal)"></span>盘旋半径取决于翼载荷</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-content" id="mode-hover">
+      <div class="mode-visual">
+        <div class="mode-animation"><canvas id="canvasHover"></canvas></div>
+        <div class="card mode-info">
+          <h3>悬停 Hovering</h3>
+          <p>蜂鸟是唯一能真正悬停的鸟类。翅膀以 ∞ 形轨迹高频拍打（可达 80 次/秒），在前后行程中均产生升力。</p>
+          <p><strong>关键：</strong>肩关节可旋转 180°，使翅膀在回程时翻转，实现双向产升。代谢率极高，心率可达 1200 次/分钟。</p>
+          <ul class="force-list">
+            <li><span class="force-dot" style="background:var(--lift-color)"></span>前后行程均产生升力</li>
+            <li><span class="force-dot" style="background:var(--accent-gold)"></span>翼尖画 ∞ 字形轨迹</li>
+            <li><span class="force-dot" style="background:var(--drag-color)"></span>极高的能量消耗</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- §3 Wing Comparison -->
+  <section class="section" id="sec-wings">
+    <div class="section-num">— 03</div>
+    <h2>翼型对比 <span>Wing Shape Comparison</span></h2>
+    <div class="divider"></div>
+    <p class="section-desc">不同鸟类的翅膀形态反映了各自的飞行策略与生态位。点击对比各翼型的气动特性。</p>
+
+    <div class="wings-grid" id="wingsGrid">
+      <div class="wing-card selected" data-wing="albatross">
+        <svg viewBox="0 0 200 80"><path d="M10,45 Q50,42 100,40 Q150,38 195,44 Q150,42 100,46 Q50,48 10,45 Z" fill="var(--accent-gold)" opacity="0.7" stroke="var(--accent-gold-light)" stroke-width="0.5"/></svg>
+        <div class="wing-name">高展弦比翼</div>
+        <div class="wing-bird">信天翁 Albatross</div>
+        <div class="wing-en">High Aspect Ratio</div>
+      </div>
+      <div class="wing-card" data-wing="eagle">
+        <svg viewBox="0 0 200 80"><path d="M30,45 Q60,30 100,28 Q140,30 170,45 Q140,38 100,50 Q60,50 30,45 Z" fill="var(--accent-gold)" opacity="0.7" stroke="var(--accent-gold-light)" stroke-width="0.5"/><path d="M170,45 L178,42 M170,45 L180,46 M170,45 L176,49" stroke="var(--accent-gold-light)" stroke-width="0.8" fill="none"/></svg>
+        <div class="wing-name">椭圆宽翼</div>
+        <div class="wing-bird">鹰 Eagle</div>
+        <div class="wing-en">Broad Soaring Wing</div>
+      </div>
+      <div class="wing-card" data-wing="falcon">
+        <svg viewBox="0 0 200 80"><path d="M40,48 Q70,35 100,30 Q140,28 185,38 Q140,34 100,42 Q70,47 40,48 Z" fill="var(--accent-gold)" opacity="0.7" stroke="var(--accent-gold-light)" stroke-width="0.5"/></svg>
+        <div class="wing-name">高速后掠翼</div>
+        <div class="wing-bird">游隼 Falcon</div>
+        <div class="wing-en">High-speed Swept</div>
+      </div>
+      <div class="wing-card" data-wing="sparrow">
+        <svg viewBox="0 0 200 80"><path d="M50,45 Q75,32 100,30 Q125,32 150,45 Q125,38 100,42 Q75,42 50,45 Z" fill="var(--accent-gold)" opacity="0.7" stroke="var(--accent-gold-light)" stroke-width="0.5"/></svg>
+        <div class="wing-name">短圆翼</div>
+        <div class="wing-bird">麻雀 Sparrow</div>
+        <div class="wing-en">Short Rounded</div>
+      </div>
+    </div>
+
+    <div class="wing-detail card" id="wingDetail">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="wingDetailInner">
+        <div class="wing-stats" id="wingStats"></div>
+        <div id="wingDesc" style="font-size:0.88rem;color:var(--text-secondary);line-height:1.8"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- §4 Bernoulli -->
+  <section class="section" id="sec-bernoulli">
+    <div class="section-num">— 04</div>
+    <h2>伯努利原理演示 <span>Bernoulli's Principle</span></h2>
+    <div class="divider"></div>
+    <p class="section-desc">观察粒子绕翼型流动：上表面流速快、压力低，下表面流速慢、压力高，压力差产生升力。</p>
+
+    <div class="card bernoulli-wrap">
+      <canvas id="bernoulliCanvas"></canvas>
+      <div class="bernoulli-controls">
+        <div class="control-group" style="flex:1;min-width:200px">
+          <label>气流速度 Airspeed</label>
+          <div class="value-display"><span id="bSpeedVal">12</span><span class="unit"> m/s</span></div>
+          <input type="range" id="bSpeedSlider" min="3" max="30" value="12" step="1">
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'JetBrains Mono';font-size:0.72rem;color:var(--text-dim);letter-spacing:1px">粒子数量 PARTICLES</div>
+          <div style="font-family:'Playfair Display';font-size:1.6rem;color:var(--accent-gold)" id="particleCount">120</div>
+        </div>
+      </div>
+    </div>
+    <div class="bernoulli-eq">
+      <span class="highlight">P</span> + ½<span class="highlight">ρv²</span> + ρgh = <span class="highlight">const</span>
+      &nbsp;&nbsp;→&nbsp;&nbsp; 速度↑ 压力↓ &nbsp;|&nbsp; 速度↓ 压力↑
+    </div>
+  </section>
+
+  <!-- §5 Reynolds -->
+  <section class="section" id="sec-reynolds">
+    <div class="section-num">— 05</div>
+    <h2>雷诺数与尺度效应 <span>Reynolds Number &amp; Scale</span></h2>
+    <div class="divider"></div>
+    <p class="section-desc">鸟类的飞行雷诺数从蜂鸟的 ~10⁴ 到信天翁的 ~10⁶，不同雷诺数下的流动特性差异巨大。</p>
+
+    <div class="card">
+      <div class="reynolds-layout">
+        <div class="reynolds-visual">
+          <div class="reynolds-bird-icon" id="reBirdIcon">🐦</div>
+          <div class="reynolds-name" id="reBirdName">麻雀</div>
+          <div class="reynolds-sci" id="reBirdSci">Passer domesticus</div>
+          <div style="margin-top:16px">
+            <input type="range" id="reSlider" min="0" max="100" value="30" style="width:80%">
+          </div>
+        </div>
+        <div class="reynolds-data">
+          <div><div style="font-family:'JetBrains Mono';font-size:0.72rem;color:var(--text-dim);letter-spacing:2px">REYNOLDS NUMBER</div>
+          <div class="re-value" id="reValue">5.0 × 10⁴</div></div>
+          <div class="re-formula">Re = ρ·V·L / μ</div>
+          <div class="data-row"><span class="data-label">翼展 Wingspan</span><span class="data-val" id="reSpan" style="color:var(--accent-teal)">24 cm</span></div>
+          <div class="data-row"><span class="data-label">弦长 Chord</span><span class="data-val" id="reChord" style="color:var(--accent-teal)">5 cm</span></div>
+          <div class="data-row"><span class="data-label">飞行速度 Speed</span><span class="data-val" id="reSpeed" style="color:var(--accent-gold)">15 m/s</span></div>
+          <div class="data-row"><span class="data-label">体重 Mass</span><span class="data-val" id="reMass" style="color:var(--text-secondary)">30 g</span></div>
+          <div class="data-row"><span class="data-label">流动特征 Flow</span><span class="data-val" id="reFlow" style="color:var(--accent-green)">层流为主</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <em>鸟类飞行空气动力学</em> — 交互式科学可视化 · The Aerodynamics of Avian Flight
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// FEATHERS
+// ═══════════════════════════════════════
+(function(){
+  const c = document.getElementById('feathers');
+  for(let i=0;i<8;i++){
+    const f = document.createElement('div');
+    f.className='feather';
+    f.style.left = Math.random()*100+'%';
+    f.style.animationDuration = (8+Math.random()*12)+'s';
+    f.style.animationDelay = Math.random()*15+'s';
+    f.style.height = (12+Math.random()*16)+'px';
+    c.appendChild(f);
+  }
+})();
+
+// ═══════════════════════════════════════
+// §1 AIRFOIL
+// ═══════════════════════════════════════
+const airfoilCanvas = document.getElementById('airfoilCanvas');
+const actx = airfoilCanvas.getContext('2d');
+let aoa = 5, airspeed = 15;
+
+function resizeCanvas(canvas){
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * (window.devicePixelRatio||1);
+  canvas.height = (canvas === airfoilCanvas ? 380 : 260) * (window.devicePixelRatio||1);
+  canvas.style.width = r.width + 'px';
+}
+
+function airfoilShape(ctx, cx, cy, chord, aoa_rad, scale){
+  const pts = [];
+  const n = 60;
+  for(let i=0;i<=n;i++){
+    const t = i/n;
+    const x = chord*(1 - Math.cos(Math.PI*t))/2;
+    const thickness = 0.12*chord*(
+      2.98*Math.sqrt(x/chord) - 1.32*(x/chord) - 3.286*Math.pow(x/chord,2) + 2.441*Math.pow(x/chord,3) - 0.815*Math.pow(x/chord,4)
+    );
+    const camber = 0.04*chord*(2*0.4*(x/chord) - Math.pow(x/chord,2))/Math.pow(0.4,2);
+    const camber2 = (x/chord > 0.4) ? 0.04*chord*(1 - 2*0.4 + 2*0.4*(x/chord) - Math.pow(x/chord,2))/Math.pow(1-0.4,2) : camber;
+    const cam = x/chord <= 0.4 ? camber : camber2;
+    pts.push({x: x - chord/2, yu: cam + thickness, yl: cam - thickness});
+  }
+  return pts.map(p => {
+    const rx = p.x*Math.cos(aoa_rad) + 0*Math.sin(aoa_rad);
+    const ryu = -p.x*Math.sin(aoa_rad) + p.yu*Math.cos(aoa_rad);
+    const ryl = -p.x*Math.sin(aoa_rad) + p.yl*Math.cos(aoa_rad);
+    return {x: cx+rx*scale, yu: cy-ryu*scale, yl: cy-ryl*scale};
+  });
+}
+
+function drawAirfoil(){
+  resizeCanvas(airfoilCanvas);
+  const W = airfoilCanvas.width, H = airfoilCanvas.height;
+  const dpr = window.devicePixelRatio||1;
+  const ctx = actx;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W*0.45, cy = H*0.48;
+  const chord = 220*dpr;
+  const aoa_rad = aoa*Math.PI/180;
+  const scale = 1;
+  const stall = aoa > 15;
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Streamlines
+  const numLines = 14;
+  for(let i=0;i<numLines;i++){
+    const yStart = H*0.08 + i*(H*0.84)/(numLines-1);
+    ctx.beginPath();
+    ctx.moveTo(0, yStart);
+
+    const pts = [];
+    for(let x=0; x<=W; x+=4*dpr){
+      const dx = x-cx, dy = yStart-cy;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const influence = Math.max(0, 1 - dist/(chord*1.8));
+      let yOff = 0;
+
+      if(x > cx-chord*0.7 && x < cx+chord*0.7){
+        const localX = (x-cx)/(chord*0.5);
+        if(yStart < cy){
+          yOff = -influence*chord*0.18*(1-localX*localX)*Math.cos(aoa_rad) - influence*chord*0.12*Math.sin(aoa_rad);
+          if(stall && localX > 0.2){
+            yOff += Math.sin(x*0.05/dpr + performance.now()*0.005)*chord*0.06*influence*(localX-0.2);
+          }
+        } else {
+          yOff = influence*chord*0.08*(1-localX*localX)*Math.cos(aoa_rad) + influence*chord*0.06*Math.sin(aoa_rad);
+        }
+      }
+      pts.push({x, y: yStart+yOff});
+    }
+
+    for(const p of pts) ctx.lineTo(p.x, p.y);
+
+    const abovePct = (cy-yStart)/(H*0.5);
+    if(yStart < cy){
+      ctx.strokeStyle = `rgba(58,123,213,${0.15+Math.abs(abovePct)*0.2})`;
+    } else {
+      ctx.strokeStyle = `rgba(211,95,95,${0.1+Math.abs(abovePct)*0.15})`;
+    }
+    ctx.lineWidth = 1.2*dpr;
+    ctx.stroke();
+
+    // Flow arrows
+    if(i%2===0){
+      const ax = W*0.75;
+      const ap = pts.find(p=>p.x>=ax);
+      if(ap){
+        ctx.save();
+        ctx.translate(ap.x, ap.y);
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(6*dpr,0); ctx.lineTo(-3*dpr,-3*dpr); ctx.lineTo(-3*dpr,3*dpr);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  // Pressure gradient on wing surface
+  const shape = airfoilShape(ctx, cx, cy, chord, aoa_rad, scale);
+
+  // Upper surface gradient (low pressure = blue)
+  ctx.beginPath();
+  ctx.moveTo(shape[0].x, shape[0].yu);
+  shape.forEach(p => ctx.lineTo(p.x, p.yu));
+  shape.slice().reverse().forEach(p => ctx.lineTo(p.x, p.yu - 12*dpr));
+  ctx.closePath();
+  const gUp = ctx.createLinearGradient(cx-chord/2, cy-chord*0.15, cx+chord/2, cy-chord*0.15);
+  gUp.addColorStop(0, 'rgba(58,123,213,0.0)');
+  gUp.addColorStop(0.3, `rgba(58,123,213,${0.15+aoa*0.015})`);
+  gUp.addColorStop(0.6, `rgba(58,123,213,${0.25+aoa*0.02})`);
+  gUp.addColorStop(1, 'rgba(58,123,213,0.05)');
+  ctx.fillStyle = gUp; ctx.fill();
+
+  // Lower surface gradient (high pressure = red)
+  ctx.beginPath();
+  ctx.moveTo(shape[0].x, shape[0].yl);
+  shape.forEach(p => ctx.lineTo(p.x, p.yl));
+  shape.slice().reverse().forEach(p => ctx.lineTo(p.x, p.yl + 10*dpr));
+  ctx.closePath();
+  const gDn = ctx.createLinearGradient(cx-chord/2, cy+chord*0.1, cx+chord/2, cy+chord*0.1);
+  gDn.addColorStop(0, 'rgba(211,95,95,0.0)');
+  gDn.addColorStop(0.3, `rgba(211,95,95,${0.1+aoa*0.01})`);
+  gDn.addColorStop(0.6, `rgba(211,95,95,${0.18+aoa*0.015})`);
+  gDn.addColorStop(1, 'rgba(211,95,95,0.03)');
+  ctx.fillStyle = gDn; ctx.fill();
+
+  // Wing body
+  ctx.beginPath();
+  ctx.moveTo(shape[0].x, shape[0].yu);
+  shape.forEach(p => ctx.lineTo(p.x, p.yu));
+  shape.slice().reverse().forEach(p => ctx.lineTo(p.x, p.yl));
+  ctx.closePath();
+  const wg = ctx.createLinearGradient(cx, cy-chord*0.1, cx, cy+chord*0.1);
+  wg.addColorStop(0, '#3d5a44'); wg.addColorStop(1, '#2a3e2e');
+  ctx.fillStyle = wg; ctx.fill();
+  ctx.strokeStyle = 'rgba(212,160,60,0.5)'; ctx.lineWidth=1.5*dpr; ctx.stroke();
+
+  // Stall turbulence
+  if(stall){
+    const t = performance.now()*0.003;
+    for(let i=0; i<12; i++){
+      const sx = cx + chord*0.1 + i*chord*0.06;
+      const sy = cy - chord*0.05*Math.sin(aoa_rad) - chord*0.08;
+      ctx.beginPath();
+      ctx.arc(sx + Math.sin(t+i*1.5)*10*dpr, sy + Math.cos(t+i*2)*12*dpr + Math.sin(t*0.7+i)*8*dpr, (4+Math.sin(t+i)*3)*dpr, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(184,92,56,${0.15+Math.sin(t+i)*0.1})`;
+      ctx.fill();
+    }
+  }
+
+  // Force vectors
+  const Cl = stall ? Math.max(0.3, 1.5 - (aoa-15)*0.12) : 0.1*aoa + 0.12;
+  const Cd = 0.008 + 0.0005*aoa*aoa + (stall ? 0.05*(aoa-15) : 0);
+  const ld = Cd > 0 ? Cl/Cd : 0;
+
+  const liftMag = Cl * 50 * dpr;
+  const dragMag = Cd * 800 * dpr;
+
+  // Lift arrow (up)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-aoa_rad);
+  // Lift
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(0, -liftMag);
+  ctx.strokeStyle = '#4ac29a'; ctx.lineWidth = 3*dpr; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, -liftMag); ctx.lineTo(-6*dpr, -liftMag+10*dpr); ctx.lineTo(6*dpr, -liftMag+10*dpr); ctx.closePath();
+  ctx.fillStyle = '#4ac29a'; ctx.fill();
+  ctx.fillStyle = '#4ac29a'; ctx.font = `${11*dpr}px 'Source Sans 3'`;
+  ctx.textAlign = 'left';
+  ctx.fillText('升力 Lift', 10*dpr, -liftMag+5*dpr);
+
+  // Drag
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(dragMag, 0);
+  ctx.strokeStyle = '#e07a5f'; ctx.lineWidth = 3*dpr; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(dragMag, 0); ctx.lineTo(dragMag-10*dpr, -5*dpr); ctx.lineTo(dragMag-10*dpr, 5*dpr); ctx.closePath();
+  ctx.fillStyle = '#e07a5f'; ctx.fill();
+  ctx.fillStyle = '#e07a5f';
+  ctx.fillText('阻力 Drag', dragMag-30*dpr, 20*dpr);
+  ctx.restore();
+
+  // Pressure labels
+  ctx.font = `bold ${10*dpr}px 'JetBrains Mono'`;
+  ctx.fillStyle = 'rgba(58,123,213,0.7)';
+  ctx.textAlign = 'center';
+  ctx.fillText('低压 Low P', cx, cy - chord*0.22);
+  ctx.fillStyle = 'rgba(211,95,95,0.7)';
+  ctx.fillText('高压 High P', cx, cy + chord*0.28);
+
+  // Angle indicator
+  ctx.save();
+  ctx.translate(cx-chord*0.4, cy);
+  ctx.beginPath();
+  ctx.arc(0, 0, 30*dpr, 0, -aoa_rad, true);
+  ctx.strokeStyle = 'rgba(212,160,60,0.6)'; ctx.lineWidth = 1.5*dpr; ctx.stroke();
+  ctx.font = `${10*dpr}px 'JetBrains Mono'`;
+  ctx.fillStyle = 'var(--accent-gold)';
+  ctx.fillText(`α=${aoa}°`, 10*dpr, -10*dpr);
+  ctx.restore();
+
+  // Update data
+  const q = 0.5*1.225*airspeed*airspeed;
+  const S = 0.025;
+  const lift = q*S*Cl;
+  const drag = q*S*Cd;
+  document.getElementById('clValue').textContent = Cl.toFixed(2);
+  document.getElementById('cdValue').textContent = Cd.toFixed(3);
+  document.getElementById('ldValue').textContent = ld.toFixed(1);
+  document.getElementById('liftValue').textContent = lift.toFixed(2)+' N';
+  document.getElementById('dragValue').textContent = drag.toFixed(2)+' N';
+  document.getElementById('stallBadge').classList.toggle('visible', stall);
+
+  requestAnimationFrame(drawAirfoil);
+}
+
+document.getElementById('aoaSlider').oninput = e => {
+  aoa = parseFloat(e.target.value);
+  document.getElementById('aoaValue').textContent = aoa;
+};
+document.getElementById('speedSliderAF').oninput = e => {
+  airspeed = parseFloat(e.target.value);
+  document.getElementById('speedValueAF').textContent = airspeed;
+};
+drawAirfoil();
+
+// ═══════════════════════════════════════
+// §2 FLIGHT MODES
+// ═══════════════════════════════════════
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('mode-'+tab.dataset.mode).classList.add('active');
+  });
+});
+
+// Glide animation
+function animGlide(){
+  const c = document.getElementById('canvasGlide');
+  if(!c) return requestAnimationFrame(animGlide);
+  const ctx = c.getContext('2d');
+  resizeCanvas(c);
+  const W=c.width, H=c.height, dpr=window.devicePixelRatio||1, t=performance.now()*0.001;
+
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const bx = W*0.5 + Math.sin(t*0.3)*20*dpr;
+  const by = H*0.4 + Math.sin(t*0.5)*8*dpr;
+
+  // Bird silhouette - gliding
+  ctx.save(); ctx.translate(bx, by);
+  const glideAngle = -5*Math.PI/180;
+  ctx.rotate(glideAngle);
+
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 30*dpr, 6*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.4)'; ctx.lineWidth=1*dpr; ctx.stroke();
+
+  // Wings spread
+  ctx.beginPath();
+  ctx.moveTo(-5*dpr, 0);
+  ctx.quadraticCurveTo(-40*dpr, -8*dpr, -80*dpr, -3*dpr+Math.sin(t*2)*1*dpr);
+  ctx.quadraticCurveTo(-40*dpr, -2*dpr, -5*dpr, 2*dpr);
+  ctx.moveTo(5*dpr, 0);
+  ctx.quadraticCurveTo(40*dpr, -8*dpr, 80*dpr, -3*dpr+Math.sin(t*2)*1*dpr);
+  ctx.quadraticCurveTo(40*dpr, -2*dpr, 5*dpr, 2*dpr);
+  ctx.fillStyle='#4a6b50'; ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.3)'; ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.ellipse(32*dpr, -1*dpr, 7*dpr, 4*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+
+  // Force arrows
+  // Lift (up-perpendicular)
+  drawArrow(ctx, 0, 0, 0, -50*dpr, '#4ac29a', 2.5*dpr, dpr);
+  // Weight (down)
+  drawArrow(ctx, 0, 5*dpr, 0, 55*dpr, '#e07a5f', 2.5*dpr, dpr);
+  // Drag (backward)
+  drawArrow(ctx, -5*dpr, 0, -35*dpr, 0, '#d4a03c', 2*dpr, dpr);
+
+  ctx.font=`${9*dpr}px 'Source Sans 3'`; ctx.textAlign='left';
+  ctx.fillStyle='#4ac29a'; ctx.fillText('升力',-20*dpr,-52*dpr);
+  ctx.fillStyle='#e07a5f'; ctx.fillText('重力',-20*dpr,65*dpr);
+  ctx.fillStyle='#d4a03c'; ctx.fillText('阻力',-55*dpr,-12*dpr);
+  ctx.restore();
+
+  // Glide path indicator
+  ctx.beginPath();
+  ctx.setLineDash([4*dpr, 6*dpr]);
+  ctx.moveTo(W*0.15, H*0.25);
+  ctx.lineTo(W*0.85, H*0.6);
+  ctx.strokeStyle='rgba(212,160,60,0.2)'; ctx.lineWidth=1*dpr; ctx.stroke();
+  ctx.setLineDash([]);
+
+  requestAnimationFrame(animGlide);
+}
+
+// Flap animation
+function animFlap(){
+  const c = document.getElementById('canvasFlap');
+  if(!c) return requestAnimationFrame(animFlap);
+  const ctx = c.getContext('2d');
+  resizeCanvas(c);
+  const W=c.width, H=c.height, dpr=window.devicePixelRatio||1, t=performance.now()*0.001;
+
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const bx = W*0.5, by = H*0.45 + Math.sin(t*3)*10*dpr;
+  const wingAngle = Math.sin(t*4)*30*Math.PI/180;
+  const isDownstroke = Math.sin(t*4) > 0;
+
+  ctx.save(); ctx.translate(bx, by);
+
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 25*dpr, 6*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.4)'; ctx.lineWidth=1*dpr; ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.ellipse(27*dpr, -2*dpr, 6*dpr, 4*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+
+  // Left wing
+  ctx.save(); ctx.rotate(wingAngle);
+  ctx.beginPath();
+  ctx.moveTo(-5*dpr, 0);
+  ctx.quadraticCurveTo(-35*dpr, -5*dpr, -65*dpr, 2*dpr);
+  ctx.quadraticCurveTo(-35*dpr, 2*dpr, -5*dpr, 3*dpr);
+  ctx.fillStyle = isDownstroke ? '#5a8a62' : '#3d5a44';
+  ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.3)'; ctx.stroke();
+  ctx.restore();
+
+  // Right wing
+  ctx.save(); ctx.rotate(-wingAngle);
+  ctx.beginPath();
+  ctx.moveTo(5*dpr, 0);
+  ctx.quadraticCurveTo(35*dpr, -5*dpr, 65*dpr, 2*dpr);
+  ctx.quadraticCurveTo(35*dpr, 2*dpr, 5*dpr, 3*dpr);
+  ctx.fillStyle = isDownstroke ? '#5a8a62' : '#3d5a44';
+  ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.3)'; ctx.stroke();
+  ctx.restore();
+
+  // Force arrows
+  if(isDownstroke){
+    drawArrow(ctx, 0, -5*dpr, 0, -55*dpr, '#4ac29a', 2.5*dpr, dpr);
+    drawArrow(ctx, 25*dpr, 0, 55*dpr, -10*dpr, '#3a9b8f', 2*dpr, dpr);
+    ctx.font=`${9*dpr}px 'Source Sans 3'`; ctx.textAlign='center';
+    ctx.fillStyle='#4ac29a'; ctx.fillText('升力',10*dpr,-58*dpr);
+    ctx.fillStyle='#3a9b8f'; ctx.fillText('推力',60*dpr,-18*dpr);
+  } else {
+    ctx.font=`${9*dpr}px 'Source Sans 3'`; ctx.textAlign='center';
+    ctx.fillStyle='rgba(168,180,160,0.5)'; ctx.fillText('收翼回程',0,-35*dpr);
+  }
+
+  drawArrow(ctx, 0, 5*dpr, 0, 45*dpr, '#e07a5f', 2*dpr, dpr);
+
+  // Phase indicator
+  ctx.font=`bold ${10*dpr}px 'JetBrains Mono'`;
+  ctx.textAlign='center';
+  ctx.fillStyle = isDownstroke ? '#4ac29a' : '#d4a03c';
+  ctx.fillText(isDownstroke ? '▼ 下拍 DOWNSTROKE' : '▲ 上提 UPSTROKE', 0, 90*dpr);
+
+  ctx.restore();
+  requestAnimationFrame(animFlap);
+}
+
+// Soar animation
+function animSoar(){
+  const c = document.getElementById('canvasSoar');
+  if(!c) return requestAnimationFrame(animSoar);
+  const ctx = c.getContext('2d');
+  resizeCanvas(c);
+  const W=c.width, H=c.height, dpr=window.devicePixelRatio||1, t=performance.now()*0.001;
+
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Thermal column
+  const tcx = W*0.5, tcy = H*0.95;
+  for(let i=0;i<8;i++){
+    const r = (60+i*18)*dpr;
+    const yoff = (t*30*dpr + i*40*dpr) % (H*1.2);
+    ctx.beginPath();
+    ctx.arc(tcx + Math.sin(t*0.5+i)*10*dpr, tcy - yoff, r*(0.3+0.7*(yoff/(H*1.2))), 0, Math.PI*2);
+    ctx.strokeStyle=`rgba(212,160,60,${0.08-i*0.008})`;
+    ctx.lineWidth=1*dpr; ctx.stroke();
+  }
+
+  // Updraft arrows
+  for(let i=0;i<5;i++){
+    const ax = tcx + (i-2)*30*dpr + Math.sin(t+i)*5*dpr;
+    const ay = H*0.85 - ((t*40*dpr+i*50*dpr)%(H*0.6));
+    ctx.beginPath();
+    ctx.moveTo(ax, ay+15*dpr); ctx.lineTo(ax, ay);
+    ctx.moveTo(ax-4*dpr, ay+6*dpr); ctx.lineTo(ax, ay); ctx.lineTo(ax+4*dpr, ay+6*dpr);
+    ctx.strokeStyle=`rgba(212,160,60,${0.2+Math.sin(t+i)*0.1})`;
+    ctx.lineWidth=1.5*dpr; ctx.stroke();
+  }
+
+  ctx.font=`${9*dpr}px 'Source Sans 3'`;
+  ctx.fillStyle='rgba(212,160,60,0.4)'; ctx.textAlign='center';
+  ctx.fillText('热气流 Thermal', tcx, H*0.92);
+
+  // Circling bird
+  const radius = 50*dpr;
+  const angle = t*0.8;
+  const bx = tcx + Math.cos(angle)*radius;
+  const by = H*0.4 + Math.sin(angle)*radius*0.3 - t%10*3*dpr;
+  const byC = Math.max(H*0.15, by);
+
+  ctx.save(); ctx.translate(bx, byC);
+  ctx.rotate(Math.cos(angle)*0.3);
+  // Simple bird shape
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 15*dpr, 4*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-3*dpr, 0);
+  ctx.quadraticCurveTo(-25*dpr, -5*dpr, -45*dpr, -1*dpr);
+  ctx.quadraticCurveTo(-25*dpr, 0, -3*dpr, 2*dpr);
+  ctx.moveTo(3*dpr, 0);
+  ctx.quadraticCurveTo(25*dpr, -5*dpr, 45*dpr, -1*dpr);
+  ctx.quadraticCurveTo(25*dpr, 0, 3*dpr, 2*dpr);
+  ctx.fillStyle='#4a6b50'; ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.3)'; ctx.lineWidth=0.8*dpr; ctx.stroke();
+  ctx.restore();
+
+  // Spiral path
+  ctx.beginPath();
+  ctx.setLineDash([3*dpr, 5*dpr]);
+  for(let a=0; a<Math.PI*6; a+=0.1){
+    const sr = radius*(1+a*0.02);
+    const sx = tcx + Math.cos(angle-a)*sr;
+    const sy = byC + Math.sin(angle-a)*sr*0.3 + a*5*dpr;
+    if(a===0) ctx.moveTo(sx,sy); else ctx.lineTo(sx,sy);
+  }
+  ctx.strokeStyle='rgba(74,194,154,0.15)'; ctx.lineWidth=1*dpr; ctx.stroke();
+  ctx.setLineDash([]);
+
+  requestAnimationFrame(animSoar);
+}
+
+// Hover animation
+function animHover(){
+  const c = document.getElementById('canvasHover');
+  if(!c) return requestAnimationFrame(animHover);
+  const ctx = c.getContext('2d');
+  resizeCanvas(c);
+  const W=c.width, H=c.height, dpr=window.devicePixelRatio||1, t=performance.now()*0.001;
+
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const bx = W*0.5, by = H*0.45 + Math.sin(t*2)*4*dpr;
+
+  // Wing tip traces (figure-8)
+  ctx.beginPath();
+  ctx.setLineDash([2*dpr, 3*dpr]);
+  for(let a=0; a<Math.PI*2; a+=0.05){
+    const fx = Math.sin(a)*35*dpr;
+    const fy = Math.sin(a*2)*12*dpr;
+    const px = bx-35*dpr+fx, py = by+fy;
+    if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.strokeStyle='rgba(212,160,60,0.25)'; ctx.lineWidth=1*dpr; ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Right side trace
+  ctx.beginPath();
+  ctx.setLineDash([2*dpr, 3*dpr]);
+  for(let a=0; a<Math.PI*2; a+=0.05){
+    const fx = Math.sin(a)*35*dpr;
+    const fy = Math.sin(a*2)*12*dpr;
+    const px = bx+35*dpr-fx, py = by+fy;
+    if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.strokeStyle='rgba(212,160,60,0.25)'; ctx.lineWidth=1*dpr; ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font=`${8*dpr}px 'JetBrains Mono'`;
+  ctx.fillStyle='rgba(212,160,60,0.35)'; ctx.textAlign='center';
+  ctx.fillText('∞ 轨迹', bx-35*dpr, by+30*dpr);
+  ctx.fillText('∞ 轨迹', bx+35*dpr, by+30*dpr);
+
+  // Hummingbird body
+  ctx.save(); ctx.translate(bx, by);
+
+  // Body (small, compact)
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 12*dpr, 5*dpr, 0, 0, Math.PI*2);
+  ctx.fillStyle='#3d5a44'; ctx.fill();
+
+  // Long beak
+  ctx.beginPath();
+  ctx.moveTo(12*dpr, -1*dpr);
+  ctx.lineTo(28*dpr, -2*dpr);
+  ctx.lineTo(12*dpr, 1*dpr);
+  ctx.fillStyle='#2a3e2e'; ctx.fill();
+
+  // Wings (blurred fast motion)
+  const wPhase = t*25;
+  const wAngle = Math.sin(wPhase)*50*Math.PI/180;
+
+  for(let blur=0; blur<3; blur++){
+    const ba = wAngle + blur*0.3;
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.rotate(ba);
+    ctx.beginPath();
+    ctx.moveTo(-3*dpr, 0);
+    ctx.quadraticCurveTo(-20*dpr, -4*dpr, -38*dpr, 1*dpr);
+    ctx.quadraticCurveTo(-20*dpr, 1*dpr, -3*dpr, 2*dpr);
+    ctx.fillStyle='#6b9b72'; ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.rotate(-ba);
+    ctx.beginPath();
+    ctx.moveTo(3*dpr, 0);
+    ctx.quadraticCurveTo(15*dpr, -4*dpr, 30*dpr, 1*dpr);
+    ctx.quadraticCurveTo(15*dpr, 1*dpr, 3*dpr, 2*dpr);
+    ctx.fillStyle='#6b9b72'; ctx.fill();
+    ctx.restore();
+  }
+
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(-12*dpr, 0);
+  ctx.lineTo(-22*dpr, 4*dpr);
+  ctx.lineTo(-20*dpr, 0);
+  ctx.lineTo(-22*dpr, -3*dpr);
+  ctx.fillStyle='#2a3e2e'; ctx.fill();
+
+  // Lift arrows (both directions)
+  drawArrow(ctx, -20*dpr, -8*dpr, -20*dpr, -35*dpr, '#4ac29a', 2*dpr, dpr);
+  drawArrow(ctx, 20*dpr, -8*dpr, 20*dpr, -35*dpr, '#4ac29a', 2*dpr, dpr);
+
+  // Weight
+  drawArrow(ctx, 0, 8*dpr, 0, 40*dpr, '#e07a5f', 2*dpr, dpr);
+
+  ctx.font=`${9*dpr}px 'Source Sans 3'`; ctx.textAlign='center';
+  ctx.fillStyle='#4ac29a'; ctx.fillText('升力', 0, -40*dpr);
+  ctx.fillStyle='#e07a5f'; ctx.fillText('重力', 0, 52*dpr);
+
+  // Frequency indicator
+  ctx.font=`bold ${10*dpr}px 'JetBrains Mono'`;
+  ctx.fillStyle='var(--accent-gold)';
+  ctx.fillText('~50-80 次/秒', 0, 80*dpr);
+
+  ctx.restore();
+  requestAnimationFrame(animHover);
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, width, dpr){
+  const angle = Math.atan2(y2-y1, x2-x1);
+  const len = Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*dpr*Math.cos(angle-0.4), y2-8*dpr*Math.sin(angle-0.4));
+  ctx.lineTo(x2-8*dpr*Math.cos(angle+0.4), y2-8*dpr*Math.sin(angle+0.4));
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+}
+
+animGlide(); animFlap(); animSoar(); animHover();
+
+// ═══════════════════════════════════════
+// §3 WING COMPARISON
+// ═══════════════════════════════════════
+const wingData = {
+  albatross: {
+    name: '信天翁', en: 'Wandering Albatross',
+    desc: '拥有鸟类中最大的翼展（可达 3.5m），细长的翅膀产生极高的升阻比。利用海面的风梯度进行动态翱翔（dynamic soaring），可连续飞行数千公里几乎不拍翅。高展弦比翼在低速时效率较低，因此起飞需要助跑。',
+    stats: { '展弦比 Aspect Ratio': 92, '升阻比 L/D': 95, '机动性 Agility': 20, '速度 Speed': 55, '低速性能 Low Speed': 15 },
+    colors: { '展弦比 Aspect Ratio': '#4ac29a', '升阻比 L/D': '#3a9b8f', '机动性 Agility': '#d4a03c', '速度 Speed': '#4a8eb5', '低速性能 Low Speed': '#e07a5f' }
+  },
+  eagle: {
+    name: '鹰', en: 'Golden Eagle',
+    desc: '宽大的椭圆形翅膀提供充足的升力面积，翼尖的「指缝」（分叉的初级飞羽）有效减少诱导阻力。适合在热气流中盘旋翱翔，也能在低速时维持飞行。翼载荷适中，兼顾翱翔效率与捕猎时的机动性。',
+    stats: { '展弦比 Aspect Ratio': 55, '升阻比 L/D': 70, '机动性 Agility': 60, '速度 Speed': 50, '低速性能 Low Speed': 75 },
+    colors: { '展弦比 Aspect Ratio': '#4ac29a', '升阻比 L/D': '#3a9b8f', '机动性 Agility': '#d4a03c', '速度 Speed': '#4a8eb5', '低速性能 Low Speed': '#e07a5f' }
+  },
+  falcon: {
+    name: '游隼', en: 'Peregrine Falcon',
+    desc: '后掠的尖翼型为高速飞行优化，俯冲速度可达 389 km/h（最快的动物）。翼面积较小，减少高速时的阻力。翅膀可在飞行中改变后掠角度，实现变几何翼的效果。高翼载荷使其在低速时需要频繁拍翅。',
+    stats: { '展弦比 Aspect Ratio': 60, '升阻比 L/D': 50, '机动性 Agility': 70, '速度 Speed': 98, '低速性能 Low Speed': 30 },
+    colors: { '展弦比 Aspect Ratio': '#4ac29a', '升阻比 L/D': '#3a9b8f', '机动性 Agility': '#d4a03c', '速度 Speed': '#4a8eb5', '低速性能 Low Speed': '#e07a5f' }
+  },
+  sparrow: {
+    name: '麻雀', en: 'House Sparrow',
+    desc: '短而圆的翅膀虽然升阻比较低，但能快速改变飞行方向，适合在树丛间穿梭。低展弦比翼在快速拍翅时效率较高，适合间歇拍翅（bounding flight）。短翼的失速速度较低，适合频繁起降。',
+    stats: { '展弦比 Aspect Ratio': 30, '升阻比 L/D': 30, '机动性 Agility': 90, '速度 Speed': 25, '低速性能 Low Speed': 80 },
+    colors: { '展弦比 Aspect Ratio': '#4ac29a', '升阻比 L/D': '#3a9b8f', '机动性 Agility': '#d4a03c', '速度 Speed': '#4a8eb5', '低速性能 Low Speed': '#e07a5f' }
+  }
+};
+
+function selectWing(type){
+  document.querySelectorAll('.wing-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelector(`.wing-card[data-wing="${type}"]`).classList.add('selected');
+
+  const d = wingData[type];
+  const statsHtml = Object.entries(d.stats).map(([k,v]) => `
+    <div class="stat-bar-wrap">
+      <div class="stat-bar-label"><span>${k}</span><span style="font-family:'JetBrains Mono';color:var(--text-primary)">${v}%</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${v}%;background:${d.colors[k]}"></div></div>
+    </div>
+  `).join('');
+
+  document.getElementById('wingStats').innerHTML = `<h3 style="font-family:'Noto Serif SC';color:var(--accent-gold-light);margin-bottom:8px">${d.name} ${d.en}</h3>` + statsHtml;
+  document.getElementById('wingDesc').innerHTML = `<p style="margin-top:8px">${d.desc}</p>`;
+}
+
+document.querySelectorAll('.wing-card').forEach(card=>{
+  card.addEventListener('click', ()=>selectWing(card.dataset.wing));
+});
+selectWing('albatross');
+
+// ═══════════════════════════════════════
+// §4 BERNOULLI
+// ═══════════════════════════════════════
+const bCanvas = document.getElementById('bernoulliCanvas');
+const bCtx = bCanvas.getContext('2d');
+let bSpeed = 12;
+
+class Particle {
+  constructor(W, H, dpr){
+    this.reset(W, H, dpr, true);
+  }
+  reset(W, H, dpr, init=false){
+    this.x = init ? Math.random()*W : -5*dpr;
+    this.y = Math.random()*H;
+    this.baseSpeed = (1.5+Math.random()*1.5)*dpr;
+    this.size = (1.2+Math.random()*1.5)*dpr;
+    this.W=W; this.H=H; this.dpr=dpr;
+  }
+  update(cx, cy, chord, aoa_rad, speedMult){
+    const dx = this.x-cx, dy = this.y-cy;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    const influence = Math.max(0, 1-dist/(chord*1.5));
+    const speed = this.baseSpeed*speedMult;
+
+    let vx = speed;
+    let vy = 0;
+
+    if(this.x > cx-chord*0.8 && this.x < cx+chord*0.6){
+      const localX = (this.x-cx)/(chord*0.5);
+      if(this.y < cy){
+        // Above wing - speed up, deflect up
+        vx = speed*(1+influence*0.6);
+        vy = -influence*speed*0.3*(1-localX*localX);
+      } else {
+        // Below wing - slow down, deflect down
+        vx = speed*(1-influence*0.2);
+        vy = influence*speed*0.15*(1-localX*localX);
+      }
+    }
+
+    this.x += vx;
+    this.y += vy;
+
+    // Avoid wing body
+    if(dist < chord*0.12 && Math.abs(this.x-cx)<chord*0.45){
+      this.y += (this.y<cy?-1:1)*2*this.dpr;
+    }
+
+    if(this.x > this.W+10*this.dpr || this.y<-10 || this.y>this.H+10){
+      this.reset(this.W, this.H, this.dpr);
+    }
+  }
+}
+
+let bParticles = [];
+
+function drawBernoulli(){
+  resizeCanvas(bCanvas);
+  const W=bCanvas.width, H=bCanvas.height, dpr=window.devicePixelRatio||1;
+  const ctx = bCtx;
+
+  if(bParticles.length === 0){
+    for(let i=0;i<150;i++) bParticles.push(new Particle(W,H,dpr));
+  }
+
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0d1a12'); bg.addColorStop(1,'#132319');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const cx=W*0.45, cy=H*0.5, chord=180*dpr;
+  const aoa_rad=6*Math.PI/180;
+  const speedMult = bSpeed/12;
+
+  // Pressure field
+  const gTop = ctx.createRadialGradient(cx, cy-chord*0.15, chord*0.05, cx, cy-chord*0.15, chord*0.6);
+  gTop.addColorStop(0, `rgba(58,123,213,${0.12*speedMult})`);
+  gTop.addColorStop(1, 'transparent');
+  ctx.fillStyle=gTop; ctx.fillRect(0,0,W,cy);
+
+  const gBot = ctx.createRadialGradient(cx, cy+chord*0.12, chord*0.05, cx, cy+chord*0.12, chord*0.5);
+  gBot.addColorStop(0, `rgba(211,95,95,${0.1*speedMult})`);
+  gBot.addColorStop(1, 'transparent');
+  ctx.fillStyle=gBot; ctx.fillRect(0,cy,W,H);
+
+  // Wing
+  const shape = airfoilShape(ctx, cx, cy, chord, aoa_rad, 1);
+  ctx.beginPath();
+  ctx.moveTo(shape[0].x, shape[0].yu);
+  shape.forEach(p=>ctx.lineTo(p.x,p.yu));
+  shape.slice().reverse().forEach(p=>ctx.lineTo(p.x,p.yl));
+  ctx.closePath();
+  const wg=ctx.createLinearGradient(cx,cy-20*dpr,cx,cy+20*dpr);
+  wg.addColorStop(0,'#3d5a44'); wg.addColorStop(1,'#2a3e2e');
+  ctx.fillStyle=wg; ctx.fill();
+  ctx.strokeStyle='rgba(212,160,60,0.4)'; ctx.lineWidth=1.5*dpr; ctx.stroke();
+
+  // Particles
+  bParticles.forEach(p=>{
+    p.update(cx, cy, chord, aoa_rad, speedMult);
+    const dx=p.x-cx, dy=p.y-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const nearWing = dist < chord*0.8;
+
+    let color;
+    if(p.y < cy && nearWing){
+      // Fast particles above - blue tint
+      const speed = p.baseSpeed*speedMult*1.5;
+      color = `rgba(74,194,154,${0.5+Math.min(speed*0.05,0.4)})`;
+    } else if(p.y >= cy && nearWing){
+      // Slow particles below - red tint
+      color = `rgba(224,122,95,${0.4})`;
+    } else {
+      color = 'rgba(168,180,160,0.3)';
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  });
+
+  // Labels
+  ctx.font=`bold ${11*dpr}px 'Source Sans 3'`;
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(74,194,154,0.7)';
+  ctx.fillText('▸ 流速快 · 压力低', cx, cy-chord*0.28);
+  ctx.fillStyle='rgba(224,122,95,0.7)';
+  ctx.fillText('▸ 流速慢 · 压力高', cx, cy+chord*0.35);
+
+  // Speed indicator arrows on top
+  ctx.fillStyle='rgba(58,123,213,0.5)';
+  const arrLen = 20*dpr*speedMult;
+  for(let i=0;i<3;i++){
+    const ax = cx-chord*0.3+i*chord*0.3;
+    ctx.beginPath();
+    ctx.moveTo(ax, cy-chord*0.18);
+    ctx.lineTo(ax+arrLen, cy-chord*0.18);
+    ctx.lineTo(ax+arrLen-4*dpr, cy-chord*0.18-3*dpr);
+    ctx.moveTo(ax+arrLen, cy-chord*0.18);
+    ctx.lineTo(ax+arrLen-4*dpr, cy-chord*0.18+3*dpr);
+    ctx.strokeStyle='rgba(74,194,154,0.4)'; ctx.lineWidth=1.5*dpr; ctx.stroke();
+  }
+
+  requestAnimationFrame(drawBernoulli);
+}
+
+document.getElementById('bSpeedSlider').oninput = e => {
+  bSpeed = parseFloat(e.target.value);
+  document.getElementById('bSpeedVal').textContent = bSpeed;
+};
+drawBernoulli();
+
+// ═══════════════════════════════════════
+// §5 REYNOLDS
+// ═══════════════════════════════════════
+const birds = [
+  { name:'蜂鸟', sci:'Trochilidae', icon:'🐦', span:'10 cm', chord:'2 cm', speed:'12 m/s', mass:'4 g', re:'1.6 × 10⁴', flow:'层流主导，高黏性效应' },
+  { name:'麻雀', sci:'Passer domesticus', icon:'🐦', span:'24 cm', chord:'5 cm', speed:'15 m/s', mass:'30 g', re:'5.0 × 10⁴', flow:'层流为主' },
+  { name:'鸽子', sci:'Columba livia', icon:'🕊️', span:'64 cm', chord:'10 cm', speed:'20 m/s', mass:'300 g', re:'1.3 × 10⁵', flow:'过渡流动' },
+  { name:'鹰', sci:'Aquila chrysaetos', icon:'🦅', span:'2.0 m', chord:'30 cm', speed:'25 m/s', mass:'4.5 kg', re:'5.0 × 10⁵', flow:'湍流边界层开始主导' },
+  { name:'信天翁', sci:'Diomedea exulans', icon:'🦅', span:'3.5 m', chord:'22 cm', speed:'30 m/s', mass:'8.5 kg', re:'4.4 × 10⁵', flow:'充分发展湍流' },
+  { name:'安第斯神鹰', sci:'Vultur gryphus', icon:'🦅', span:'3.2 m', chord:'45 cm', speed:'20 m/s', mass:'12 kg', re:'6.0 × 10⁵', flow:'高雷诺数湍流' },
+];
+
+document.getElementById('reSlider').oninput = e => {
+  const v = parseInt(e.target.value);
+  const idx = Math.min(Math.floor(v/100*birds.length), birds.length-1);
+  const b = birds[idx];
+  document.getElementById('reBirdIcon').textContent = b.icon;
+  document.getElementById('reBirdIcon').style.fontSize = (3+idx*0.6)+'rem';
+  document.getElementById('reBirdName').textContent = b.name;
+  document.getElementById('reBirdSci').textContent = b.sci;
+  document.getElementById('reValue').textContent = b.re;
+  document.getElementById('reSpan').textContent = b.span;
+  document.getElementById('reChord').textContent = b.chord;
+  document.getElementById('reSpeed').textContent = b.speed;
+  document.getElementById('reMass').textContent = b.mass;
+  document.getElementById('reFlow').textContent = b.flow;
+};
+
+// ═══════════════════════════════════════
+// Resize handler
+// ═══════════════════════════════════════
+window.addEventListener('resize', () => {
+  bParticles = [];
+});
+</script>
+</body>
+</html>

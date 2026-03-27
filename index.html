@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medley of Fun - 趣味合集</title>
+<meta name="description" content="A collection of fun, interactive HTML pages — science explainers, mini games, and more!">
+<!-- Open Graph for WeChat / social sharing -->
+<meta property="og:title" content="Medley of Fun - 趣味合集">
+<meta property="og:description" content="有趣的互动网页合集 — 科普知识、小游戏，尽在其中！">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wateralways.github.io/medley_of_fun/">
+<meta property="og:image" content="https://wateralways.github.io/medley_of_fun/og-image.png">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #0f1923 0%, #1a1a2e 50%, #16213e 100%);
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #f5af19, #f12711);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.card-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.8rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(245, 175, 25, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.card h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #f5af19;
+}
+
+.card p {
+  color: #aaa;
+  line-height: 1.6;
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(245, 175, 25, 0.15);
+  color: #f5af19;
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+footer {
+  text-align: center;
+  margin-top: 4rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Medley of Fun</h1>
+  <p class="subtitle">趣味合集 — 科普知识、互动小游戏，尽在其中</p>
+
+  <div class="card-list">
+    <a class="card" href="bird-aerodynamics.html">
+      <h2>鸟类飞行空气动力学</h2>
+      <p>探索鸟类翱翔天际的奥秘 — 升力、阻力、翼型原理的互动科普</p>
+      <span class="tag">科普</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>Each page is standalone HTML — no frameworks, no dependencies, just fun.</p>
+  </footer>
+</div>
+</body>
+</html>

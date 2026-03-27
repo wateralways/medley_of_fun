@@ -1,0 +1,17 @@
+# Medley of Fun
+
+A collection of fun, interactive HTML pages — science explainers, mini games, and more!
+
+## Browse Online
+
+Visit: **https://wateralways.github.io/medley_of_fun/**
+
+## Contents
+
+| File | Description |
+|------|-------------|
+| [bird-aerodynamics.html](bird-aerodynamics.html) | Interactive guide to the aerodynamics of bird flight |
+
+## About
+
+Each file is a standalone HTML page — no build tools, no dependencies. Just open in a browser and enjoy!
