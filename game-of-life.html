@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>生命游戏</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #0a0a0a;
+  font-family: 'Courier New', monospace;
+  color: #00ff41;
+  touch-action: none;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Top HUD */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 24px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 10;
+}
+#hud span { text-shadow: 0 0 8px #00ff41; }
+#hud .label { color: #888; }
+
+/* Mini chart */
+#mini-chart {
+  position: fixed;
+  top: 36px; right: 10px;
+  width: 220px; height: 90px;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(0,255,65,0.25);
+  border-radius: 6px;
+  z-index: 11;
+  pointer-events: none;
+}
+#mini-chart canvas {
+  width: 100%; height: 100%;
+  cursor: default;
+}
+#chart-label {
+  position: fixed;
+  top: 38px; right: 16px;
+  font-size: 10px;
+  color: #888;
+  z-index: 12;
+  pointer-events: none;
+}
+
+/* Bottom toolbar */
+#toolbar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,10,0.92);
+  border-top: 1px solid #1a3a1a;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.btn-row {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+}
+
+button {
+  min-width: 44px; min-height: 44px;
+  padding: 6px 14px;
+  border: 1px solid #00ff41;
+  border-radius: 6px;
+  background: rgba(0,255,65,0.08);
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  text-shadow: 0 0 6px #00ff41;
+}
+button:hover, button:active {
+  background: rgba(0,255,65,0.25);
+  box-shadow: 0 0 12px rgba(0,255,65,0.3);
+}
+button.active {
+  background: rgba(0,255,65,0.35);
+  box-shadow: 0 0 16px rgba(0,255,65,0.5) inset;
+}
+
+/* Speed slider */
+.speed-row {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  font-size: 12px; color: #888;
+}
+input[type=range] {
+  -webkit-appearance: none;
+  width: 140px; height: 6px;
+  border-radius: 3px;
+  background: #1a3a1a;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00ff41;
+  cursor: pointer;
+  box-shadow: 0 0 8px #00ff41;
+}
+
+/* Rules row */
+.rules-row {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+}
+.rules-row button {
+  font-size: 11px;
+  padding: 4px 10px;
+  min-height: 34px;
+  border-color: #ff8800;
+  color: #ff8800;
+  background: rgba(255,136,0,0.08);
+  text-shadow: 0 0 6px #ff8800;
+}
+.rules-row button:hover, .rules-row button:active {
+  background: rgba(255,136,0,0.25);
+}
+.rules-row button.active {
+  background: rgba(255,136,0,0.35);
+  box-shadow: 0 0 12px rgba(255,136,0,0.5) inset;
+}
+
+/* Presets scroll */
+#presets-row {
+  display: flex; gap: 6px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #1a3a1a transparent;
+}
+#presets-row::-webkit-scrollbar { height: 4px; }
+#presets-row::-webkit-scrollbar-thumb { background: #1a3a1a; border-radius: 2px; }
+#presets-row button {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-color: #0088ff;
+  color: #0088ff;
+  background: rgba(0,136,255,0.08);
+  text-shadow: 0 0 6px #0088ff;
+}
+#presets-row button:hover, #presets-row button:active {
+  background: rgba(0,136,255,0.25);
+}
+
+/* Placement mode banner */
+#placement-banner {
+  display: none;
+  position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,136,255,0.15);
+  border: 1px solid #0088ff;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  color: #0088ff;
+  text-shadow: 0 0 8px #0088ff;
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* Milestone animation */
+.milestone {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffdd00;
+  text-shadow: 0 0 30px #ffdd00, 0 0 60px #ff8800;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  animation: milestoneAnim 2.5s ease-out forwards;
+}
+.milestone .sub {
+  font-size: 18px;
+  display: block;
+  margin-top: 4px;
+  color: #ffaa00;
+  text-shadow: 0 0 16px #ff8800;
+}
+@keyframes milestoneAnim {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-5deg); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(2deg); }
+  20% { transform: translate(-50%, -50%) scale(0.95) rotate(-1deg); }
+  30% { transform: translate(-50%, -50%) scale(1.05) rotate(0deg); }
+  40% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -70%) scale(0.7); }
+}
+
+/* Milestone particle burst */
+.milestone-particle {
+  position: fixed;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99;
+  animation: particleBurst 1.5s ease-out forwards;
+}
+@keyframes particleBurst {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+  <span><span class="label">世代 </span><span id="gen-count">0</span></span>
+  <span><span class="label">存活 </span><span id="alive-count">0</span></span>
+  <span><span class="label">速率 </span><span id="gps-display">10</span></span>
+  <span><span class="label">规则 </span><span id="rule-display">经典</span></span>
+</div>
+
+<div id="chart-label">人口曲线</div>
+<div id="mini-chart"><canvas id="chart-canvas"></canvas></div>
+
+<div id="placement-banner">点击放置图案 / 右键或ESC取消</div>
+
+<div id="toolbar">
+  <div class="btn-row">
+    <button id="btn-play" title="播放/暂停">&#9654; 播放</button>
+    <button id="btn-step" title="单步推演">&#9205; 单步</button>
+    <button id="btn-clear" title="清空网格">&#9724; 清空</button>
+    <button id="btn-random" title="随机填充">&#9776; 随机</button>
+    <button id="btn-fit" title="适应视图">&#9635; 适应</button>
+  </div>
+  <div class="speed-row">
+    <span>速度:</span>
+    <input type="range" id="speed-slider" min="1" max="60" value="10">
+    <span id="speed-label">10 代/秒</span>
+  </div>
+  <div class="rules-row" id="rules-row"></div>
+  <div id="presets-row"></div>
+</div>
+
+<script>
+// ==================== CORE STATE ====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const CELL = 10;
+let cols = 200, rows = 200;
+let grid = new Uint16Array(cols * rows);
+let gridNext = new Uint16Array(cols * rows);
+// Fade buffer: stores fade-out alpha (0-255) for recently dead cells
+let fadeBuf = new Float32Array(cols * rows);
+// Glow intensity buffer for alive cells (for pulsing effect)
+let glowPhase = 0;
+
+let generation = 0;
+let playing = false;
+let speed = 10;
+let lastTick = 0;
+let animId = null;
+let lastAliveCount = 0;
+
+// View transform
+let viewX = 0, viewY = 0, viewScale = 1;
+
+// Drawing state
+let drawing = false;
+let drawValue = 1;
+let placementPattern = null;
+let lastDrawCell = null;
+
+// Population history for mini chart
+const popHistory = [];
+const POP_HISTORY_MAX = 300;
+
+// ==================== RULES ====================
+const RULES = {
+  '经典': { B: [3], S: [2, 3], desc: '康威经典规则' },
+  '高生命': { B: [3, 6], S: [2, 3], desc: '更多复制子' },
+  '昼与夜': { B: [3, 6, 7, 8], S: [3, 4, 6, 7, 8], desc: '正负对称' },
+  '种子': { B: [2], S: [], desc: '爆炸性增长' },
+  '珊瑚': { B: [3], S: [4, 5, 6, 7, 8], desc: '缓慢生长' },
+  '仿生': { B: [3, 5, 7], S: [2, 3, 8], desc: '类生命演化' },
+  '迷宫': { B: [3], S: [1, 2, 3, 4, 5], desc: '生成迷宫' },
+  '复制': { B: [1, 3, 5, 7], S: [1, 3, 5, 7], desc: '自我复制' },
+  '钻石': { B: [3, 5, 6, 7, 8], S: [2, 3, 5, 6, 7, 8], desc: '钻石形扩散' },
+};
+let currentRule = '经典';
+let birthSet = new Set(RULES['经典'].B);
+let surviveSet = new Set(RULES['经典'].S);
+
+// Create rule buttons
+const rulesRow = document.getElementById('rules-row');
+for (const name of Object.keys(RULES)) {
+  const btn = document.createElement('button');
+  const rule = RULES[name];
+  const bStr = 'B' + rule.B.join('');
+  const sStr = 'S' + rule.S.join('');
+  btn.textContent = name + ' (' + bStr + '/' + sStr + ')';
+  btn.title = rule.desc;
+  btn.dataset.rule = name;
+  if (name === currentRule) btn.classList.add('active');
+  btn.addEventListener('click', () => {
+    currentRule = name;
+    birthSet = new Set(RULES[name].B);
+    surviveSet = new Set(RULES[name].S);
+    document.getElementById('rule-display').textContent = name;
+    rulesRow.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  rulesRow.appendChild(btn);
+}
+
+// ==================== PRESETS ====================
+const PRESETS = {
+  '滑翔机': [[0,1],[1,2],[2,0],[2,1],[2,2]],
+  '轻型飞船': [[0,1],[0,3],[1,4],[2,0],[2,4],[3,1],[3,2],[3,3],[3,4]],
+  '中型飞船': [[0,2],[1,0],[1,4],[2,5],[3,0],[3,5],[4,1],[4,2],[4,3],[4,4],[4,5]],
+  '重型飞船': [[0,2],[0,3],[1,0],[1,5],[2,6],[3,0],[3,6],[4,1],[4,2],[4,3],[4,4],[4,5],[4,6]],
+  '飞船舰队': (function(){
+    const pts = [];
+    // 5 gliders in V-formation
+    const g = [[0,1],[1,2],[2,0],[2,1],[2,2]];
+    for (const [r,c] of g) pts.push([r, c]);
+    for (const [r,c] of g) pts.push([r+4, c+5]);
+    for (const [r,c] of g) pts.push([r+8, c+10]);
+    for (const [r,c] of g) pts.push([r+4, c+15]);
+    for (const [r,c] of g) pts.push([r, c+20]);
+    // LWSS leading
+    const lwss = [[0,1],[0,3],[1,4],[2,0],[2,4],[3,1],[3,2],[3,3],[3,4]];
+    for (const [r,c] of lwss) pts.push([r+3, c+24]);
+    // MWSS
+    const mwss = [[0,2],[1,0],[1,4],[2,5],[3,0],[3,5],[4,1],[4,2],[4,3],[4,4],[4,5]];
+    for (const [r,c] of mwss) pts.push([r+1, c+32]);
+    return pts;
+  })(),
+  '脉冲星': (function(){
+    const q = [[2,1],[3,1],[4,1],[1,2],[1,3],[1,4],[2,6],[3,6],[4,6],[6,2],[6,3],[6,4]];
+    const pts = [];
+    for (const [r,c] of q) {
+      pts.push([r,c],[r,12-c],[12-r,c],[12-r,12-c]);
+    }
+    const s = new Set(pts.map(p=>p.join(',')));
+    return [...s].map(p=>p.split(',').map(Number));
+  })(),
+  '十五连珠': [[0,1],[1,1],[2,0],[2,2],[3,1],[4,1],[5,1],[6,1],[7,0],[7,2],[8,1],[9,1]],
+  'R-五联骨': [[0,1],[0,2],[1,0],[1,1],[2,1]],
+  '硬汉': [[0,6],[1,0],[1,1],[2,1],[2,5],[2,6],[2,7]],
+  '橡子': [[0,1],[1,3],[2,0],[2,1],[2,4],[2,5],[2,6]],
+  '高斯帕枪': (function(){
+    return [
+      [4,0],[4,1],[5,0],[5,1],
+      [4,10],[5,10],[6,10],[3,11],[7,11],[2,12],[8,12],[2,13],[8,13],
+      [5,14],[3,15],[7,15],[4,16],[5,16],[6,16],[5,17],
+      [2,20],[3,20],[4,20],[2,21],[3,21],[4,21],[1,22],[5,22],[0,24],[1,24],[5,24],[6,24],
+      [2,34],[3,34],[2,35],[3,35]
+    ];
+  })(),
+  '无限增长(线)': [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,9],[0,10],[0,11],[0,12],[0,13],[0,17],[0,18],[0,19],[0,26],[0,27],[0,28],[0,29],[0,30],[0,31],[0,32],[0,34],[0,35],[0,36],[0,37],[0,38]],
+  '无限增长(紧凑)': (function(){
+    // 10-cell infinite growth
+    return [[0,6],[1,4],[1,6],[1,7],[2,4],[2,6],[3,4],[4,2],[5,0],[5,2]];
+  })(),
+  '蜂巢制造机': (function(){
+    return [[0,5],[1,3],[1,5],[2,3],[2,4],[3,0],[3,1],[3,2],[4,0],[4,1],[4,2],[5,3],[5,4],[6,3],[6,5],[7,5]];
+  })(),
+  '信号灯': [[0,0],[1,0],[0,1],[3,2],[2,3],[3,3]],
+  '蟾蜍': [[1,0],[1,1],[1,2],[0,1],[0,2],[0,3]],
+  '方块': [[0,0],[0,1],[1,0],[1,1]],
+  '闪光灯': [[0,0],[0,1],[0,2]],
+  '银河': (function(){
+    // Kok's Galaxy (period 8 oscillator)
+    const pts = [];
+    for (let i = 0; i < 6; i++) { pts.push([0, i]); pts.push([1, i]); }
+    for (let i = 3; i < 9; i++) { pts.push([7, i]); pts.push([8, i]); }
+    for (let i = 0; i < 6; i++) { pts.push([i+3, 0]); pts.push([i+3, 1]); }
+    for (let i = 0; i < 6; i++) { pts.push([i, 7]); pts.push([i, 8]); }
+    return pts;
+  })(),
+  '五角星': (function(){
+    // Pentadecathlon (period 15)
+    return [[0,1],[1,1],[2,0],[2,2],[3,1],[4,1],[5,1],[6,1],[7,0],[7,2],[8,1],[9,1]];
+  })(),
+  '太空耙': (function(){
+    // Spaceship rake: creates gliders periodically
+    // Simplified version: c/2 puffer with glider output
+    const pts = [];
+    // LWSS 1
+    const lwss = [[0,1],[0,3],[1,4],[2,0],[2,4],[3,1],[3,2],[3,3],[3,4]];
+    for (const [r,c] of lwss) pts.push([r, c]);
+    // LWSS 2 trailing
+    for (const [r,c] of lwss) pts.push([r+6, c+2]);
+    // Glider seed between them
+    const g = [[0,1],[1,2],[2,0],[2,1],[2,2]];
+    for (const [r,c] of g) pts.push([r+3, c+8]);
+    return pts;
+  })(),
+};
+
+// Create preset buttons
+const presetsRow = document.getElementById('presets-row');
+for (const name of Object.keys(PRESETS)) {
+  const btn = document.createElement('button');
+  btn.textContent = name;
+  btn.addEventListener('click', () => startPlacement(name));
+  presetsRow.appendChild(btn);
+}
+
+// ==================== GRID HELPERS ====================
+function idx(c, r) { return r * cols + c; }
+
+function cellAlive(c, r) {
+  if (c < 0 || c >= cols || r < 0 || r >= rows) return 0;
+  return grid[idx(c, r)] > 0 ? 1 : 0;
+}
+
+function countNeighbors(c, r) {
+  return cellAlive(c-1,r-1)+cellAlive(c,r-1)+cellAlive(c+1,r-1)+
+         cellAlive(c-1,r)+cellAlive(c+1,r)+
+         cellAlive(c-1,r+1)+cellAlive(c,r+1)+cellAlive(c+1,r+1);
+}
+
+// Milestone tracking
+let lastMilestone = 0;
+
+function showMilestone(gen) {
+  const el = document.createElement('div');
+  el.className = 'milestone';
+  const emoji = gen >= 10000 ? '🌟' : gen >= 5000 ? '🎆' : '🎉';
+  el.innerHTML = emoji + ' 第 ' + gen.toLocaleString() + ' 代! ' + emoji +
+    '<span class="sub">存活细胞: ' + lastAliveCount.toLocaleString() + '</span>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+
+  // Spawn particle burst
+  const colors = ['#ffdd00','#ff8800','#00ff41','#0088ff','#ff44aa','#44ffaa'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'milestone-particle';
+    p.style.left = '50%';
+    p.style.top = '50%';
+    const angle = (Math.PI * 2 * i) / 20 + Math.random() * 0.3;
+    const dist = 80 + Math.random() * 120;
+    p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+    p.style.background = colors[i % colors.length];
+    p.style.boxShadow = '0 0 6px ' + colors[i % colors.length];
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1600);
+  }
+}
+
+function stepGeneration() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = idx(c, r);
+      const n = countNeighbors(c, r);
+      const alive = grid[i] > 0;
+      if (alive) {
+        gridNext[i] = surviveSet.has(n) ? Math.min(grid[i] + 1, 60000) : 0;
+        // If cell just died, start fade
+        if (gridNext[i] === 0 && grid[i] > 0) {
+          fadeBuf[i] = 1.0; // start at full opacity
+        }
+      } else {
+        gridNext[i] = birthSet.has(n) ? 1 : 0;
+        // If cell is born, clear any residual fade
+        if (gridNext[i] > 0) fadeBuf[i] = 0;
+      }
+    }
+  }
+  [grid, gridNext] = [gridNext, grid];
+  generation++;
+
+  // Record population
+  popHistory.push(lastAliveCount);
+  if (popHistory.length > POP_HISTORY_MAX) popHistory.shift();
+
+  // Milestone check
+  const milestone = Math.floor(generation / 1000) * 1000;
+  if (milestone > 0 && milestone !== lastMilestone && generation === milestone) {
+    lastMilestone = milestone;
+    showMilestone(generation);
+  }
+}
+
+function clearGrid() {
+  grid.fill(0);
+  fadeBuf.fill(0);
+  generation = 0;
+  lastMilestone = 0;
+  popHistory.length = 0;
+}
+
+function randomize(density = 0.2) {
+  for (let i = 0; i < grid.length; i++) {
+    grid[i] = Math.random() < density ? 1 : 0;
+  }
+  fadeBuf.fill(0);
+  generation = 0;
+  lastMilestone = 0;
+  popHistory.length = 0;
+}
+
+function expandGrid(c, r) {
+  if (c >= 0 && c < cols && r >= 0 && r < rows) return;
+  const newCols = Math.max(cols, c + 10, 10);
+  const newRows = Math.max(rows, r + 10, 10);
+  if (newCols > cols || newRows > rows) {
+    const nc = Math.max(newCols, cols);
+    const nr = Math.max(newRows, rows);
+    const ng = new Uint16Array(nc * nr);
+    const nf = new Float32Array(nc * nr);
+    for (let rr = 0; rr < rows; rr++) {
+      for (let cc = 0; cc < cols; cc++) {
+        ng[rr * nc + cc] = grid[rr * cols + cc];
+        nf[rr * nc + cc] = fadeBuf[rr * cols + cc];
+      }
+    }
+    cols = nc; rows = nr;
+    grid = ng;
+    gridNext = new Uint16Array(nc * nr);
+    fadeBuf = nf;
+  }
+}
+
+// ==================== RENDERING ====================
+function resizeCanvas() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  const cc = document.getElementById('chart-canvas');
+  cc.width = 220 * devicePixelRatio;
+  cc.height = 90 * devicePixelRatio;
+}
+
+function ageColor(age) {
+  if (age <= 0) return null;
+  const t = Math.min(age / 120, 1);
+  // Young: bright green -> old: blue-purple
+  const r = Math.floor(20 * t);
+  const g = Math.floor(255 * (1 - t * 0.65));
+  const b = Math.floor(65 + 190 * t);
+  return { r, g, b };
+}
+
+function drawChart() {
+  const cc = document.getElementById('chart-canvas');
+  const cctx = cc.getContext('2d');
+  const W = cc.width, H = cc.height;
+  const dpr = devicePixelRatio;
+
+  cctx.clearRect(0, 0, W, H);
+
+  if (popHistory.length < 2) return;
+
+  const maxPop = Math.max(...popHistory, 1);
+  const minPop = Math.min(...popHistory);
+  const range = maxPop - minPop || 1;
+  const step = W / (POP_HISTORY_MAX - 1);
+
+  // Draw grid lines
+  cctx.strokeStyle = 'rgba(0,255,65,0.08)';
+  cctx.lineWidth = 0.5;
+  for (let i = 0; i < 4; i++) {
+    const y = H * (i + 1) / 5;
+    cctx.beginPath();
+    cctx.moveTo(0, y);
+    cctx.lineTo(W, y);
+    cctx.stroke();
+  }
+
+  // Draw filled area with gradient
+  cctx.beginPath();
+  cctx.moveTo(0, H);
+  for (let i = 0; i < popHistory.length; i++) {
+    const x = (POP_HISTORY_MAX - popHistory.length + i) * step;
+    const y = H - ((popHistory[i] - minPop) / range) * (H - 8 * dpr) - 2 * dpr;
+    cctx.lineTo(x, y);
+  }
+  cctx.lineTo((POP_HISTORY_MAX - 1) * step, H);
+  cctx.closePath();
+  const grad = cctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,255,65,0.25)');
+  grad.addColorStop(1, 'rgba(0,255,65,0.01)');
+  cctx.fillStyle = grad;
+  cctx.fill();
+
+  // Draw line with glow
+  cctx.beginPath();
+  for (let i = 0; i < popHistory.length; i++) {
+    const x = (POP_HISTORY_MAX - popHistory.length + i) * step;
+    const y = H - ((popHistory[i] - minPop) / range) * (H - 8 * dpr) - 2 * dpr;
+    if (i === 0) cctx.moveTo(x, y);
+    else cctx.lineTo(x, y);
+  }
+  cctx.strokeStyle = '#00ff41';
+  cctx.lineWidth = 1.5 * dpr;
+  cctx.shadowColor = '#00ff41';
+  cctx.shadowBlur = 6 * dpr;
+  cctx.stroke();
+  cctx.shadowBlur = 0;
+
+  // Current value label
+  const lastPop = popHistory[popHistory.length - 1];
+  cctx.fillStyle = '#00ff41';
+  cctx.font = `bold ${10 * dpr}px Courier New`;
+  cctx.textAlign = 'right';
+  cctx.fillText(lastPop.toLocaleString(), W - 4 * dpr, 12 * dpr);
+
+  // Max/Min labels
+  cctx.fillStyle = '#666';
+  cctx.font = `${8 * dpr}px Courier New`;
+  cctx.fillText('峰:' + maxPop.toLocaleString(), W - 4 * dpr, 24 * dpr);
+  cctx.fillText('谷:' + minPop.toLocaleString(), W - 4 * dpr, H - 4 * dpr);
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  const dpr = devicePixelRatio;
+
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, W, H);
+
+  const s = CELL * viewScale * dpr;
+  const ox = viewX * dpr;
+  const oy = viewY * dpr;
+
+  // Visible range
+  const c0 = Math.max(0, Math.floor(-ox / s));
+  const r0 = Math.max(0, Math.floor(-oy / s));
+  const c1 = Math.min(cols - 1, Math.ceil((W - ox) / s));
+  const r1 = Math.min(rows - 1, Math.ceil((H - oy) / s));
+
+  // Grid lines
+  if (s >= 4) {
+    ctx.strokeStyle = 'rgba(0,255,65,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let c = c0; c <= c1 + 1; c++) {
+      const x = ox + c * s;
+      ctx.moveTo(x, Math.max(0, oy + r0 * s));
+      ctx.lineTo(x, Math.min(H, oy + (r1 + 1) * s));
+    }
+    for (let r = r0; r <= r1 + 1; r++) {
+      const y = oy + r * s;
+      ctx.moveTo(Math.max(0, ox + c0 * s), y);
+      ctx.lineTo(Math.min(W, ox + (c1 + 1) * s), y);
+    }
+    ctx.stroke();
+  }
+
+  // Update glow phase for pulsing
+  glowPhase += 0.04;
+
+  const gap = s >= 6 ? 1 : 0;
+
+  // Fade out dead cells (smooth decay with warm color)
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      const i = idx(c, r);
+      if (fadeBuf[i] > 0.01) {
+        const alpha = fadeBuf[i];
+        // Warm orange-red fade with decreasing size
+        const shrink = (1 - alpha) * 0.3;
+        const cellX = ox + c * s + gap + s * shrink * 0.5;
+        const cellY = oy + r * s + gap + s * shrink * 0.5;
+        const cellW = (s - gap * 2) * (1 - shrink);
+        const cellH = (s - gap * 2) * (1 - shrink);
+
+        // Multi-layer fade: outer glow then inner
+        if (s >= 3) {
+          ctx.shadowColor = `rgba(255,80,20,${alpha * 0.6})`;
+          ctx.shadowBlur = 8 * dpr * alpha;
+        }
+        const fr = Math.floor(255 * alpha);
+        const fg = Math.floor(80 * alpha + 40 * (1 - alpha));
+        const fb = Math.floor(20 * alpha);
+        ctx.fillStyle = `rgba(${fr},${fg},${fb},${alpha * 0.7})`;
+        ctx.fillRect(cellX, cellY, cellW, cellH);
+        ctx.shadowBlur = 0;
+
+        // Smooth exponential decay
+        fadeBuf[i] *= 0.88;
+        if (fadeBuf[i] < 0.01) fadeBuf[i] = 0;
+      }
+    }
+  }
+
+  // Cells with glow effects
+  let alive = 0;
+  const colorBatch = {};
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      const age = grid[idx(c, r)];
+      if (age > 0) {
+        alive++;
+        const key = Math.min(age, 120);
+        if (!colorBatch[key]) colorBatch[key] = [];
+        colorBatch[key].push(c, r);
+      }
+    }
+  }
+  // Count rest of alive cells outside view
+  if (c0 > 0 || r0 > 0 || c1 < cols - 1 || r1 < rows - 1) {
+    for (let i = 0; i < grid.length; i++) {
+      const c = i % cols, r = (i - c) / cols;
+      if (c >= c0 && c <= c1 && r >= r0 && r <= r1) continue;
+      if (grid[i] > 0) alive++;
+    }
+  }
+  lastAliveCount = alive;
+
+  // Render cells by age group with glow
+  for (const key in colorBatch) {
+    const col = ageColor(+key);
+    if (!col) continue;
+
+    // Pulsing glow for young cells
+    const ageFactor = Math.min(+key / 120, 1);
+    const pulse = 0.5 + 0.5 * Math.sin(glowPhase + ageFactor * 3);
+
+    if (+key <= 1) {
+      // Newborn: bright flash
+      ctx.shadowColor = `rgba(100,255,100,0.9)`;
+      ctx.shadowBlur = (12 + 4 * pulse) * dpr;
+      ctx.fillStyle = `rgba(${col.r + 80},${Math.min(255, col.g + 50)},${col.b},1)`;
+    } else if (+key <= 4) {
+      // Very young: strong glow
+      ctx.shadowColor = `rgba(${col.r},${col.g},${col.b},0.8)`;
+      ctx.shadowBlur = (10 + 3 * pulse) * dpr;
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},1)`;
+    } else if (+key < 15) {
+      // Young: medium glow
+      ctx.shadowColor = `rgba(${col.r},${col.g},${col.b},0.5)`;
+      ctx.shadowBlur = (6 + 2 * pulse) * dpr;
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},0.95)`;
+    } else if (+key < 50) {
+      // Mature: subtle glow
+      ctx.shadowColor = `rgba(${col.r},${col.g},${col.b},0.3)`;
+      ctx.shadowBlur = 3 * dpr;
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},0.85)`;
+    } else {
+      // Old: steady dim
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},0.75)`;
+    }
+
+    const arr = colorBatch[key];
+    for (let i = 0; i < arr.length; i += 2) {
+      const cx2 = ox + arr[i] * s + gap;
+      const cy2 = oy + arr[i + 1] * s + gap;
+      ctx.fillRect(cx2, cy2, s - gap * 2, s - gap * 2);
+    }
+  }
+  ctx.shadowBlur = 0;
+
+  // Placement preview
+  if (placementPattern) {
+    const previewPulse = 0.3 + 0.15 * Math.sin(glowPhase * 2);
+    ctx.globalAlpha = previewPulse;
+    ctx.fillStyle = '#0088ff';
+    ctx.shadowColor = '#0088ff';
+    ctx.shadowBlur = 10 * dpr;
+    const pts = PRESETS[placementPattern];
+    const mc = placementCell;
+    if (mc) {
+      for (const [pr, pc] of pts) {
+        const cx2 = ox + (mc.c + pc) * s + gap;
+        const cy2 = oy + (mc.r + pr) * s + gap;
+        ctx.fillRect(cx2, cy2, s - gap * 2, s - gap * 2);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  // Update HUD
+  document.getElementById('gen-count').textContent = generation.toLocaleString();
+  document.getElementById('alive-count').textContent = alive.toLocaleString();
+
+  // Draw mini chart
+  drawChart();
+}
+
+// ==================== GAME LOOP ====================
+function gameLoop(ts) {
+  animId = requestAnimationFrame(gameLoop);
+  if (playing) {
+    const interval = 1000 / speed;
+    if (ts - lastTick >= interval) {
+      stepGeneration();
+      lastTick = ts;
+    }
+  }
+  draw();
+}
+
+// ==================== COORDINATE MAPPING ====================
+function screenToCell(sx, sy) {
+  const c = Math.floor((sx - viewX) / (CELL * viewScale));
+  const r = Math.floor((sy - viewY) / (CELL * viewScale));
+  return { c, r };
+}
+
+let placementCell = null;
+
+// ==================== INTERPOLATED DRAWING ====================
+function drawLine(c0, r0, c1, r1, val) {
+  // Bresenham line to fill gaps
+  const dc = Math.abs(c1 - c0);
+  const dr = Math.abs(r1 - r0);
+  const sc = c0 < c1 ? 1 : -1;
+  const sr = r0 < r1 ? 1 : -1;
+  let err = dc - dr;
+  let c = c0, r = r0;
+  while (true) {
+    setCell(c, r, val);
+    if (c === c1 && r === r1) break;
+    const e2 = 2 * err;
+    if (e2 > -dr) { err -= dr; c += sc; }
+    if (e2 < dc) { err += dc; r += sr; }
+  }
+}
+
+// ==================== INPUT: MOUSE ====================
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let panViewStart = { x: 0, y: 0 };
+
+function setCell(c, r, val) {
+  if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+  grid[idx(c, r)] = val;
+  if (val > 0) fadeBuf[idx(c, r)] = 0;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  if (placementPattern) {
+    if (e.button === 2 || e.button === 1) { cancelPlacement(); return; }
+    placePattern(); return;
+  }
+  if (e.button === 1 || (e.button === 0 && e.altKey)) {
+    isPanning = true;
+    panStart = { x: e.clientX, y: e.clientY };
+    panViewStart = { x: viewX, y: viewY };
+    return;
+  }
+  if (e.button === 0) {
+    const cell = screenToCell(e.clientX, e.clientY);
+    if (cell.c >= 0 && cell.c < cols && cell.r >= 0 && cell.r < rows) {
+      drawValue = grid[idx(cell.c, cell.r)] > 0 ? 0 : 1;
+      setCell(cell.c, cell.r, drawValue);
+      lastDrawCell = { c: cell.c, r: cell.r };
+      drawing = true;
+    }
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (placementPattern) {
+    placementCell = screenToCell(e.clientX, e.clientY);
+    return;
+  }
+  if (isPanning) {
+    viewX = panViewStart.x + (e.clientX - panStart.x);
+    viewY = panViewStart.y + (e.clientY - panStart.y);
+    return;
+  }
+  if (drawing) {
+    const cell = screenToCell(e.clientX, e.clientY);
+    if (lastDrawCell) {
+      drawLine(lastDrawCell.c, lastDrawCell.r, cell.c, cell.r, drawValue);
+    } else {
+      setCell(cell.c, cell.r, drawValue);
+    }
+    lastDrawCell = { c: cell.c, r: cell.r };
+  }
+});
+
+canvas.addEventListener('mouseup', () => { drawing = false; isPanning = false; lastDrawCell = null; });
+canvas.addEventListener('mouseleave', () => { drawing = false; isPanning = false; lastDrawCell = null; });
+
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (placementPattern) cancelPlacement();
+});
+
+// Zoom with wheel
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const mx = e.clientX, my = e.clientY;
+  const oldScale = viewScale;
+  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  viewScale = Math.max(0.1, Math.min(20, viewScale * factor));
+  viewX = mx - (mx - viewX) * (viewScale / oldScale);
+  viewY = my - (my - viewY) * (viewScale / oldScale);
+}, { passive: false });
+
+// ==================== INPUT: TOUCH ====================
+let touches = {};
+let lastPinchDist = 0;
+let lastPinchCenter = null;
+let touchDrawing = false;
+let lastTouchCell = null;
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const ts = e.changedTouches;
+  for (const t of ts) touches[t.identifier] = { x: t.clientX, y: t.clientY };
+
+  if (placementPattern) {
+    if (e.touches.length === 1) {
+      placementCell = screenToCell(ts[0].clientX, ts[0].clientY);
+    }
+    return;
+  }
+
+  if (e.touches.length === 1) {
+    const cell = screenToCell(ts[0].clientX, ts[0].clientY);
+    if (cell.c >= 0 && cell.c < cols && cell.r >= 0 && cell.r < rows) {
+      drawValue = grid[idx(cell.c, cell.r)] > 0 ? 0 : 1;
+      setCell(cell.c, cell.r, drawValue);
+      lastTouchCell = { c: cell.c, r: cell.r };
+      touchDrawing = true;
+    }
+  } else if (e.touches.length === 2) {
+    touchDrawing = false;
+    lastTouchCell = null;
+    const [a, b] = [e.touches[0], e.touches[1]];
+    lastPinchDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    lastPinchCenter = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+    panViewStart = { x: viewX, y: viewY };
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const ts = e.changedTouches;
+  for (const t of ts) touches[t.identifier] = { x: t.clientX, y: t.clientY };
+
+  if (placementPattern && e.touches.length === 1) {
+    placementCell = screenToCell(e.touches[0].clientX, e.touches[0].clientY);
+    return;
+  }
+
+  if (e.touches.length === 1 && touchDrawing) {
+    const cell = screenToCell(e.touches[0].clientX, e.touches[0].clientY);
+    if (lastTouchCell) {
+      drawLine(lastTouchCell.c, lastTouchCell.r, cell.c, cell.r, drawValue);
+    } else {
+      setCell(cell.c, cell.r, drawValue);
+    }
+    lastTouchCell = { c: cell.c, r: cell.r };
+  } else if (e.touches.length === 2) {
+    touchDrawing = false;
+    lastTouchCell = null;
+    const [a, b] = [e.touches[0], e.touches[1]];
+    const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    const center = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+
+    const oldScale = viewScale;
+    viewScale = Math.max(0.1, Math.min(20, viewScale * (dist / lastPinchDist)));
+    viewX = center.x - (center.x - viewX) * (viewScale / oldScale);
+    viewY = center.y - (center.y - viewY) * (viewScale / oldScale);
+
+    if (lastPinchCenter) {
+      viewX += center.x - lastPinchCenter.x;
+      viewY += center.y - lastPinchCenter.y;
+    }
+
+    lastPinchDist = dist;
+    lastPinchCenter = center;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (placementPattern && e.touches.length === 0) {
+    placePattern();
+    return;
+  }
+  for (const t of e.changedTouches) delete touches[t.identifier];
+  if (e.touches.length < 2) { lastPinchDist = 0; lastPinchCenter = null; }
+  if (e.touches.length === 0) { touchDrawing = false; lastTouchCell = null; }
+}, { passive: false });
+
+// ==================== PATTERN PLACEMENT ====================
+function startPlacement(name) {
+  placementPattern = name;
+  placementCell = null;
+  document.getElementById('placement-banner').style.display = 'block';
+}
+
+function cancelPlacement() {
+  placementPattern = null;
+  placementCell = null;
+  document.getElementById('placement-banner').style.display = 'none';
+}
+
+function placePattern() {
+  if (!placementPattern || !placementCell) return;
+  const pts = PRESETS[placementPattern];
+  for (const [pr, pc] of pts) {
+    const c = placementCell.c + pc;
+    const r = placementCell.r + pr;
+    if (c >= 0 && c < cols && r >= 0 && r < rows) {
+      grid[idx(c, r)] = 1;
+    }
+  }
+  cancelPlacement();
+}
+
+// ==================== KEYBOARD ====================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cancelPlacement();
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  if (e.key === 'n' || e.key === 'N') { stepGeneration(); }
+});
+
+// ==================== BUTTONS ====================
+const btnPlay = document.getElementById('btn-play');
+const btnStep = document.getElementById('btn-step');
+const btnClear = document.getElementById('btn-clear');
+const btnRandom = document.getElementById('btn-random');
+const btnFit = document.getElementById('btn-fit');
+const speedSlider = document.getElementById('speed-slider');
+const speedLabel = document.getElementById('speed-label');
+
+function togglePlay() {
+  playing = !playing;
+  btnPlay.classList.toggle('active', playing);
+  btnPlay.innerHTML = playing ? '&#10074;&#10074; 暂停' : '&#9654; 播放';
+  if (playing) lastTick = performance.now();
+}
+
+btnPlay.addEventListener('click', togglePlay);
+btnStep.addEventListener('click', () => { stepGeneration(); });
+btnClear.addEventListener('click', () => { clearGrid(); });
+btnRandom.addEventListener('click', () => { randomize(0.18); });
+
+btnFit.addEventListener('click', () => {
+  const padding = 40;
+  const scaleX = (window.innerWidth - padding * 2) / (cols * CELL);
+  const scaleY = (window.innerHeight - padding * 2 - 140) / (rows * CELL);
+  viewScale = Math.min(scaleX, scaleY, 3);
+  viewX = (window.innerWidth - cols * CELL * viewScale) / 2;
+  viewY = (window.innerHeight - 140 - rows * CELL * viewScale) / 2;
+});
+
+speedSlider.addEventListener('input', () => {
+  speed = +speedSlider.value;
+  speedLabel.textContent = speed + ' 代/秒';
+  document.getElementById('gps-display').textContent = speed;
+});
+
+// ==================== INIT ====================
+function init() {
+  resizeCanvas();
+  viewScale = Math.min(
+    window.innerWidth / (cols * CELL),
+    (window.innerHeight - 140) / (rows * CELL),
+    2
+  );
+  viewX = (window.innerWidth - cols * CELL * viewScale) / 2;
+  viewY = (window.innerHeight - 140 - rows * CELL * viewScale) / 2;
+
+  animId = requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('resize', resizeCanvas);
+init();
+</script>
+</body>
+</html>

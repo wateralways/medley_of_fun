@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>迷宫闯关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:#e0e0e0}
+canvas{display:block}
+#ui-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#ui-layer *{pointer-events:auto}
+#hud{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:18px;align-items:center;background:rgba(10,10,30,.75);backdrop-filter:blur(6px);border:1px solid rgba(120,100,255,.25);border-radius:12px;padding:6px 18px;font-size:14px;white-space:nowrap}
+#hud .item{display:flex;align-items:center;gap:4px}
+#hud .label{color:#8888bb}
+#hud .val{color:#f0d060;font-weight:700;min-width:28px;text-align:center}
+#start-screen,#win-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,6,18,.92);z-index:20;transition:opacity .4s}
+#start-screen.hidden,#win-screen.hidden{opacity:0;pointer-events:none}
+h1{font-size:clamp(28px,6vw,48px);background:linear-gradient(135deg,#a78bfa,#60a5fa,#f9a825);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;font-weight:800;letter-spacing:2px}
+.subtitle{color:#8888bb;font-size:14px;margin-bottom:28px}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0}
+button{background:linear-gradient(135deg,#4a3ab5,#6c3dd1);border:1px solid rgba(160,140,255,.3);color:#e8e0ff;padding:10px 22px;border-radius:10px;font-size:15px;cursor:pointer;transition:all .2s;font-family:inherit}
+button:hover{background:linear-gradient(135deg,#5a4ac5,#8050e0);transform:translateY(-1px);box-shadow:0 4px 18px rgba(100,60,220,.35)}
+button:active{transform:scale(.97)}
+.level-btn{min-width:80px}
+.level-btn.current{background:linear-gradient(135deg,#b8860b,#d4a020);border-color:rgba(255,200,60,.4);color:#fff}
+#stars{font-size:clamp(32px,8vw,56px);margin:12px 0;letter-spacing:8px}
+#win-time,#win-steps{font-size:16px;color:#aaa;margin:3px 0}
+#win-msg{font-size:20px;color:#f0d060;margin:10px 0 18px;font-weight:600}
+#joystick-zone{position:absolute;bottom:24px;left:24px;width:120px;height:120px;z-index:15}
+#joystick-base{position:absolute;width:80px;height:80px;left:20px;top:20px;border-radius:50%;background:radial-gradient(circle,rgba(120,100,255,.18),rgba(120,100,255,.06));border:1.5px solid rgba(150,130,255,.25);transition:opacity .3s}
+#joystick-knob{position:absolute;width:36px;height:36px;left:42px;top:42px;border-radius:50%;background:radial-gradient(circle,rgba(200,180,255,.45),rgba(140,120,255,.2));border:1px solid rgba(200,180,255,.35);transition:left .05s,top .05s}
+#gravity-toggle{position:absolute;bottom:28px;right:24px;font-size:12px;padding:7px 14px;z-index:15;border-radius:8px;opacity:.7}
+#gravity-toggle.active{opacity:1;background:linear-gradient(135deg,#b8860b,#d4a020)}
+@media(min-width:800px){#joystick-zone{opacity:.3;pointer-events:none}#gravity-toggle{display:none}}
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="ui-layer">
+  <div id="hud">
+    <div class="item"><span class="label">关卡</span><span class="val" id="h-level">1</span></div>
+    <div class="item"><span class="label">时间</span><span class="val" id="h-time">0s</span></div>
+    <div class="item"><span class="label">步数</span><span class="val" id="h-steps">0</span></div>
+  </div>
+
+  <div id="start-screen">
+    <h1>迷宫闯关</h1>
+    <div class="subtitle">递归回溯生成 / 物理小球 / 多关卡挑战</div>
+    <div class="btn-row" id="level-btns"></div>
+    <div style="margin-top:10px;color:#666;font-size:12px">方向键 / WASD / 虚拟摇杆 / 拖动屏幕 / 重力感应</div>
+  </div>
+
+  <div id="win-screen" class="hidden">
+    <div id="win-msg">恭喜过关！</div>
+    <div id="stars"></div>
+    <div id="win-time"></div>
+    <div id="win-steps"></div>
+    <div class="btn-row" style="margin-top:18px">
+      <button id="btn-retry">重玩本关</button>
+      <button id="btn-next">下一关</button>
+      <button id="btn-menu">返回菜单</button>
+    </div>
+  </div>
+</div>
+
+<div id="joystick-zone">
+  <div id="joystick-base"></div>
+  <div id="joystick-knob"></div>
+</div>
+<button id="gravity-toggle">重力感应</button>
+
+<script>
+'use strict';
+/* ========== CONSTANTS & LEVELS ========== */
+const LEVELS = [
+  {name:'初级',cols:8,rows:8},
+  {name:'简单',cols:11,rows:11},
+  {name:'普通',cols:15,rows:15},
+  {name:'困难',cols:20,rows:20},
+  {name:'噩梦',cols:26,rows:26},
+  {name:'地狱',cols:33,rows:33},
+];
+const WALL=1, PATH=0;
+
+/* ========== DOM ========== */
+const cvs=document.getElementById('c'), ctx=cvs.getContext('2d');
+const $hLevel=document.getElementById('h-level'),
+      $hTime=document.getElementById('h-time'),
+      $hSteps=document.getElementById('h-steps');
+const $start=document.getElementById('start-screen'),
+      $win=document.getElementById('win-screen'),
+      $stars=document.getElementById('stars'),
+      $winTime=document.getElementById('win-time'),
+      $winSteps=document.getElementById('win-steps'),
+      $winMsg=document.getElementById('win-msg');
+const $levelBtns=document.getElementById('level-btns');
+const $jBase=document.getElementById('joystick-base'),
+      $jKnob=document.getElementById('joystick-knob'),
+      $jZone=document.getElementById('joystick-zone');
+const $gravBtn=document.getElementById('gravity-toggle');
+
+/* ========== STATE ========== */
+let curLevel=0, grid=[], cols=0, rows=0, cellPx=0;
+let generating=false, playing=false, won=false;
+let genStack=[], genVisited=[];
+let playerX=0, playerY=0, velX=0, velY=0;
+let startTime=0, steps=0, elapsed=0;
+let visited=[];  // track visited cells
+let offsetX=0, offsetY=0; // camera offset
+let fireworks=[];
+let joystickActive=false, joyDX=0, joyDY=0, joyTouchId=null;
+let gravityEnabled=false, gravBeta=0, gravGamma=0;
+let keys={};
+let shakeTimer=0, shakeX=0, shakeY=0;
+let dpr=1;
+/* drag control state */
+let dragActive=false, dragStartX=0, dragStartY=0, dragCurX=0, dragCurY=0;
+let dragDX=0, dragDY=0; // normalized direction for acceleration
+let dragPointerId=null; // track which pointer is dragging
+let dragTouchId=null; // track which touch is dragging (for touch events)
+
+/* ========== INIT LEVELS BUTTONS ========== */
+LEVELS.forEach((lv,i)=>{
+  const b=document.createElement('button');
+  b.className='level-btn';b.textContent=lv.name;
+  b.onclick=()=>startLevel(i);
+  $levelBtns.appendChild(b);
+});
+
+/* ========== RESIZE ========== */
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  cvs.width=window.innerWidth*dpr;cvs.height=window.innerHeight*dpr;
+  cvs.style.width=window.innerWidth+'px';cvs.style.height=window.innerHeight+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);resize();
+
+/* ========== MAZE GENERATION (recursive backtracker, animated) ========== */
+function initGrid(c,r){
+  cols=c*2+1; rows=r*2+1;
+  grid=[];
+  for(let y=0;y<rows;y++){grid[y]=[];for(let x=0;x<cols;x++) grid[y][x]=WALL;}
+  genVisited=[];
+  for(let y=0;y<r;y++){genVisited[y]=[];for(let x=0;x<c;x++) genVisited[y][x]=false;}
+  // start cell
+  const sx=0,sy=0;
+  genVisited[sy][sx]=true;
+  grid[sy*2+1][sx*2+1]=PATH;
+  genStack=[{x:sx,y:sy}];
+  generating=true;
+}
+
+function genStep(stepsPerFrame){
+  const mc=(cols-1)/2, mr=(rows-1)/2;
+  const dirs=[[0,-1],[1,0],[0,1],[-1,0]];
+  for(let s=0;s<stepsPerFrame&&genStack.length>0;s++){
+    const cur=genStack[genStack.length-1];
+    // shuffle neighbors
+    const nb=[];
+    for(const[dx,dy] of dirs){
+      const nx=cur.x+dx, ny=cur.y+dy;
+      if(nx>=0&&nx<mc&&ny>=0&&ny<mr&&!genVisited[ny][nx]) nb.push({x:nx,y:ny,dx,dy});
+    }
+    if(nb.length){
+      const pick=nb[Math.random()*nb.length|0];
+      genVisited[pick.y][pick.x]=true;
+      // remove wall between
+      grid[cur.y*2+1+pick.dy][cur.x*2+1+pick.dx]=PATH;
+      grid[pick.y*2+1][pick.x*2+1]=PATH;
+      genStack.push({x:pick.x,y:pick.y});
+    } else {
+      genStack.pop();
+    }
+  }
+  if(genStack.length===0){
+    generating=false;
+    beginPlay();
+  }
+}
+
+/* ========== START LEVEL ========== */
+function startLevel(idx){
+  curLevel=idx;
+  $start.classList.add('hidden');
+  $win.classList.add('hidden');
+  won=false; playing=false; fireworks=[];
+  const lv=LEVELS[idx];
+  initGrid(lv.cols,lv.rows);
+  // update hud
+  $hLevel.textContent=idx+1;
+  // highlight btn
+  [...$levelBtns.children].forEach((b,i)=>b.classList.toggle('current',i===idx));
+  // calc cell size to fit screen
+  calcCellSize();
+  // init visited array
+  visited=[];
+  for(let y=0;y<rows;y++){visited[y]=[];for(let x=0;x<cols;x++) visited[y][x]=false;}
+}
+
+function calcCellSize(){
+  const maxW=window.innerWidth-20, maxH=window.innerHeight-70;
+  cellPx=Math.max(4,Math.min(maxW/cols,maxH/rows));
+}
+
+function beginPlay(){
+  playing=true;
+  playerX=1; playerY=1;
+  velX=0; velY=0;
+  steps=0; startTime=performance.now(); elapsed=0;
+  visited[1][1]=true;
+}
+
+/* ========== PHYSICS ========== */
+const ACCEL=0.38, FRICTION=0.82, MAX_VEL=0.32, BOUNCE=0.3;
+
+function updatePlayer(dt){
+  if(!playing||won) return;
+  // input
+  let ax=0,ay=0;
+  if(keys['ArrowLeft']||keys['KeyA']) ax=-1;
+  if(keys['ArrowRight']||keys['KeyD']) ax=1;
+  if(keys['ArrowUp']||keys['KeyW']) ay=-1;
+  if(keys['ArrowDown']||keys['KeyS']) ay=1;
+  // joystick
+  if(joystickActive){ax+=joyDX;ay+=joyDY;}
+  // drag control
+  if(dragActive){ax+=dragDX;ay+=dragDY;}
+  // gravity
+  if(gravityEnabled){
+    ax+=gravGamma/30;
+    ay+=gravBeta/30;
+  }
+  // clamp input
+  const mag=Math.sqrt(ax*ax+ay*ay)||1;
+  if(mag>1){ax/=mag;ay/=mag;}
+
+  velX+=ax*ACCEL*dt*60;
+  velY+=ay*ACCEL*dt*60;
+  velX*=FRICTION;
+  velY*=FRICTION;
+  if(Math.abs(velX)<0.001) velX=0;
+  if(Math.abs(velY)<0.001) velY=0;
+  const sp=Math.sqrt(velX*velX+velY*velY);
+  if(sp>MAX_VEL){velX*=MAX_VEL/sp;velY*=MAX_VEL/sp;}
+
+  // step count on cell change
+  const prevCX=Math.round(playerX), prevCY=Math.round(playerY);
+
+  // move with collision
+  const newX=playerX+velX;
+  const newY=playerY+velY;
+  // check X
+  if(!isWall(newX,playerY)) playerX=newX;
+  else {shakeTimer=0.08;velX*=-BOUNCE;}
+  // check Y
+  if(!isWall(playerX,newY)) playerY=newY;
+  else {shakeTimer=0.08;velY*=-BOUNCE;}
+
+  const curCX=Math.round(playerX), curCY=Math.round(playerY);
+  if(curCX!==prevCX||curCY!==prevCY){
+    steps++;
+    if(curCX>=0&&curCX<cols&&curCY>=0&&curCY<rows) visited[curCY][curCX]=true;
+  }
+
+  // shake decay
+  if(shakeTimer>0){
+    shakeTimer-=dt;
+    shakeX=(Math.random()-.5)*3;shakeY=(Math.random()-.5)*3;
+  } else {shakeX=0;shakeY=0;}
+
+  // timer
+  elapsed=(performance.now()-startTime)/1000;
+  $hTime.textContent=elapsed.toFixed(1)+'s';
+  $hSteps.textContent=steps;
+
+  // win check
+  const endX=cols-2, endY=rows-2;
+  if(Math.abs(playerX-endX)<.45&&Math.abs(playerY-endY)<.45){
+    winLevel();
+  }
+}
+
+function isWall(px,py){
+  const r=0.35;
+  // check 4 corners of player circle
+  const checks=[[px-r,py-r],[px+r,py-r],[px-r,py+r],[px+r,py+r]];
+  for(const[cx,cy] of checks){
+    const gx=Math.round(cx), gy=Math.round(cy);
+    if(gx<0||gx>=cols||gy<0||gy>=rows) return true;
+    if(grid[gy][gx]===WALL) return true;
+  }
+  return false;
+}
+
+/* ========== WIN ========== */
+function winLevel(){
+  won=true; playing=false;
+  // stars
+  const lv=LEVELS[curLevel];
+  const totalCells=lv.cols*lv.rows;
+  const idealSteps=totalCells*1.5;
+  const idealTime=totalCells*0.4;
+  let star=1;
+  if(steps<idealSteps*1.3&&elapsed<idealTime*1.5) star=2;
+  if(steps<idealSteps&&elapsed<idealTime) star=3;
+  $stars.textContent='★'.repeat(star)+'☆'.repeat(3-star);
+  $winTime.textContent='用时：'+elapsed.toFixed(1)+'秒';
+  $winSteps.textContent='步数：'+steps;
+  $winMsg.textContent=star===3?'完美通关！':star===2?'表现不错！':'勉强过关';
+  $win.classList.remove('hidden');
+  // fireworks
+  for(let i=0;i<40;i++) spawnFirework();
+}
+
+/* ========== FIREWORKS ========== */
+function spawnFirework(){
+  const cx=Math.random()*window.innerWidth;
+  const cy=Math.random()*window.innerHeight*0.6;
+  const hue=Math.random()*360;
+  for(let i=0;i<18;i++){
+    const a=Math.PI*2*i/18+Math.random()*0.3;
+    const sp=1.5+Math.random()*3;
+    fireworks.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,hue,size:2+Math.random()*2});
+  }
+}
+function updateFireworks(dt){
+  for(let i=fireworks.length-1;i>=0;i--){
+    const p=fireworks[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life-=dt*1.2;
+    if(p.life<=0) fireworks.splice(i,1);
+  }
+}
+
+/* ========== RENDER ========== */
+let glowPhase=0;
+function render(){
+  const W=window.innerWidth, H=window.innerHeight;
+  ctx.clearRect(0,0,W,H);
+
+  // background
+  ctx.fillStyle='#0a0a12';
+  ctx.fillRect(0,0,W,H);
+
+  if(!grid.length) return;
+
+  calcCellSize();
+  const mazeW=cols*cellPx, mazeH=rows*cellPx;
+  // center maze or follow player
+  let camX=(W-mazeW)/2, camY=(H-mazeH)/2;
+  if(playing||won){
+    // follow player if maze bigger than screen
+    if(mazeW>W) camX=W/2-playerX*cellPx;
+    if(mazeH>H) camY=H/2-playerY*cellPx;
+    // clamp
+    if(mazeW>W){camX=Math.min(10,Math.max(W-mazeW-10,camX));}
+    if(mazeH>H){camY=Math.min(50,Math.max(H-mazeH-10,camY));}
+  }
+  camX+=shakeX; camY+=shakeY;
+
+  ctx.save();
+  ctx.translate(camX,camY);
+
+  glowPhase+=0.02;
+
+  // draw cells
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const px=x*cellPx, py=y*cellPx;
+      if(grid[y][x]===WALL){
+        // wall with gradient glow
+        const glow=0.55+0.15*Math.sin(glowPhase+(x+y)*0.15);
+        const r=Math.round(60+40*glow);
+        const g=Math.round(30+30*glow);
+        const b=Math.round(140+60*glow);
+        ctx.fillStyle=`rgb(${r},${g},${b})`;
+        ctx.fillRect(px,py,cellPx+.5,cellPx+.5);
+        // bright edge
+        ctx.fillStyle=`rgba(160,130,255,${0.12*glow})`;
+        ctx.fillRect(px,py,cellPx+.5,1);
+        ctx.fillRect(px,py,1,cellPx+.5);
+      } else {
+        // path
+        ctx.fillStyle='#0d0d1a';
+        ctx.fillRect(px,py,cellPx+.5,cellPx+.5);
+        // visited overlay
+        if(visited[y]&&visited[y][x]){
+          ctx.fillStyle='rgba(100,80,200,0.1)';
+          ctx.fillRect(px,py,cellPx+.5,cellPx+.5);
+        }
+      }
+    }
+  }
+
+  // end point glow
+  const endX=(cols-2)*cellPx+cellPx/2, endY=(rows-2)*cellPx+cellPx/2;
+  const ep=0.5+0.5*Math.sin(glowPhase*3);
+  const grad=ctx.createRadialGradient(endX,endY,0,endX,endY,cellPx*1.5);
+  grad.addColorStop(0,`rgba(0,255,120,${0.5*ep})`);
+  grad.addColorStop(0.5,`rgba(0,200,100,${0.15*ep})`);
+  grad.addColorStop(1,'rgba(0,200,100,0)');
+  ctx.fillStyle=grad;
+  ctx.beginPath();ctx.arc(endX,endY,cellPx*1.5,0,Math.PI*2);ctx.fill();
+  // flag
+  ctx.fillStyle=`rgba(0,255,140,${0.6+0.4*ep})`;
+  ctx.font=`${cellPx*0.7}px sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('⚑',endX,endY);
+
+  // generation animation: highlight current cell
+  if(generating&&genStack.length){
+    const top=genStack[genStack.length-1];
+    const gx=top.x*2+1, gy=top.y*2+1;
+    ctx.fillStyle='rgba(255,200,60,0.35)';
+    ctx.fillRect(gx*cellPx,gy*cellPx,cellPx,cellPx);
+  }
+
+  // player
+  if(playing||won){
+    const ppx=playerX*cellPx+cellPx/2;
+    const ppy=playerY*cellPx+cellPx/2;
+    const pr=cellPx*0.32;
+    // glow
+    const pg=ctx.createRadialGradient(ppx,ppy,0,ppx,ppy,pr*3);
+    pg.addColorStop(0,'rgba(255,200,60,0.35)');
+    pg.addColorStop(1,'rgba(255,200,60,0)');
+    ctx.fillStyle=pg;
+    ctx.beginPath();ctx.arc(ppx,ppy,pr*3,0,Math.PI*2);ctx.fill();
+    // ball
+    const bg=ctx.createRadialGradient(ppx-pr*0.2,ppy-pr*0.2,0,ppx,ppy,pr);
+    bg.addColorStop(0,'#fff8e0');
+    bg.addColorStop(0.4,'#f9c825');
+    bg.addColorStop(1,'#b8860b');
+    ctx.fillStyle=bg;
+    ctx.beginPath();ctx.arc(ppx,ppy,pr,0,Math.PI*2);ctx.fill();
+  }
+
+  ctx.restore();
+
+  // fireworks on top
+  for(const p of fireworks){
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=`hsl(${p.hue},90%,65%)`;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // drag visual feedback: line + arrow from start to current
+  if(dragActive){
+    const dx=dragCurX-dragStartX, dy=dragCurY-dragStartY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>6){
+      ctx.save();
+      // line
+      ctx.strokeStyle='rgba(200,180,255,0.45)';
+      ctx.lineWidth=2.5;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.moveTo(dragStartX,dragStartY);
+      ctx.lineTo(dragCurX,dragCurY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // start circle
+      ctx.fillStyle='rgba(200,180,255,0.3)';
+      ctx.beginPath();ctx.arc(dragStartX,dragStartY,8,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(200,180,255,0.5)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(dragStartX,dragStartY,8,0,Math.PI*2);ctx.stroke();
+      // arrowhead at current position
+      const angle=Math.atan2(dy,dx);
+      const arrLen=12;
+      ctx.fillStyle='rgba(200,180,255,0.55)';
+      ctx.beginPath();
+      ctx.moveTo(dragCurX,dragCurY);
+      ctx.lineTo(dragCurX-Math.cos(angle-0.4)*arrLen,dragCurY-Math.sin(angle-0.4)*arrLen);
+      ctx.lineTo(dragCurX-Math.cos(angle+0.4)*arrLen,dragCurY-Math.sin(angle+0.4)*arrLen);
+      ctx.closePath();ctx.fill();
+      // current position dot
+      ctx.fillStyle='rgba(255,220,100,0.6)';
+      ctx.beginPath();ctx.arc(dragCurX,dragCurY,5,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+/* ========== MAIN LOOP ========== */
+let lastT=0;
+function loop(t){
+  const dt=Math.min((t-lastT)/1000,0.05);lastT=t;
+  if(generating){
+    const mc=(cols-1)/2, mr=(rows-1)/2;
+    const speed=Math.max(1,Math.ceil(mc*mr/60));
+    genStep(speed);
+  }
+  if(playing) updatePlayer(dt);
+  updateFireworks(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(t=>{lastT=t;loop(t);});
+
+/* ========== INPUT: Keyboard ========== */
+window.addEventListener('keydown',e=>{keys[e.code]=true;e.preventDefault();});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+/* ========== INPUT: Joystick ========== */
+const jZone=$jZone.getBoundingClientRect();
+function joyPos(tx,ty){
+  const rect=$jZone.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  let dx=tx-cx, dy=ty-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const maxR=36;
+  if(dist>maxR){dx*=maxR/dist;dy*=maxR/dist;}
+  $jKnob.style.left=(60/2-18+dx)+'px'; // center knob in zone
+  $jKnob.style.top=(60/2-18+dy)+'px';
+  // map to -1..1 based on actual displacement vs maxR
+  const nd=Math.min(dist,maxR);
+  if(nd<4){joyDX=0;joyDY=0;return;}
+  joyDX=(dx/maxR);joyDY=(dy/maxR);
+}
+
+$jZone.addEventListener('touchstart',e=>{
+  if(joyTouchId!==null)return;
+  const t=e.changedTouches[0];
+  joyTouchId=t.identifier;joystickActive=true;
+  joyPos(t.clientX,t.clientY);
+  e.preventDefault();
+},{passive:false});
+$jZone.addEventListener('touchmove',e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId){joyPos(t.clientX,t.clientY);break;}
+  }
+  e.preventDefault();
+},{passive:false});
+function joyEnd(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId){
+      joyTouchId=null;joystickActive=false;joyDX=0;joyDY=0;
+      $jKnob.style.left='42px';$jKnob.style.top='42px';
+      break;
+    }
+  }
+}
+$jZone.addEventListener('touchend',joyEnd);
+$jZone.addEventListener('touchcancel',joyEnd);
+
+/* ========== INPUT: Gravity ========== */
+$gravBtn.addEventListener('click',()=>{
+  gravityEnabled=!gravityEnabled;
+  $gravBtn.classList.toggle('active',gravityEnabled);
+  if(gravityEnabled&&typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
+    DeviceOrientationEvent.requestPermission().then(r=>{
+      if(r!=='granted'){gravityEnabled=false;$gravBtn.classList.remove('active');}
+    }).catch(()=>{gravityEnabled=false;$gravBtn.classList.remove('active');});
+  }
+});
+window.addEventListener('deviceorientation',e=>{
+  if(!gravityEnabled)return;
+  gravBeta=e.beta||0;   // front-back tilt
+  gravGamma=e.gamma||0; // left-right tilt
+});
+
+/* ========== INPUT: Drag (mouse & touch on canvas) ========== */
+function isDragOnUI(x,y){
+  // don't start drag if clicking on UI elements (joystick zone, buttons, screens)
+  const el=document.elementFromPoint(x,y);
+  if(!el) return false;
+  if(el===cvs) return false; // canvas is fine
+  // if it's inside ui-layer or joystick-zone, it's UI
+  if(el.closest('#joystick-zone')||el.closest('#ui-layer')||el.closest('#gravity-toggle')) return true;
+  return false;
+}
+function dragUpdateDir(){
+  const dx=dragCurX-dragStartX, dy=dragCurY-dragStartY;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const deadZone=8, maxDist=100;
+  if(dist<deadZone){dragDX=0;dragDY=0;return;}
+  const strength=Math.min((dist-deadZone)/(maxDist-deadZone),1);
+  dragDX=(dx/dist)*strength;
+  dragDY=(dy/dist)*strength;
+}
+// Mouse events
+cvs.addEventListener('mousedown',e=>{
+  if(e.button!==0) return;
+  if(isDragOnUI(e.clientX,e.clientY)) return;
+  dragActive=true;dragPointerId=1;
+  dragStartX=e.clientX;dragStartY=e.clientY;
+  dragCurX=e.clientX;dragCurY=e.clientY;
+  dragDX=0;dragDY=0;
+});
+window.addEventListener('mousemove',e=>{
+  if(!dragActive||dragPointerId!==1) return;
+  dragCurX=e.clientX;dragCurY=e.clientY;
+  dragUpdateDir();
+});
+window.addEventListener('mouseup',e=>{
+  if(!dragActive||dragPointerId!==1) return;
+  dragActive=false;dragPointerId=null;dragDX=0;dragDY=0;
+});
+// Touch events on canvas (separate from joystick touch)
+cvs.addEventListener('touchstart',e=>{
+  if(dragTouchId!==null) return; // already tracking a drag touch
+  for(const t of e.changedTouches){
+    if(isDragOnUI(t.clientX,t.clientY)) continue;
+    dragTouchId=t.identifier;dragActive=true;
+    dragStartX=t.clientX;dragStartY=t.clientY;
+    dragCurX=t.clientX;dragCurY=t.clientY;
+    dragDX=0;dragDY=0;
+    break;
+  }
+},{passive:true});
+window.addEventListener('touchmove',e=>{
+  if(dragTouchId===null) return;
+  for(const t of e.changedTouches){
+    if(t.identifier===dragTouchId){
+      dragCurX=t.clientX;dragCurY=t.clientY;
+      dragUpdateDir();
+      break;
+    }
+  }
+},{passive:true});
+function dragTouchEnd(e){
+  if(dragTouchId===null) return;
+  for(const t of e.changedTouches){
+    if(t.identifier===dragTouchId){
+      dragTouchId=null;dragActive=false;dragDX=0;dragDY=0;
+      break;
+    }
+  }
+}
+window.addEventListener('touchend',dragTouchEnd);
+window.addEventListener('touchcancel',dragTouchEnd);
+
+/* ========== UI BUTTONS ========== */
+document.getElementById('btn-retry').onclick=()=>startLevel(curLevel);
+document.getElementById('btn-next').onclick=()=>{
+  if(curLevel<LEVELS.length-1) startLevel(curLevel+1);
+  else {$win.classList.add('hidden');$start.classList.remove('hidden');}
+};
+document.getElementById('btn-menu').onclick=()=>{$win.classList.add('hidden');$start.classList.remove('hidden');};
+</script>
+</body>
+</html>

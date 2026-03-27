@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>粒子艺术画板</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+body { background: #000; }
+canvas { display: block; position: fixed; top: 0; left: 0; }
+
+/* Bottom toolbar */
+.toolbar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  pointer-events: none;
+}
+.toolbar > * { pointer-events: auto; }
+
+.mode-bar {
+  display: flex; gap: 10px;
+  padding: 10px 16px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: none;
+}
+.mode-bar::-webkit-scrollbar { display: none; }
+
+.mode-btn {
+  flex-shrink: 0;
+  min-width: 70px; height: 48px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 24px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px;
+  padding: 0 14px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.mode-btn.active {
+  border-color: currentColor;
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 0 16px rgba(255,255,255,0.2);
+  transform: scale(1.05);
+}
+
+.action-bar {
+  display: flex; gap: 10px;
+  padding: 6px 16px 10px;
+}
+.action-btn {
+  min-width: 48px; height: 48px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 24px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px;
+  padding: 0 16px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.action-btn:active { transform: scale(0.93); }
+
+/* Hint */
+.hint {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.25);
+  font-size: 18px; text-align: center;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  line-height: 1.8;
+}
+.hint.hidden { opacity: 0; }
+
+/* Toast */
+.toast {
+  position: fixed; top: 20%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(12px);
+  color: #fff; padding: 14px 28px;
+  border-radius: 12px; font-size: 15px;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* Light background adjustments */
+body.light-bg { background: #f5f5f0; }
+body.light-bg .mode-btn,
+body.light-bg .action-btn {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.15);
+  color: #333;
+}
+body.light-bg .mode-btn.active {
+  background: rgba(255,255,255,0.9);
+  border-color: #666;
+  box-shadow: 0 0 12px rgba(0,0,0,0.1);
+}
+body.light-bg .hint { color: rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="hint" id="hint">在屏幕上滑动绘制粒子<br>选择下方模式切换效果</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="toolbar">
+  <div class="mode-bar" id="modeBar"></div>
+  <div class="action-bar">
+    <button class="action-btn" id="btnClear">🗑 清除</button>
+    <button class="action-btn" id="btnBg">🌓 背景</button>
+    <button class="action-btn" id="btnSave">💾 保存</button>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+const MODES = [
+  {
+    name: '火焰', icon: '🔥', key: 'fire',
+    colors: ['#FF4500','#FF6600','#FF8800','#FFAA00','#FFCC00','#FFE060'],
+    lightColors: ['#CC3300','#DD5500','#EE7700','#FF9900','#FFBB00','#FFDD00'],
+    particleSize: [2, 6], life: [30, 80], speed: [1, 4],
+    gravity: -0.06, wind: 0, spread: 0.8,
+    glow: 25, glowColor: 'rgba(255,100,0,0.4)',
+    trail: 0.92, emitRate: 5, jitter: 1.5,
+    behavior: 'rise'
+  },
+  {
+    name: '星尘', icon: '✨', key: 'stardust',
+    colors: ['#FFFFFF','#AACCFF','#88AAFF','#CCDDFF','#FFE8AA','#FFEEDD'],
+    lightColors: ['#4466AA','#5577CC','#3355AA','#6688DD','#AA8844','#BB9955'],
+    particleSize: [1, 4], life: [60, 150], speed: [0.3, 2],
+    gravity: -0.01, wind: 0, spread: 1.2,
+    glow: 20, glowColor: 'rgba(180,200,255,0.35)',
+    trail: 0.96, emitRate: 4, jitter: 0.6,
+    behavior: 'drift', twinkle: true
+  },
+  {
+    name: '烟花', icon: '🎆', key: 'firework',
+    colors: ['#FF0055','#FF4488','#FFAA00','#00FF88','#00AAFF','#CC44FF','#FFFFFF'],
+    lightColors: ['#CC0044','#DD3377','#DD8800','#00CC66','#0088DD','#AA33DD','#666666'],
+    particleSize: [1.5, 4], life: [40, 100], speed: [2, 7],
+    gravity: 0.05, wind: 0, spread: Math.PI * 2,
+    glow: 18, glowColor: 'rgba(255,100,200,0.3)',
+    trail: 0.9, emitRate: 8, jitter: 0,
+    behavior: 'explode'
+  },
+  {
+    name: '水流', icon: '💧', key: 'water',
+    colors: ['#0077CC','#0099EE','#22BBFF','#66DDFF','#99EEFF','#CCFFFF'],
+    lightColors: ['#005599','#0077BB','#1199DD','#44BBEE','#77DDFF','#AAEEFF'],
+    particleSize: [2, 5], life: [50, 120], speed: [1, 3],
+    gravity: 0.08, wind: 0, spread: 0.4,
+    glow: 15, glowColor: 'rgba(0,150,255,0.3)',
+    trail: 0.94, emitRate: 6, jitter: 0.8,
+    behavior: 'flow'
+  },
+  {
+    name: '萤火虫', icon: '🟡', key: 'firefly',
+    colors: ['#AAFF00','#CCFF44','#EEFF88','#FFFF00','#88FF44'],
+    lightColors: ['#66AA00','#88CC00','#AADD22','#CCCC00','#55AA22'],
+    particleSize: [2, 5], life: [100, 250], speed: [0.3, 1.2],
+    gravity: -0.005, wind: 0, spread: Math.PI * 2,
+    glow: 30, glowColor: 'rgba(180,255,50,0.4)',
+    trail: 0.97, emitRate: 2, jitter: 0.3,
+    behavior: 'wander', twinkle: true, pulse: true
+  }
+];
+
+// ==================== STATE ====================
+let currentMode = 0;
+let darkBg = true;
+let particles = [];
+let pointers = new Map(); // id -> {x, y, prevX, prevY}
+let animId;
+let hintVisible = true;
+
+// ==================== CANVAS ====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ==================== PARTICLE ====================
+class Particle {
+  constructor(x, y, mode) {
+    const m = MODES[mode];
+    const isLight = !darkBg;
+    const palette = isLight ? m.lightColors : m.colors;
+    this.x = x;
+    this.y = y;
+    this.color = palette[Math.floor(Math.random() * palette.length)];
+    this.size = m.particleSize[0] + Math.random() * (m.particleSize[1] - m.particleSize[0]);
+    this.life = m.life[0] + Math.random() * (m.life[1] - m.life[0]);
+    this.maxLife = this.life;
+    this.gravity = m.gravity;
+    this.glow = m.glow;
+    this.glowColor = m.glowColor;
+    this.mode = mode;
+    this.twinkle = m.twinkle || false;
+    this.pulse = m.pulse || false;
+    this.wanderAngle = Math.random() * Math.PI * 2;
+
+    const speed = m.speed[0] + Math.random() * (m.speed[1] - m.speed[0]);
+    const jitterX = (Math.random() - 0.5) * m.jitter * 2;
+    const jitterY = (Math.random() - 0.5) * m.jitter * 2;
+
+    switch (m.behavior) {
+      case 'rise':
+        this.vx = (Math.random() - 0.5) * m.spread * speed + jitterX;
+        this.vy = -speed * (0.5 + Math.random() * 0.5) + jitterY;
+        break;
+      case 'explode':
+        const angle = Math.random() * m.spread;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        break;
+      case 'flow':
+        this.vx = (Math.random() - 0.5) * m.spread * speed + jitterX;
+        this.vy = speed * (0.3 + Math.random() * 0.7) + jitterY;
+        break;
+      case 'drift':
+        const a2 = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(a2) * speed * 0.5 + jitterX;
+        this.vy = Math.sin(a2) * speed * 0.5 + jitterY;
+        break;
+      case 'wander':
+        const a3 = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(a3) * speed;
+        this.vy = Math.sin(a3) * speed;
+        break;
+      default:
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed;
+    }
+
+    // Trail history
+    this.trail = [];
+    this.trailMax = 8;
+  }
+
+  update(attractors) {
+    // Attract towards pointers (force field)
+    for (const [, pt] of attractors) {
+      const dx = pt.x - this.x;
+      const dy = pt.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+      if (dist < 200) {
+        const force = 0.3 / (dist * 0.05 + 1);
+        this.vx += (dx / dist) * force;
+        this.vy += (dy / dist) * force;
+      }
+    }
+
+    // Gravity
+    this.vy += this.gravity;
+
+    // Wander (firefly)
+    const m = MODES[this.mode];
+    if (m.behavior === 'wander') {
+      this.wanderAngle += (Math.random() - 0.5) * 0.6;
+      this.vx += Math.cos(this.wanderAngle) * 0.08;
+      this.vy += Math.sin(this.wanderAngle) * 0.08;
+      // Damping
+      this.vx *= 0.98;
+      this.vy *= 0.98;
+    }
+
+    // Store trail
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > this.trailMax) this.trail.shift();
+
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life--;
+  }
+
+  draw(ctx) {
+    const progress = 1 - this.life / this.maxLife;
+    let alpha = 1;
+    // Fade in/out
+    if (progress < 0.1) alpha = progress / 0.1;
+    else if (progress > 0.7) alpha = (1 - progress) / 0.3;
+    alpha = Math.max(0, Math.min(1, alpha));
+
+    // Twinkle
+    if (this.twinkle) {
+      alpha *= 0.5 + 0.5 * Math.sin(this.life * 0.3 + this.x * 0.1);
+    }
+    // Pulse size
+    let sz = this.size * (1 - progress * 0.5);
+    if (this.pulse) {
+      sz *= 0.7 + 0.3 * Math.sin(this.life * 0.15);
+    }
+
+    if (alpha <= 0.01) return;
+
+    // Draw trail
+    if (this.trail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(this.trail[0].x, this.trail[0].y);
+      for (let i = 1; i < this.trail.length; i++) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+      ctx.lineTo(this.x, this.y);
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = alpha * 0.3;
+      ctx.lineWidth = sz * 0.6;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Glow
+    ctx.globalAlpha = alpha;
+    if (this.glow > 0) {
+      ctx.shadowBlur = this.glow * alpha;
+      ctx.shadowColor = this.glowColor;
+    }
+
+    // Draw particle
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, sz, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+
+    // Extra bright core
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, sz * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ==================== EMIT ====================
+function emitFromPointer(ptr) {
+  const m = MODES[currentMode];
+  const rate = m.emitRate;
+  // Interpolate between prev and current for smooth trails
+  const dx = ptr.x - ptr.prevX;
+  const dy = ptr.y - ptr.prevY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const steps = Math.max(1, Math.floor(dist / 4));
+
+  for (let s = 0; s < steps; s++) {
+    const t = s / steps;
+    const ix = ptr.prevX + dx * t;
+    const iy = ptr.prevY + dy * t;
+    for (let i = 0; i < rate; i++) {
+      particles.push(new Particle(
+        ix + (Math.random() - 0.5) * 6,
+        iy + (Math.random() - 0.5) * 6,
+        currentMode
+      ));
+    }
+  }
+
+  // Cap particles
+  const MAX = 8000;
+  if (particles.length > MAX) {
+    particles = particles.slice(particles.length - MAX);
+  }
+}
+
+// ==================== ANIMATION ====================
+function animate() {
+  const m = MODES[currentMode];
+
+  // Fade background
+  if (darkBg) {
+    ctx.fillStyle = `rgba(0,0,0,${1 - m.trail})`;
+  } else {
+    ctx.fillStyle = `rgba(245,245,240,${1 - m.trail})`;
+  }
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+  // Emit from active pointers
+  for (const [, ptr] of pointers) {
+    if (ptr.active) emitFromPointer(ptr);
+  }
+
+  // Update & draw
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update(pointers);
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+    p.draw(ctx);
+  }
+
+  animId = requestAnimationFrame(animate);
+}
+
+// ==================== INPUT ====================
+function hideHint() {
+  if (hintVisible) {
+    hintVisible = false;
+    document.getElementById('hint').classList.add('hidden');
+  }
+}
+
+// Pointer events (covers mouse + touch)
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  hideHint();
+  pointers.set(e.pointerId, {
+    x: e.clientX, y: e.clientY,
+    prevX: e.clientX, prevY: e.clientY,
+    active: true
+  });
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  const ptr = pointers.get(e.pointerId);
+  if (!ptr) return;
+  ptr.prevX = ptr.x;
+  ptr.prevY = ptr.y;
+  ptr.x = e.clientX;
+  ptr.y = e.clientY;
+});
+
+canvas.addEventListener('pointerup', (e) => {
+  pointers.delete(e.pointerId);
+});
+canvas.addEventListener('pointercancel', (e) => {
+  pointers.delete(e.pointerId);
+});
+
+// Prevent default touch actions
+canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// ==================== UI ====================
+const modeBar = document.getElementById('modeBar');
+MODES.forEach((m, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'mode-btn' + (i === 0 ? ' active' : '');
+  btn.innerHTML = m.icon + ' ' + m.name;
+  btn.dataset.index = i;
+  // Apply theme color
+  if (i === 0) btn.style.color = m.colors[0];
+  btn.addEventListener('click', () => {
+    currentMode = i;
+    document.querySelectorAll('.mode-btn').forEach((b, j) => {
+      b.classList.toggle('active', j === i);
+      if (j === i) b.style.color = MODES[j].colors[0];
+      else b.style.color = '';
+    });
+  });
+  modeBar.appendChild(btn);
+});
+
+// Clear
+document.getElementById('btnClear').addEventListener('click', () => {
+  particles = [];
+  // Full clear
+  if (darkBg) {
+    ctx.fillStyle = '#000';
+  } else {
+    ctx.fillStyle = '#f5f5f0';
+  }
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  showToast('画布已清除');
+});
+
+// Background toggle
+document.getElementById('btnBg').addEventListener('click', () => {
+  darkBg = !darkBg;
+  document.body.classList.toggle('light-bg', !darkBg);
+  // Clear canvas to new bg
+  if (darkBg) {
+    ctx.fillStyle = '#000';
+  } else {
+    ctx.fillStyle = '#f5f5f0';
+  }
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  showToast(darkBg ? '深色背景' : '浅色背景');
+});
+
+// Save
+document.getElementById('btnSave').addEventListener('click', saveCanvas);
+
+function saveCanvas() {
+  // Create a clean canvas for saving (without UI)
+  const saveC = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  saveC.width = canvas.width;
+  saveC.height = canvas.height;
+  const sCtx = saveC.getContext('2d');
+  sCtx.drawImage(canvas, 0, 0);
+
+  try {
+    const link = document.createElement('a');
+    link.download = 'particle-art-' + Date.now() + '.png';
+    link.href = saveC.toDataURL('image/png');
+    link.click();
+    showToast('已保存图片');
+  } catch (e) {
+    // Fallback: open in new tab
+    const dataUrl = saveC.toDataURL('image/png');
+    window.open(dataUrl, '_blank');
+    showToast('已在新窗口打开图片，长按保存');
+  }
+}
+
+// Long press to save (mobile)
+let longPressTimer = null;
+canvas.addEventListener('pointerdown', (e) => {
+  longPressTimer = setTimeout(() => {
+    saveCanvas();
+  }, 800);
+});
+canvas.addEventListener('pointermove', () => {
+  // Moving cancels long press
+});
+canvas.addEventListener('pointerup', () => {
+  clearTimeout(longPressTimer);
+});
+canvas.addEventListener('pointercancel', () => {
+  clearTimeout(longPressTimer);
+});
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ==================== START ====================
+animate();
+</script>
+</body>
+</html>

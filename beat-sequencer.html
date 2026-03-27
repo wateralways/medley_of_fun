@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>节拍工坊 - 鼓机 + 旋律</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{height:6px;width:6px}
+::-webkit-scrollbar-track{background:#1a1a1a}
+::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+body{background:#111;color:#eee;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
+header{text-align:center;padding:12px 10px 6px}
+header h1{font-size:1.5rem;letter-spacing:6px;font-weight:800;background:linear-gradient(90deg,#ff006e,#fb5607,#ffbe0b,#06d6a0,#118ab2,#8338ec);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
+header p{font-size:.7rem;color:#555;letter-spacing:2px}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;padding:8px 12px}
+.controls button{background:#222;color:#ccc;border:1px solid #444;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:.85rem;transition:all .15s;letter-spacing:1px}
+.controls button:hover{background:#333;border-color:#888}
+.controls button.active{background:#06d6a0;color:#111;border-color:#06d6a0;box-shadow:0 0 12px #06d6a044}
+.controls button.stop-btn:hover{background:#ef476f;border-color:#ef476f;color:#fff}
+.controls button.clear-btn:hover{background:#ffd166;border-color:#ffd166;color:#111}
+
+.bpm-control,.swing-control{display:flex;align-items:center;gap:6px;background:#1a1a1a;padding:4px 12px;border-radius:6px;border:1px solid #333}
+.bpm-control label,.swing-control label{font-size:.75rem;color:#888}
+.bpm-control input[type=range]{width:100px;accent-color:#06d6a0;cursor:pointer}
+.bpm-control .bpm-val{font-size:.95rem;font-weight:700;color:#06d6a0;min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
+.swing-control input[type=range]{width:60px;accent-color:#fb5607;cursor:pointer}
+.swing-control .swing-val{font-size:.8rem;color:#fb5607;min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+
+.presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:0 12px 8px}
+.presets button{background:#1a1a1a;border:1px solid #333;color:#aaa;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:.72rem;letter-spacing:1px;transition:all .15s}
+.presets button:hover{border-color:#8338ec;color:#8338ec;box-shadow:0 0 8px #8338ec44}
+
+.grid-wrapper{overflow-x:auto;overflow-y:auto;padding:4px 8px 12px}
+.grid-container{display:flex;flex-direction:column;gap:2px;min-width:fit-content;margin:0 auto;max-width:960px}
+
+.instrument-row{display:flex;align-items:center;gap:2px}
+.inst-label{width:72px;min-width:72px;font-size:.72rem;letter-spacing:1px;color:#888;text-align:right;padding-right:8px;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.inst-label span{white-space:nowrap}
+.vol-slider{width:56px;height:3px;accent-color:var(--row-color);cursor:pointer;opacity:.6;transition:opacity .15s}
+.vol-slider:hover{opacity:1}
+
+.steps{display:flex;gap:2px}
+.step{width:48px;height:40px;background:#1a1a1a;border:1px solid #282828;border-radius:4px;cursor:pointer;transition:all .1s;position:relative;touch-action:manipulation}
+.step:hover{border-color:#444;background:#222}
+.step.active{background:var(--row-color);border-color:var(--row-color);box-shadow:0 0 8px color-mix(in srgb,var(--row-color) 40%,transparent)}
+.step.active::after{content:'';position:absolute;inset:3px;border-radius:2px;background:linear-gradient(135deg,rgba(255,255,255,.25),transparent)}
+
+.step-numbers{display:flex;gap:2px;margin-left:74px;margin-bottom:2px}
+.step-num{width:48px;text-align:center;font-size:.55rem;color:#444;font-variant-numeric:tabular-nums}
+.step-num.beat-start{color:#666;font-weight:700}
+
+.playhead-row{display:flex;gap:2px;margin-left:74px;height:3px;margin-bottom:1px}
+.playhead-cell{width:48px;border-radius:1px;transition:background .05s,box-shadow .05s}
+.playhead-cell.current{background:#fff;box-shadow:0 0 12px #fff8,0 0 24px #fff4}
+
+.step:nth-child(4n+1){margin-left:4px}
+.step:nth-child(1){margin-left:0}
+.playhead-cell:nth-child(4n+1){margin-left:4px}
+.playhead-cell:nth-child(1){margin-left:0}
+.step-num:nth-child(4n+1){margin-left:4px}
+.step-num:nth-child(1){margin-left:0}
+
+/* ===== 旋律区域 ===== */
+.melody-section{margin:0 auto;max-width:960px;padding:0 8px 80px}
+.section-divider{display:flex;align-items:center;gap:12px;margin:12px 0 10px}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#335,#335,transparent)}
+.section-divider-text{font-size:.8rem;letter-spacing:4px;color:#668;white-space:nowrap}
+
+.melody-controls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:8px}
+.timbre-btn{background:#181828;border:1px solid #334;color:#99b;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .15s;letter-spacing:1px}
+.timbre-btn:hover{border-color:#558;background:#222240}
+.timbre-btn.timbre-active{color:#fff;box-shadow:0 0 10px var(--tb-glow)}
+.timbre-btn.timbre-active[data-timbre="piano"]{background:#2a5a8a;border-color:#3a7ab0;--tb-glow:#2a5a8a66}
+.timbre-btn.timbre-active[data-timbre="violin"]{background:#7a4a2a;border-color:#9a6a4a;--tb-glow:#7a4a2a66}
+.timbre-btn.timbre-active[data-timbre="bass"]{background:#5a2a7a;border-color:#7a4a9a;--tb-glow:#5a2a7a66}
+.timbre-btn.timbre-active[data-timbre="bell"]{background:#1a6a5a;border-color:#2a8a7a;--tb-glow:#1a6a5a66}
+
+.mel-vol-control{display:flex;align-items:center;gap:6px;background:#181828;padding:4px 12px;border-radius:6px;border:1px solid #334}
+.mel-vol-control label{font-size:.72rem;color:#778}
+.mel-vol-control input[type=range]{width:70px;accent-color:#5577bb;cursor:pointer}
+.mel-vol-control .mel-vol-val{font-size:.78rem;color:#5577bb;min-width:28px;text-align:center}
+
+.clear-mel-btn{background:#1a1a1a;border:1px solid #433;color:#a88;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .15s}
+.clear-mel-btn:hover{background:#2a1a1a;border-color:#a66;color:#faa}
+
+.melody-presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.melody-presets button{background:#181828;border:1px solid #334;color:#88a;padding:4px 10px;border-radius:16px;cursor:pointer;font-size:.68rem;letter-spacing:1px;transition:all .15s}
+.melody-presets button:hover{border-color:#6a4aaa;color:#b8a;box-shadow:0 0 8px #6a4aaa33}
+
+.piano-roll-wrapper{overflow-x:auto;overflow-y:auto;max-height:520px;border:1px solid #223;border-radius:6px;background:#0c0c18}
+.piano-roll{display:flex;flex-direction:column;gap:0;min-width:fit-content;padding:4px 0}
+
+.pr-row{display:flex;align-items:center;gap:0}
+.pr-label{width:72px;min-width:72px;font-size:.62rem;color:#556;text-align:right;padding-right:8px;font-family:'Courier New',monospace;letter-spacing:1px;white-space:nowrap;height:20px;line-height:20px}
+.pr-label.is-c{color:#9ab;font-weight:700}
+.pr-label.is-black{color:#445}
+
+.pr-cells{display:flex;gap:1px}
+.pr-cell{width:48px;height:20px;border-radius:2px;cursor:pointer;transition:all .08s;touch-action:manipulation;border:1px solid transparent}
+.pr-cell.white-key{background:#14142a}
+.pr-cell.black-key{background:#0e0e1e}
+.pr-cell:hover{border-color:#3a3a5a;background:#1c1c34}
+
+.pr-cell.pr-active{position:relative}
+.pr-cell.pr-active::after{content:'';position:absolute;inset:2px;border-radius:2px;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent)}
+.pr-cell.pr-active.timbre-piano{background:#2a5a8a;border-color:#3a7ab0;box-shadow:0 0 4px #2a5a8a55}
+.pr-cell.pr-active.timbre-violin{background:#7a4a2a;border-color:#9a6a4a;box-shadow:0 0 4px #7a4a2a55}
+.pr-cell.pr-active.timbre-bass{background:#5a2a7a;border-color:#7a4a9a;box-shadow:0 0 4px #5a2a7a55}
+.pr-cell.pr-active.timbre-bell{background:#1a6a5a;border-color:#2a8a7a;box-shadow:0 0 4px #1a6a5a55}
+
+.pr-cell:nth-child(4n+1){margin-left:3px}
+.pr-cell:nth-child(1){margin-left:0}
+
+.pr-playhead-row{display:flex;gap:1px;margin-left:72px;height:3px;margin-bottom:2px;padding:0}
+.pr-ph-cell{width:48px;border-radius:1px;transition:background .05s}
+.pr-ph-cell.current{background:#88aaff;box-shadow:0 0 10px #88aaff66}
+.pr-ph-cell:nth-child(4n+1){margin-left:3px}
+.pr-ph-cell:nth-child(1){margin-left:0}
+
+.pr-step-numbers{display:flex;gap:1px;margin-left:72px;margin-bottom:2px}
+.pr-step-num{width:48px;text-align:center;font-size:.5rem;color:#335;font-variant-numeric:tabular-nums}
+.pr-step-num.beat-start{color:#446;font-weight:700}
+.pr-step-num:nth-child(4n+1){margin-left:3px}
+.pr-step-num:nth-child(1){margin-left:0}
+
+/* C音行的水平辅助线 */
+.pr-row.c-row{border-top:1px solid #223}
+
+@media(max-width:640px){
+  header h1{font-size:1.1rem;letter-spacing:2px}
+  .step{width:36px;height:34px}
+  .step-num,.playhead-cell{width:36px}
+  .inst-label{width:52px;min-width:52px;font-size:.55rem}
+  .vol-slider{width:40px}
+  .step-numbers{margin-left:54px}
+  .playhead-row{margin-left:54px}
+  .step:nth-child(4n+1),.playhead-cell:nth-child(4n+1),.step-num:nth-child(4n+1){margin-left:3px}
+  .controls{gap:5px}
+  .controls button{padding:6px 12px;font-size:.75rem}
+  .bpm-control input[type=range]{width:70px}
+  .pr-cell{width:36px;height:17px}
+  .pr-label{width:52px;min-width:52px;font-size:.52rem;height:17px;line-height:17px}
+  .pr-step-numbers{margin-left:52px}
+  .pr-playhead-row{margin-left:52px}
+  .pr-step-num,.pr-ph-cell{width:36px}
+  .pr-cell:nth-child(4n+1),.pr-ph-cell:nth-child(4n+1),.pr-step-num:nth-child(4n+1){margin-left:2px}
+}
+@media(max-width:400px){
+  header h1{font-size:1rem;letter-spacing:2px}
+  .step{width:28px;height:28px}
+  .step-num,.playhead-cell{width:28px}
+  .inst-label{width:44px;min-width:44px;font-size:.5rem}
+  .vol-slider{width:32px}
+  .step-numbers{margin-left:46px}
+  .playhead-row{margin-left:46px}
+  .step:nth-child(4n+1),.playhead-cell:nth-child(4n+1),.step-num:nth-child(4n+1){margin-left:2px}
+  .controls button{padding:5px 8px;font-size:.7rem}
+  .presets button{padding:4px 8px;font-size:.65rem}
+  .bpm-control input[type=range]{width:50px}
+  .swing-control input[type=range]{width:40px}
+  .pr-cell{width:28px;height:15px}
+  .pr-label{width:44px;min-width:44px;font-size:.46rem;height:15px;line-height:15px}
+  .pr-step-numbers{margin-left:44px}
+  .pr-playhead-row{margin-left:44px}
+  .pr-step-num,.pr-ph-cell{width:28px}
+  .pr-cell:nth-child(4n+1),.pr-ph-cell:nth-child(4n+1),.pr-step-num:nth-child(4n+1){margin-left:2px}
+  .timbre-btn{padding:4px 8px;font-size:.68rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>节拍工坊</h1>
+  <p>鼓机 + 旋律合成器</p>
+</header>
+
+<div class="controls">
+  <button id="playBtn" onclick="togglePlay()">&#9654; 播放</button>
+  <button class="stop-btn" onclick="stopPlay()">&#9632; 停止</button>
+  <button class="clear-btn" onclick="clearAll()">&#10005; 全部清除</button>
+  <div class="bpm-control">
+    <label>速度</label>
+    <input type="range" id="bpmSlider" min="60" max="200" value="120" oninput="setBPM(this.value)">
+    <span class="bpm-val" id="bpmVal">120</span>
+  </div>
+  <div class="swing-control">
+    <label>摇摆</label>
+    <input type="range" id="swingSlider" min="0" max="80" value="0" oninput="setSwing(this.value)">
+    <span class="swing-val" id="swingVal">0%</span>
+  </div>
+</div>
+
+<div class="presets">
+  <button onclick="loadDrumPreset('rock')">摇滚节奏</button>
+  <button onclick="loadDrumPreset('funk')">放克节奏</button>
+  <button onclick="loadDrumPreset('electro')">电子节奏</button>
+  <button onclick="loadDrumPreset('hiphop')">嘻哈节奏</button>
+</div>
+
+<div class="grid-wrapper" id="gridWrapper">
+  <div class="grid-container" id="grid"></div>
+</div>
+
+<!-- 旋律区域 -->
+<div class="melody-section" id="melodySection">
+  <div class="section-divider">
+    <span class="section-divider-text">旋 律 音 轨</span>
+  </div>
+
+  <div class="melody-controls">
+    <button class="timbre-btn timbre-active" id="tb-piano" data-timbre="piano" onclick="setTimbre('piano')">&#127929; 钢琴</button>
+    <button class="timbre-btn" id="tb-violin" data-timbre="violin" onclick="setTimbre('violin')">&#127931; 小提琴</button>
+    <button class="timbre-btn" id="tb-bass" data-timbre="bass" onclick="setTimbre('bass')">&#127928; 合成贝斯</button>
+    <button class="timbre-btn" id="tb-bell" data-timbre="bell" onclick="setTimbre('bell')">&#128276; 电子铃声</button>
+    <div class="mel-vol-control">
+      <label>音量</label>
+      <input type="range" id="melVolSlider" min="0" max="100" value="70" oninput="setMelodyVolume(this.value)">
+      <span class="mel-vol-val" id="melVolVal">70%</span>
+    </div>
+    <button class="clear-mel-btn" onclick="clearMelody()">&#10005; 清除旋律</button>
+  </div>
+
+  <div class="melody-presets">
+    <button onclick="loadMelodyPreset('cMajChord')">C大调和弦进行</button>
+    <button onclick="loadMelodyPreset('popMelody')">流行旋律</button>
+    <button onclick="loadMelodyPreset('bassline')">经典贝斯线</button>
+    <button onclick="loadMelodyPreset('arpeggio')">琶音扫弦</button>
+    <button onclick="loadMelodyPreset('twinkle')">小星星</button>
+  </div>
+
+  <div class="piano-roll-wrapper" id="pianoRollWrapper">
+    <div class="piano-roll" id="pianoRoll"></div>
+  </div>
+</div>
+
+<script>
+// ========== 配置 ==========
+const STEPS = 16;
+const INSTRUMENTS = [
+  { name: '底鼓',   color: '#ef476f' },
+  { name: '军鼓',   color: '#ffd166' },
+  { name: '踩镲',   color: '#06d6a0' },
+  { name: '开镲',   color: '#118ab2' },
+  { name: '拍掌',   color: '#8338ec' },
+  { name: '低音鼓', color: '#fb5607' },
+  { name: '中音鼓', color: '#ff006e' },
+  { name: '牛铃',   color: '#3a86a7' },
+];
+
+// 旋律音符：C3到B4（2个八度，24个音，从高到低显示）
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const BLACK_INDICES = new Set([1,3,6,8,10]);
+const MELODY_NOTES = [];
+for (let oct = 4; oct >= 3; oct--) {
+  for (let n = 11; n >= 0; n--) {
+    const name = NOTE_NAMES[n] + oct;
+    const midi = 12 * (oct + 1) + n;
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    MELODY_NOTES.push({ name, freq, midi, isBlack: BLACK_INDICES.has(n), isC: n === 0 });
+  }
+}
+
+// 数据
+let drumGrid = Array.from({length: 8}, () => new Uint8Array(STEPS));
+let drumVolumes = new Float32Array(8).fill(0.8);
+let melodyGrid = Array.from({length: MELODY_NOTES.length}, () => new Uint8Array(STEPS));
+let melodyVolume = 0.7;
+let currentTimbre = 'piano';
+let bpm = 120, swing = 0;
+let playing = false, currentStep = -1, nextNoteTime = 0, timerID = null, audioCtx = null;
+
+// ========== 构建鼓机UI ==========
+function buildDrumGrid() {
+  const c = document.getElementById('grid');
+  c.innerHTML = '';
+  let nums = '<div class="step-numbers">';
+  for (let s = 0; s < STEPS; s++) nums += `<div class="step-num${s%4===0?' beat-start':''}">${s+1}</div>`;
+  nums += '</div>';
+  c.innerHTML += nums;
+  let ph = '<div class="playhead-row" id="playheadRow">';
+  for (let s = 0; s < STEPS; s++) ph += `<div class="playhead-cell" id="ph-${s}"></div>`;
+  ph += '</div>';
+  c.innerHTML += ph;
+  for (let i = 0; i < INSTRUMENTS.length; i++) {
+    const inst = INSTRUMENTS[i];
+    const row = document.createElement('div');
+    row.className = 'instrument-row';
+    row.innerHTML = `<div class="inst-label"><span>${inst.name}</span><input type="range" class="vol-slider" min="0" max="100" value="80" title="音量" style="--row-color:${inst.color}" oninput="setDrumVol(${i},this.value)"></div><div class="steps" id="row-${i}">${Array.from({length:STEPS},(_,s)=>`<div class="step" id="s-${i}-${s}" style="--row-color:${inst.color}" onpointerdown="toggleDrum(${i},${s})" onpointerenter="dragDrum(event,${i},${s})"></div>`).join('')}</div>`;
+    c.appendChild(row);
+  }
+}
+
+// ========== 构建旋律钢琴卷帘 ==========
+function buildPianoRoll() {
+  const c = document.getElementById('pianoRoll');
+  c.innerHTML = '';
+  let nums = '<div class="pr-step-numbers">';
+  for (let s = 0; s < STEPS; s++) nums += `<div class="pr-step-num${s%4===0?' beat-start':''}">${s+1}</div>`;
+  nums += '</div>';
+  c.innerHTML += nums;
+  let ph = '<div class="pr-playhead-row" id="melPlayheadRow">';
+  for (let s = 0; s < STEPS; s++) ph += `<div class="pr-ph-cell" id="mph-${s}"></div>`;
+  ph += '</div>';
+  c.innerHTML += ph;
+  for (let n = 0; n < MELODY_NOTES.length; n++) {
+    const note = MELODY_NOTES[n];
+    const row = document.createElement('div');
+    row.className = 'pr-row' + (note.isC ? ' c-row' : '');
+    const lc = note.isC ? ' is-c' : (note.isBlack ? ' is-black' : '');
+    row.innerHTML = `<div class="pr-label${lc}">${note.name}</div><div class="pr-cells" id="pr-row-${n}">${Array.from({length:STEPS},(_,s)=>`<div class="pr-cell ${note.isBlack?'black-key':'white-key'}" id="pr-${n}-${s}" onpointerdown="toggleMel(${n},${s})" onpointerenter="dragMel(event,${n},${s})"></div>`).join('')}</div>`;
+    c.appendChild(row);
+  }
+}
+
+buildDrumGrid();
+buildPianoRoll();
+
+// ========== 交互 ==========
+let isDragging = false, dragValue = false;
+document.addEventListener('pointerdown', () => { isDragging = true; });
+document.addEventListener('pointerup', () => { isDragging = false; });
+
+function toggleDrum(i, s) { drumGrid[i][s] = drumGrid[i][s]?0:1; dragValue = drumGrid[i][s]; updDrumUI(i,s); }
+function dragDrum(e, i, s) { if(!isDragging)return; e.preventDefault(); drumGrid[i][s]=dragValue?1:0; updDrumUI(i,s); }
+function updDrumUI(i, s) { document.getElementById(`s-${i}-${s}`).classList.toggle('active', !!drumGrid[i][s]); }
+function refreshDrumUI() { for(let i=0;i<8;i++) for(let s=0;s<STEPS;s++) updDrumUI(i,s); }
+
+function toggleMel(n, s) { melodyGrid[n][s] = melodyGrid[n][s]?0:1; dragValue = melodyGrid[n][s]; updMelUI(n,s); }
+function dragMel(e, n, s) { if(!isDragging)return; e.preventDefault(); melodyGrid[n][s]=dragValue?1:0; updMelUI(n,s); }
+function updMelUI(n, s) {
+  const el = document.getElementById(`pr-${n}-${s}`);
+  el.classList.remove('pr-active','timbre-piano','timbre-violin','timbre-bass','timbre-bell');
+  if (melodyGrid[n][s]) el.classList.add('pr-active', 'timbre-' + currentTimbre);
+}
+function refreshMelUI() { for(let n=0;n<MELODY_NOTES.length;n++) for(let s=0;s<STEPS;s++) updMelUI(n,s); }
+
+// ========== 控制 ==========
+function setDrumVol(i, v) { drumVolumes[i] = v/100; }
+function setBPM(v) { bpm = +v; document.getElementById('bpmVal').textContent = v; }
+function setSwing(v) { swing = +v; document.getElementById('swingVal').textContent = v+'%'; }
+function setMelodyVolume(v) { melodyVolume = v/100; document.getElementById('melVolVal').textContent = v+'%'; }
+
+function setTimbre(t) {
+  currentTimbre = t;
+  document.querySelectorAll('.timbre-btn').forEach(b => b.classList.remove('timbre-active'));
+  document.getElementById('tb-' + t).classList.add('timbre-active');
+  refreshMelUI();
+}
+
+function clearAll() {
+  for(let i=0;i<8;i++) drumGrid[i].fill(0);
+  for(let n=0;n<MELODY_NOTES.length;n++) melodyGrid[n].fill(0);
+  refreshDrumUI(); refreshMelUI();
+}
+function clearMelody() {
+  for(let n=0;n<MELODY_NOTES.length;n++) melodyGrid[n].fill(0);
+  refreshMelUI();
+}
+
+// ========== 音频 ==========
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// ========== 鼓机音色 ==========
+function playKick(time, vol) {
+  const ctx = audioCtx;
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type='sine'; osc.frequency.setValueAtTime(150,time); osc.frequency.exponentialRampToValueAtTime(30,time+0.12);
+  g.gain.setValueAtTime(vol*1.2,time); g.gain.exponentialRampToValueAtTime(0.001,time+0.3);
+  osc.connect(g).connect(ctx.destination); osc.start(time); osc.stop(time+0.3);
+  const c=ctx.createOscillator(), cg=ctx.createGain();
+  c.type='square'; c.frequency.setValueAtTime(300,time); c.frequency.exponentialRampToValueAtTime(40,time+0.02);
+  cg.gain.setValueAtTime(vol*0.4,time); cg.gain.exponentialRampToValueAtTime(0.001,time+0.04);
+  c.connect(cg).connect(ctx.destination); c.start(time); c.stop(time+0.05);
+}
+function playSnare(time, vol) {
+  const ctx=audioCtx, bufSz=ctx.sampleRate*0.15, buf=ctx.createBuffer(1,bufSz,ctx.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<bufSz;i++) d[i]=Math.random()*2-1;
+  const ns=ctx.createBufferSource(); ns.buffer=buf;
+  const nf=ctx.createBiquadFilter(); nf.type='highpass'; nf.frequency.value=1800;
+  const ng=ctx.createGain(); ng.gain.setValueAtTime(vol*0.8,time); ng.gain.exponentialRampToValueAtTime(0.001,time+0.15);
+  ns.connect(nf).connect(ng).connect(ctx.destination); ns.start(time); ns.stop(time+0.15);
+  const o=ctx.createOscillator(), og=ctx.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(200,time); o.frequency.exponentialRampToValueAtTime(100,time+0.05);
+  og.gain.setValueAtTime(vol*0.6,time); og.gain.exponentialRampToValueAtTime(0.001,time+0.08);
+  o.connect(og).connect(ctx.destination); o.start(time); o.stop(time+0.1);
+}
+function playHihat(time, vol, open) {
+  const ctx=audioCtx, dur=open?0.3:0.06, bufSz=ctx.sampleRate*dur, buf=ctx.createBuffer(1,bufSz,ctx.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<bufSz;i++) d[i]=Math.random()*2-1;
+  const ns=ctx.createBufferSource(); ns.buffer=buf;
+  const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=open?6000:8000; bp.Q.value=1.2;
+  const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=5000;
+  const g=ctx.createGain(); g.gain.setValueAtTime(vol*(open?0.5:0.4),time); g.gain.exponentialRampToValueAtTime(0.001,time+dur);
+  ns.connect(bp).connect(hp).connect(g).connect(ctx.destination); ns.start(time); ns.stop(time+dur+0.01);
+}
+function playClap(time, vol) {
+  const ctx=audioCtx;
+  for(let n=0;n<3;n++){const t=time+n*0.012,bs=ctx.sampleRate*0.02,bf=ctx.createBuffer(1,bs,ctx.sampleRate),d=bf.getChannelData(0);
+  for(let i=0;i<bs;i++)d[i]=Math.random()*2-1;const s=ctx.createBufferSource();s.buffer=bf;
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2400;bp.Q.value=0.8;
+  const g=ctx.createGain();g.gain.setValueAtTime(vol*0.5,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+  s.connect(bp).connect(g).connect(ctx.destination);s.start(t);s.stop(t+0.05);}
+  const bs2=ctx.sampleRate*0.14,bf2=ctx.createBuffer(1,bs2,ctx.sampleRate),d2=bf2.getChannelData(0);
+  for(let i=0;i<bs2;i++)d2[i]=Math.random()*2-1;const s2=ctx.createBufferSource();s2.buffer=bf2;
+  const bp2=ctx.createBiquadFilter();bp2.type='bandpass';bp2.frequency.value=2200;bp2.Q.value=1.5;
+  const g2=ctx.createGain();g2.gain.setValueAtTime(vol*0.6,time+0.035);g2.gain.exponentialRampToValueAtTime(0.001,time+0.16);
+  s2.connect(bp2).connect(g2).connect(ctx.destination);s2.start(time+0.035);s2.stop(time+0.18);
+}
+function playTom(time, vol, freq) {
+  const ctx=audioCtx, o=ctx.createOscillator(), g=ctx.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(freq,time); o.frequency.exponentialRampToValueAtTime(freq*0.5,time+0.2);
+  g.gain.setValueAtTime(vol*0.9,time); g.gain.exponentialRampToValueAtTime(0.001,time+0.25);
+  o.connect(g).connect(ctx.destination); o.start(time); o.stop(time+0.26);
+}
+function playCowbell(time, vol) {
+  const ctx=audioCtx, o1=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain();
+  o1.type='square'; o2.type='square'; o1.frequency.value=560; o2.frequency.value=845;
+  g.gain.setValueAtTime(vol*0.35,time); g.gain.exponentialRampToValueAtTime(vol*0.2,time+0.02); g.gain.exponentialRampToValueAtTime(0.001,time+0.12);
+  const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=700; bp.Q.value=3;
+  o1.connect(bp); o2.connect(bp); bp.connect(g).connect(ctx.destination);
+  o1.start(time); o2.start(time); o1.stop(time+0.13); o2.stop(time+0.13);
+}
+
+const drumSynthFns = [
+  (t,v)=>playKick(t,v), (t,v)=>playSnare(t,v), (t,v)=>playHihat(t,v,false), (t,v)=>playHihat(t,v,true),
+  (t,v)=>playClap(t,v), (t,v)=>playTom(t,v,100), (t,v)=>playTom(t,v,160), (t,v)=>playCowbell(t,v),
+];
+
+// ========== 旋律音色合成 ==========
+
+// 钢琴：多泛音衰减正弦波叠加
+function synthPiano(time, freq, vol) {
+  const ctx = audioCtx;
+  const harmonics = [1, 2, 3, 4, 5, 6];
+  const amps =      [1, 0.5, 0.28, 0.15, 0.08, 0.04];
+  const decays =    [0.65, 0.5, 0.38, 0.28, 0.2, 0.15];
+  const master = ctx.createGain();
+  master.gain.value = vol * 0.25;
+  master.connect(ctx.destination);
+  for (let h = 0; h < harmonics.length; h++) {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq * harmonics[h];
+    g.gain.setValueAtTime(amps[h], time);
+    g.gain.exponentialRampToValueAtTime(0.001, time + decays[h]);
+    osc.connect(g).connect(master);
+    osc.start(time); osc.stop(time + decays[h] + 0.01);
+  }
+  // 锤击瞬态
+  const ck = ctx.createOscillator(), cg = ctx.createGain();
+  ck.type = 'sine'; ck.frequency.value = freq * 7;
+  cg.gain.setValueAtTime(vol * 0.06, time);
+  cg.gain.exponentialRampToValueAtTime(0.001, time + 0.015);
+  ck.connect(cg).connect(master);
+  ck.start(time); ck.stop(time + 0.02);
+}
+
+// 小提琴：锯齿波 + 滤波 + vibrato
+function synthViolin(time, freq, vol) {
+  const ctx = audioCtx, dur = 0.5;
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(freq, time);
+  // vibrato LFO
+  const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+  lfo.type = 'sine'; lfo.frequency.value = 5.5;
+  lfoG.gain.value = freq * 0.018;
+  lfo.connect(lfoG); lfoG.connect(osc.frequency);
+  // 滤波器模拟弓弦摩擦
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.Q.value = 1.8;
+  lp.frequency.setValueAtTime(freq * 2, time);
+  lp.frequency.linearRampToValueAtTime(freq * 5, time + 0.07);
+  lp.frequency.linearRampToValueAtTime(freq * 3, time + dur);
+  // ADSR包络
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, time);
+  g.gain.linearRampToValueAtTime(vol * 0.2, time + 0.05);
+  g.gain.setValueAtTime(vol * 0.18, time + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.connect(lp).connect(g).connect(ctx.destination);
+  lfo.start(time); osc.start(time);
+  lfo.stop(time + dur + 0.01); osc.stop(time + dur + 0.01);
+}
+
+// 合成贝斯：方波+锯齿 + 低通滤波 + 滑音
+function synthBass(time, freq, vol) {
+  const ctx = audioCtx, dur = 0.35;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+  o1.type = 'sawtooth'; o2.type = 'square';
+  const startF = freq * 1.1;
+  o1.frequency.setValueAtTime(startF, time); o1.frequency.exponentialRampToValueAtTime(freq, time + 0.04);
+  o2.frequency.setValueAtTime(startF, time); o2.frequency.exponentialRampToValueAtTime(freq, time + 0.04);
+  // 低通滤波
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.Q.value = 5;
+  lp.frequency.setValueAtTime(freq * 10, time);
+  lp.frequency.exponentialRampToValueAtTime(freq * 1.5, time + 0.12);
+  const mix = ctx.createGain(); mix.gain.value = 0.5;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol * 0.32, time);
+  g.gain.setValueAtTime(vol * 0.28, time + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  o1.connect(mix); o2.connect(mix);
+  mix.connect(lp).connect(g).connect(ctx.destination);
+  o1.start(time); o2.start(time);
+  o1.stop(time + dur + 0.01); o2.stop(time + dur + 0.01);
+}
+
+// 电子铃声：正弦波非谐泛音 + 快速衰减
+function synthBell(time, freq, vol) {
+  const ctx = audioCtx;
+  const ratios = [1, 2.0, 3.0, 4.2, 5.4, 6.8];
+  const amps   = [1, 0.6, 0.4, 0.3, 0.2, 0.12];
+  const decs   = [0.9, 0.7, 0.5, 0.35, 0.25, 0.18];
+  for (let h = 0; h < ratios.length; h++) {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq * ratios[h];
+    const d = decs[h] * 0.28;
+    g.gain.setValueAtTime(amps[h] * vol * 0.18, time);
+    g.gain.exponentialRampToValueAtTime(0.001, time + d);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(time); osc.stop(time + d + 0.01);
+  }
+}
+
+const melSynthFns = { piano: synthPiano, violin: synthViolin, bass: synthBass, bell: synthBell };
+
+// ========== 序列器引擎 ==========
+const LOOKAHEAD = 25, SCHEDULE_AHEAD = 0.1;
+
+function scheduler() {
+  while (nextNoteTime < audioCtx.currentTime + SCHEDULE_AHEAD) {
+    scheduleStep(currentStep, nextNoteTime);
+    advanceStep();
+  }
+  timerID = setTimeout(scheduler, LOOKAHEAD);
+}
+
+function scheduleStep(step, time) {
+  // 视觉反馈
+  setTimeout(() => {
+    document.querySelectorAll('.playhead-cell.current').forEach(el => el.classList.remove('current'));
+    document.querySelectorAll('.pr-ph-cell.current').forEach(el => el.classList.remove('current'));
+    const ph = document.getElementById(`ph-${step}`);
+    if (ph) ph.classList.add('current');
+    const mph = document.getElementById(`mph-${step}`);
+    if (mph) mph.classList.add('current');
+    // 鼓机闪光
+    for (let i = 0; i < 8; i++) {
+      const el = document.getElementById(`s-${i}-${step}`);
+      if (el && drumGrid[i][step]) { el.style.filter='brightness(1.6)'; setTimeout(()=>el.style.filter='',100); }
+    }
+    // 旋律闪光
+    for (let n = 0; n < MELODY_NOTES.length; n++) {
+      const el = document.getElementById(`pr-${n}-${step}`);
+      if (el && melodyGrid[n][step]) { el.style.filter='brightness(1.5)'; setTimeout(()=>el.style.filter='',100); }
+    }
+  }, (time - audioCtx.currentTime) * 1000);
+
+  // 鼓机音频
+  for (let i = 0; i < 8; i++) {
+    if (drumGrid[i][step]) drumSynthFns[i](time, drumVolumes[i]);
+  }
+  // 旋律音频
+  const fn = melSynthFns[currentTimbre];
+  for (let n = 0; n < MELODY_NOTES.length; n++) {
+    if (melodyGrid[n][step]) fn(time, MELODY_NOTES[n].freq, melodyVolume);
+  }
+}
+
+function advanceStep() {
+  const sixteenthDur = 60.0 / bpm / 4;
+  const swingOff = (currentStep % 2 === 0) ? 0 : sixteenthDur * (swing / 100) * 0.7;
+  currentStep = (currentStep + 1) % STEPS;
+  nextNoteTime += sixteenthDur + swingOff;
+}
+
+function togglePlay() {
+  ensureAudio();
+  if (playing) { pausePlay(); }
+  else {
+    playing = true;
+    document.getElementById('playBtn').classList.add('active');
+    document.getElementById('playBtn').innerHTML = '&#10074;&#10074; 暂停';
+    if (currentStep === -1) currentStep = 0;
+    nextNoteTime = audioCtx.currentTime + 0.05;
+    scheduler();
+  }
+}
+function pausePlay() {
+  playing = false; clearTimeout(timerID);
+  document.getElementById('playBtn').classList.remove('active');
+  document.getElementById('playBtn').innerHTML = '&#9654; 播放';
+}
+function stopPlay() {
+  pausePlay(); currentStep = -1;
+  document.querySelectorAll('.playhead-cell.current').forEach(el => el.classList.remove('current'));
+  document.querySelectorAll('.pr-ph-cell.current').forEach(el => el.classList.remove('current'));
+}
+
+// ========== 鼓机预设 ==========
+const drumPresets = {
+  rock: [[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+  funk: [[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]],
+  electro: [[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]],
+  hiphop: [[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+};
+function loadDrumPreset(name) {
+  const p = drumPresets[name]; if(!p) return;
+  for(let i=0;i<8;i++) for(let s=0;s<STEPS;s++) drumGrid[i][s]=p[i][s];
+  refreshDrumUI();
+}
+
+// ========== 旋律预设 ==========
+function noteIdx(name) { for(let i=0;i<MELODY_NOTES.length;i++) if(MELODY_NOTES[i].name===name) return i; return -1; }
+
+function loadMelodyPreset(name) {
+  clearMelody();
+  const presets = {
+    // C大调和弦进行: C - Am - F - G
+    cMajChord() {
+      [['C4','E4','G4'], ['A3','C4','E4'], ['F3','A3','C4'], ['G3','B3','D4']].forEach((chord, ci) => {
+        chord.forEach(n => { const idx=noteIdx(n); if(idx>=0) for(let s=ci*4;s<ci*4+4;s++) melodyGrid[idx][s]=1; });
+      });
+    },
+    // 简单流行旋律
+    popMelody() {
+      [['C4',0],['D4',1],['E4',2],['G4',3],['A4',4],['G4',5],['E4',6],['D4',7],
+       ['C4',8],['E4',9],['G4',10],['A4',11],['G4',12],['E4',13],['D4',14],['C4',15]]
+      .forEach(([n,s])=>{ const i=noteIdx(n); if(i>=0) melodyGrid[i][s]=1; });
+    },
+    // 经典贝斯线
+    bassline() {
+      [['C3',0],['C3',2],['E3',4],['G3',6],['A3',8],['A3',10],['G3',12],['E3',14]]
+      .forEach(([n,s])=>{ const i=noteIdx(n); if(i>=0) melodyGrid[i][s]=1; });
+    },
+    // 琶音扫弦
+    arpeggio() {
+      ['C3','E3','G3','C4','E4','G4','C4','G3','F3','A3','C4','F4','C4','A3','F3','C3']
+      .forEach((n,s)=>{ const i=noteIdx(n); if(i>=0) melodyGrid[i][s]=1; });
+    },
+    // 小星星
+    twinkle() {
+      [['C4',0],['C4',1],['G4',2],['G4',3],['A4',4],['A4',5],['G4',6],['G4',7],
+       ['F4',8],['F4',9],['E4',10],['E4',11],['D4',12],['D4',13],['C4',14],['C4',15]]
+      .forEach(([n,s])=>{ const i=noteIdx(n); if(i>=0) melodyGrid[i][s]=1; });
+    },
+  };
+  if (presets[name]) presets[name]();
+  refreshMelUI();
+}
+
+// ========== 键盘快捷键 ==========
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'Escape') stopPlay();
+});
+</script>
+
+</body>
+</html>

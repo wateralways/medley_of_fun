@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>布料模拟</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #0a0a12;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+canvas {
+  display: block;
+  width: 100%; height: 100%;
+  position: fixed; top: 0; left: 0;
+}
+#controls {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: center; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.88) 40%);
+  z-index: 10;
+  flex-wrap: wrap;
+}
+#controls button, #controls select {
+  min-width: 40px; min-height: 40px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
+  font-size: 13px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+#controls select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+#controls select option {
+  background: #1a1a2e;
+  color: #ccc;
+}
+#controls button:hover, #controls select:hover { background: rgba(255,255,255,0.15); }
+#controls button.active {
+  border-color: rgba(100,180,255,0.6);
+  background: rgba(100,180,255,0.15);
+  color: #8cf;
+}
+#hint {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: center; align-items: center;
+  pointer-events: none; z-index: 20;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+#hint.hidden { opacity: 0; }
+#hint-inner {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 20px 32px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  max-width: 320px;
+}
+#hint-inner p {
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 0;
+}
+#hint-inner p span {
+  color: #8cf;
+  font-weight: 500;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hint">
+  <div id="hint-inner">
+    <p><span>拖拽</span> 移动布料</p>
+    <p><span>右键 / 双指 / 长按</span> 撕裂布料</p>
+    <p><span>单击</span> 布料上的点可钉住/取消</p>
+  </div>
+</div>
+<div id="controls">
+  <select id="selMaterial">
+    <option value="silk">丝绸</option>
+    <option value="denim">牛仔</option>
+    <option value="rubber">橡皮</option>
+  </select>
+  <button id="btnGravity">重力 ↓</button>
+  <button id="btnGyro">陀螺仪</button>
+  <button id="btnWind">风力</button>
+  <button id="btnPin">钉子模式</button>
+  <button id="btnReset">重置</button>
+</div>
+<script>
+"use strict";
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const hintEl = document.getElementById('hint');
+
+// --- Material presets ---
+const MATERIALS = {
+  silk: {
+    label: '丝绸',
+    gravity: 0.35,
+    damping: 0.997,
+    tearDist: 2.4,
+    stiffness: 0.48,
+    windMult: 1.8,
+    iters: 5,
+    colorA: [80, 160, 240],
+    colorB: [220, 120, 255],
+    colorC: [255, 180, 200],
+    specular: 0.6,
+  },
+  denim: {
+    label: '牛仔',
+    gravity: 0.6,
+    damping: 0.98,
+    tearDist: 3.8,
+    stiffness: 0.55,
+    windMult: 0.4,
+    iters: 10,
+    colorA: [40, 60, 120],
+    colorB: [60, 90, 160],
+    colorC: [80, 110, 180],
+    specular: 0.15,
+  },
+  rubber: {
+    label: '橡皮',
+    gravity: 0.5,
+    damping: 0.99,
+    tearDist: 5.5,
+    stiffness: 0.35,
+    windMult: 0.6,
+    iters: 8,
+    colorA: [180, 50, 50],
+    colorB: [200, 80, 60],
+    colorC: [220, 100, 70],
+    specular: 0.45,
+  },
+};
+
+let currentMaterial = 'silk';
+function MAT() { return MATERIALS[currentMaterial]; }
+
+// --- Config (adaptive to screen size) ---
+let COLS, ROWS, SPACING;
+function calcGridSize() {
+  SPACING = W < 500 ? 7 : W < 800 ? 9 : 10;
+  COLS = Math.min(55, Math.floor((W - 40) / SPACING));
+  ROWS = Math.min(35, Math.floor((H - 120) / SPACING));
+  COLS = Math.max(12, COLS);
+  ROWS = Math.max(10, ROWS);
+}
+const DRAG_RADIUS = 70;
+
+let W, H, dpr;
+let gravityDir = { x: 0, y: 1 };
+let windOn = false;
+let gyroOn = false;
+let pinMode = false;
+let windTime = 0;
+
+// --- Particles & Springs ---
+let particles = [];
+let springs = [];
+let tearParticles = [];
+let windArrows = [];
+let gridCols, gridRows; // for current cloth
+
+// --- Light direction (normalized) ---
+const LIGHT_DIR = { x: -0.4, y: -0.6, z: 0.7 };
+(function normalizeLight() {
+  let len = Math.sqrt(LIGHT_DIR.x**2 + LIGHT_DIR.y**2 + LIGHT_DIR.z**2);
+  LIGHT_DIR.x /= len; LIGHT_DIR.y /= len; LIGHT_DIR.z /= len;
+})();
+
+class Point {
+  constructor(x, y, pinned, col, row) {
+    this.x = x; this.y = y;
+    this.ox = x; this.oy = y;
+    this.pinned = pinned;
+    this.alive = true;
+    this.col = col;
+    this.row = row;
+    this.userPinned = false; // user-toggled pin
+  }
+  update(dt) {
+    if (this.pinned || !this.alive) return;
+    let mat = MAT();
+    let vx = (this.x - this.ox) * mat.damping;
+    let vy = (this.y - this.oy) * mat.damping;
+    vx += gravityDir.x * mat.gravity * dt;
+    vy += gravityDir.y * mat.gravity * dt;
+    if (windOn) {
+      let wm = mat.windMult;
+      let wf = Math.sin(windTime * 0.7 + this.y * 0.02 + this.x * 0.008) * 0.12 * wm * dt;
+      let wf2 = Math.cos(windTime * 0.4 + this.x * 0.015) * 0.04 * wm * dt;
+      let wf3 = Math.sin(windTime * 1.3 + this.row * 0.15) * 0.06 * wm * dt;
+      vx += wf + wf3;
+      vy += wf2;
+    }
+    this.ox = this.x;
+    this.oy = this.y;
+    this.x += vx;
+    this.y += vy;
+    if (this.y > H - 60) { this.y = H - 60; this.oy = this.y; }
+    if (this.x < 0) { this.x = 0; this.ox = 0; }
+    if (this.x > W) { this.x = W; this.ox = W; }
+    if (this.y < 0) { this.y = 0; this.oy = 0; }
+  }
+}
+
+class Spring {
+  constructor(a, b, restLen) {
+    this.a = a; this.b = b;
+    this.restLen = restLen;
+    this.alive = true;
+    this.tornEdge = false; // marks as recently torn for glow
+    this.tornTime = 0;
+  }
+  solve() {
+    if (!this.alive || !this.a.alive || !this.b.alive) return;
+    let dx = this.b.x - this.a.x;
+    let dy = this.b.y - this.a.y;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 0.0001) dist = 0.0001;
+    let mat = MAT();
+    if (dist > this.restLen * mat.tearDist) {
+      this.alive = false;
+      spawnTearParticles((this.a.x + this.b.x) / 2, (this.a.y + this.b.y) / 2, dx, dy);
+      markTornEdges(this.a, this.b);
+      return;
+    }
+    let diff = (this.restLen - dist) / dist * mat.stiffness;
+    let ox = dx * diff;
+    let oy = dy * diff;
+    if (!this.a.pinned) { this.a.x -= ox; this.a.y -= oy; }
+    if (!this.b.pinned) { this.b.x += ox; this.b.y += oy; }
+  }
+}
+
+// Mark edges near a tear for red glow
+function markTornEdges(pa, pb) {
+  for (let s of springs) {
+    if (!s.alive) continue;
+    if (s.a === pa || s.b === pa || s.a === pb || s.b === pb) {
+      s.tornEdge = true;
+      s.tornTime = 1.0;
+    }
+  }
+}
+
+// --- Tear particles with trails ---
+function spawnTearParticles(x, y, dx, dy) {
+  let count = 16 + Math.floor(Math.random() * 10);
+  let dirAngle = Math.atan2(dy, dx);
+  for (let i = 0; i < count; i++) {
+    let angle = dirAngle + (Math.random() - 0.5) * Math.PI * 1.5;
+    let speed = 1.5 + Math.random() * 4;
+    let hue = Math.random();
+    let r, g, b;
+    if (hue < 0.5) { r = 255; g = 60 + Math.random() * 80; b = 30; }
+    else { r = 255; g = 150 + Math.random() * 80; b = 50; }
+    tearParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1.5,
+      life: 1,
+      maxLife: 1,
+      size: 1.5 + Math.random() * 3,
+      r, g, b,
+      trail: [{ x, y }],
+    });
+  }
+}
+
+function updateTearParticles(dt) {
+  for (let i = tearParticles.length - 1; i >= 0; i--) {
+    let p = tearParticles[i];
+    p.trail.push({ x: p.x, y: p.y });
+    if (p.trail.length > 8) p.trail.shift();
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 0.1 * dt;
+    p.vx *= 0.98;
+    p.life -= 0.018 * dt;
+    if (p.life <= 0) tearParticles.splice(i, 1);
+  }
+}
+
+function drawTearParticles() {
+  for (let p of tearParticles) {
+    let alpha = p.life * 0.9;
+    // Draw trail
+    if (p.trail.length > 1) {
+      for (let t = 1; t < p.trail.length; t++) {
+        let ta = (t / p.trail.length) * alpha * 0.5;
+        let tw = p.size * p.life * (t / p.trail.length);
+        ctx.strokeStyle = `rgba(${p.r},${p.g},${p.b},${ta})`;
+        ctx.lineWidth = tw;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y);
+        ctx.lineTo(p.trail[t].x, p.trail[t].y);
+        ctx.stroke();
+      }
+    }
+    // Draw particle
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
+    ctx.shadowColor = `rgb(${p.r},${p.g},${p.b})`;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+}
+
+// --- Wind arrow particles ---
+function spawnWindArrows() {
+  if (!windOn) return;
+  if (Math.random() > 0.12) return;
+  let x = -20;
+  let y = 50 + Math.random() * (H - 150);
+  windArrows.push({
+    x, y,
+    vx: 2 + Math.random() * 3,
+    vy: (Math.random() - 0.5) * 0.5,
+    life: 1,
+    size: 15 + Math.random() * 20,
+  });
+}
+
+function updateWindArrows(dt) {
+  for (let i = windArrows.length - 1; i >= 0; i--) {
+    let a = windArrows[i];
+    a.x += a.vx * dt;
+    a.y += a.vy * dt;
+    a.vy += Math.sin(windTime * 2 + a.y * 0.01) * 0.02;
+    a.life -= 0.005 * dt;
+    if (a.life <= 0 || a.x > W + 40) windArrows.splice(i, 1);
+  }
+}
+
+function drawWindArrows() {
+  for (let a of windArrows) {
+    let alpha = a.life * 0.18;
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = 'rgba(150,200,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    let len = a.size;
+    ctx.moveTo(0, 0);
+    ctx.lineTo(len, 0);
+    ctx.moveTo(len, 0);
+    ctx.lineTo(len - 6, -4);
+    ctx.moveTo(len, 0);
+    ctx.lineTo(len - 6, 4);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+// --- Init cloth ---
+function initCloth() {
+  particles = [];
+  springs = [];
+  tearParticles = [];
+  windArrows = [];
+  gridCols = COLS;
+  gridRows = ROWS;
+  let startX = (W - (COLS - 1) * SPACING) / 2;
+  let startY = 40;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let x = startX + c * SPACING;
+      let y = startY + r * SPACING;
+      let pinned = r === 0 && c % 3 === 0;
+      particles.push(new Point(x, y, pinned, c, r));
+    }
+  }
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let idx = r * COLS + c;
+      if (c < COLS - 1)
+        springs.push(new Spring(particles[idx], particles[idx + 1], SPACING));
+      if (r < ROWS - 1)
+        springs.push(new Spring(particles[idx], particles[idx + COLS], SPACING));
+    }
+  }
+}
+
+// --- Resize ---
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// --- Interaction ---
+let mouse = { x: 0, y: 0, ox: 0, oy: 0, down: false, button: 0 };
+let longPressTimer = null;
+let isTearing = false;
+let touchCount = 0;
+let draggedPoint = null;
+let isDragging = false;
+let mouseDownTime = 0;
+let mouseDownPos = { x: 0, y: 0 };
+
+function getMousePos(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+function handleDown(e) {
+  e.preventDefault();
+  let pos = getMousePos(e);
+  mouse.ox = pos.x; mouse.oy = pos.y;
+  mouse.x = pos.x; mouse.y = pos.y;
+  mouse.down = true;
+  mouse.button = e.button || 0;
+  mouseDownTime = performance.now();
+  mouseDownPos = { x: pos.x, y: pos.y };
+  isDragging = false;
+  isTearing = mouse.button === 2;
+  if (e.touches) {
+    touchCount = e.touches.length;
+    if (touchCount >= 2) isTearing = true;
+    longPressTimer = setTimeout(() => { isTearing = true; }, 400);
+  }
+  hintEl.classList.add('hidden');
+}
+
+function handleMove(e) {
+  e.preventDefault();
+  let pos;
+  if (e.touches) {
+    if (e.touches.length === 0) return;
+    pos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchCount = e.touches.length;
+    if (touchCount >= 2) isTearing = true;
+  } else {
+    pos = { x: e.clientX, y: e.clientY };
+  }
+  mouse.ox = mouse.x; mouse.oy = mouse.y;
+  mouse.x = pos.x; mouse.y = pos.y;
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  if (!mouse.down) return;
+  let totalDist = Math.sqrt((mouse.x - mouseDownPos.x)**2 + (mouse.y - mouseDownPos.y)**2);
+  if (totalDist > 5) isDragging = true;
+  let dx = mouse.x - mouse.ox;
+  let dy = mouse.y - mouse.oy;
+  if (isTearing) {
+    for (let s of springs) {
+      if (!s.alive) continue;
+      let mx = (s.a.x + s.b.x) / 2;
+      let my = (s.a.y + s.b.y) / 2;
+      let d = Math.sqrt((mx - mouse.x) ** 2 + (my - mouse.y) ** 2);
+      if (d < 20) {
+        s.alive = false;
+        spawnTearParticles(mx, my, s.b.x - s.a.x, s.b.y - s.a.y);
+        markTornEdges(s.a, s.b);
+      }
+    }
+  } else if (!pinMode) {
+    // Find closest point for highlight
+    let closestDist = Infinity;
+    draggedPoint = null;
+    for (let p of particles) {
+      if (!p.alive) continue;
+      let d = Math.sqrt((p.x - mouse.x) ** 2 + (p.y - mouse.y) ** 2);
+      if (d < closestDist && d < DRAG_RADIUS) {
+        closestDist = d;
+        draggedPoint = p;
+      }
+    }
+    // Drag cloth with larger influence and better feel
+    for (let p of particles) {
+      if (p.pinned || !p.alive) continue;
+      let d = Math.sqrt((p.x - mouse.x) ** 2 + (p.y - mouse.y) ** 2);
+      if (d < DRAG_RADIUS) {
+        let influence = 1 - d / DRAG_RADIUS;
+        influence = influence * influence * influence; // cubic falloff
+        let strength = 0.45;
+        p.x += dx * influence * strength;
+        p.y += dy * influence * strength;
+        // Reduce velocity to make it feel more "grabbed"
+        p.ox = p.ox + (p.x - p.ox) * 0.1 * influence;
+        p.oy = p.oy + (p.y - p.oy) * 0.1 * influence;
+      }
+    }
+  }
+}
+
+function handleUp(e) {
+  // Pin mode: click to toggle pin
+  if (pinMode && mouse.down && !isDragging) {
+    let elapsed = performance.now() - mouseDownTime;
+    if (elapsed < 400) {
+      let closest = null, closestDist = 30;
+      for (let p of particles) {
+        if (!p.alive) continue;
+        let d = Math.sqrt((p.x - mouse.x)**2 + (p.y - mouse.y)**2);
+        if (d < closestDist) { closestDist = d; closest = p; }
+      }
+      if (closest) {
+        if (closest.userPinned) {
+          closest.userPinned = false;
+          closest.pinned = (closest.row === 0 && closest.col % 3 === 0);
+        } else {
+          closest.userPinned = true;
+          closest.pinned = true;
+        }
+      }
+    }
+  }
+  // Non-pin mode: click to toggle pin on exact point
+  if (!pinMode && !isTearing && mouse.down && !isDragging) {
+    let elapsed = performance.now() - mouseDownTime;
+    if (elapsed < 300) {
+      let closest = null, closestDist = 15;
+      for (let p of particles) {
+        if (!p.alive) continue;
+        let d = Math.sqrt((p.x - mouse.x)**2 + (p.y - mouse.y)**2);
+        if (d < closestDist) { closestDist = d; closest = p; }
+      }
+      if (closest) {
+        if (closest.userPinned) {
+          closest.userPinned = false;
+          closest.pinned = (closest.row === 0 && closest.col % 3 === 0);
+        } else {
+          closest.userPinned = true;
+          closest.pinned = true;
+        }
+      }
+    }
+  }
+  mouse.down = false;
+  isTearing = false;
+  isDragging = false;
+  touchCount = 0;
+  draggedPoint = null;
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}
+
+canvas.addEventListener('mousedown', handleDown);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseup', handleUp);
+canvas.addEventListener('mouseleave', handleUp);
+canvas.addEventListener('touchstart', handleDown, { passive: false });
+canvas.addEventListener('touchmove', handleMove, { passive: false });
+canvas.addEventListener('touchend', handleUp);
+canvas.addEventListener('touchcancel', handleUp);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// --- Connectivity map ---
+const connMap = new Map();
+function buildConnMap() {
+  connMap.clear();
+  for (let s of springs) {
+    if (!s.alive) continue;
+    if (!connMap.has(s.a)) connMap.set(s.a, new Set());
+    if (!connMap.has(s.b)) connMap.set(s.b, new Set());
+    connMap.get(s.a).add(s.b);
+    connMap.get(s.b).add(s.a);
+  }
+}
+function isConnected(a, b) {
+  let s = connMap.get(a);
+  return s ? s.has(b) : false;
+}
+
+// --- Compute face normal (simplified, returns z-component and lighting) ---
+function computeFaceLighting(p0, p1, p2) {
+  let ax = p1.x - p0.x, ay = p1.y - p0.y;
+  let bx = p2.x - p0.x, by = p2.y - p0.y;
+  // Cross product (ax,ay,0) x (bx,by,0) = (0, 0, ax*by - ay*bx)
+  let nz = ax * by - ay * bx;
+  // For 3D-like normal, approximate z displacement
+  let area = Math.abs(nz);
+  let restArea = SPACING * SPACING;
+  let stretch = area / restArea;
+  // Fake a z-component based on stretch/compression
+  let fakeNx = -(p1.y - p0.y + p2.y - p0.y) * 0.01;
+  let fakeNy = (p1.x - p0.x + p2.x - p0.x) * 0.01;
+  let fakeNz = Math.max(0.3, Math.min(1.0, stretch));
+  // Normalize
+  let len = Math.sqrt(fakeNx * fakeNx + fakeNy * fakeNy + fakeNz * fakeNz);
+  if (len < 0.001) len = 0.001;
+  fakeNx /= len; fakeNy /= len; fakeNz /= len;
+  // Dot product with light
+  let dot = fakeNx * LIGHT_DIR.x + fakeNy * LIGHT_DIR.y + fakeNz * LIGHT_DIR.z;
+  let diffuse = Math.max(0.12, Math.min(1.0, dot * 0.7 + 0.5));
+  // Specular (Blinn-Phong style)
+  let hx = LIGHT_DIR.x, hy = LIGHT_DIR.y - 0.3, hz = LIGHT_DIR.z + 1;
+  let hlen = Math.sqrt(hx*hx + hy*hy + hz*hz);
+  hx /= hlen; hy /= hlen; hz /= hlen;
+  let specDot = Math.max(0, fakeNx * hx + fakeNy * hy + fakeNz * hz);
+  let specular = Math.pow(specDot, 16) * MAT().specular;
+  return { diffuse, specular };
+}
+
+function lerpColor(a, b, t) {
+  return [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t,
+    a[2] + (b[2] - a[2]) * t,
+  ];
+}
+
+// --- Drawing ---
+function drawCloth() {
+  let mat = MAT();
+  // Draw filled triangles with lighting
+  for (let r = 0; r < ROWS - 1; r++) {
+    for (let c = 0; c < COLS - 1; c++) {
+      let i0 = r * COLS + c;
+      let i1 = i0 + 1;
+      let i2 = i0 + COLS;
+      let i3 = i2 + 1;
+      let p0 = particles[i0], p1 = particles[i1];
+      let p2 = particles[i2], p3 = particles[i3];
+      let topAlive = isConnected(p0, p1);
+      let leftAlive = isConnected(p0, p2);
+      let rightAlive = isConnected(p1, p3);
+      let bottomAlive = isConnected(p2, p3);
+      let diagAlive1 = topAlive && leftAlive; // top-left triangle
+      let diagAlive2 = rightAlive && bottomAlive; // bottom-right triangle
+      if (!diagAlive1 && !diagAlive2) continue;
+      // Gradient color across cloth
+      let t = r / (ROWS - 1);
+      let s = c / (COLS - 1);
+      // Three-color gradient: colorA -> colorB -> colorC
+      let baseColor;
+      let blend = t + s * 0.3;
+      if (blend < 0.5) {
+        baseColor = lerpColor(mat.colorA, mat.colorB, blend * 2);
+      } else {
+        baseColor = lerpColor(mat.colorB, mat.colorC, (blend - 0.5) * 2);
+      }
+      // Triangle 1: p0, p1, p2
+      if (diagAlive1) {
+        let light1 = computeFaceLighting(p0, p1, p2);
+        let cr = Math.floor(Math.min(255, baseColor[0] * light1.diffuse + light1.specular * 255));
+        let cg = Math.floor(Math.min(255, baseColor[1] * light1.diffuse + light1.specular * 200));
+        let cb = Math.floor(Math.min(255, baseColor[2] * light1.diffuse + light1.specular * 255));
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Triangle 2: p1, p3, p2
+      if (diagAlive2) {
+        let light2 = computeFaceLighting(p1, p3, p2);
+        let cr2 = Math.floor(Math.min(255, baseColor[0] * light2.diffuse + light2.specular * 255));
+        let cg2 = Math.floor(Math.min(255, baseColor[1] * light2.diffuse + light2.specular * 200));
+        let cb2 = Math.floor(Math.min(255, baseColor[2] * light2.diffuse + light2.specular * 255));
+        ctx.fillStyle = `rgb(${cr2},${cg2},${cb2})`;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+  // Draw torn edge glow
+  for (let s of springs) {
+    if (!s.alive || !s.tornEdge) continue;
+    if (s.tornTime > 0) {
+      ctx.strokeStyle = `rgba(255,60,30,${s.tornTime * 0.7})`;
+      ctx.shadowColor = `rgba(255,40,20,${s.tornTime * 0.9})`;
+      ctx.shadowBlur = 12 * s.tornTime;
+      ctx.lineWidth = 2 * s.tornTime;
+      ctx.beginPath();
+      ctx.moveTo(s.a.x, s.a.y);
+      ctx.lineTo(s.b.x, s.b.y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  }
+  // Draw pinned points
+  for (let p of particles) {
+    if (!p.alive) continue;
+    if (p.userPinned) {
+      // User-pinned: bright golden dot with glow
+      ctx.shadowColor = 'rgba(255,200,80,0.8)';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ffd060';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Inner highlight
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (p.pinned) {
+      ctx.fillStyle = 'rgba(200,220,255,0.7)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Draw drag highlight
+  if (mouse.down && !isTearing && !pinMode && draggedPoint) {
+    ctx.strokeStyle = 'rgba(100,200,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, DRAG_RADIUS, 0, Math.PI * 2);
+    ctx.stroke();
+    // Highlight closest point
+    ctx.shadowColor = 'rgba(100,200,255,0.9)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#8cf';
+    ctx.beginPath();
+    ctx.arc(draggedPoint.x, draggedPoint.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+// --- Main loop ---
+let lastTime = -1;
+function loop(time) {
+  requestAnimationFrame(loop);
+  if (lastTime < 0) { lastTime = time; return; }
+  let dt = Math.min((time - lastTime) / 16, 2);
+  lastTime = time;
+  windTime += dt * 0.05;
+  let mat = MAT();
+
+  // Physics
+  for (let p of particles) p.update(dt);
+  for (let i = 0; i < mat.iters; i++) {
+    for (let s of springs) s.solve();
+  }
+  updateTearParticles(dt);
+  // Update torn edge glow
+  for (let s of springs) {
+    if (s.tornEdge && s.tornTime > 0) {
+      s.tornTime -= 0.012 * dt;
+      if (s.tornTime <= 0) { s.tornEdge = false; s.tornTime = 0; }
+    }
+  }
+  // Wind arrows
+  spawnWindArrows();
+  updateWindArrows(dt);
+  buildConnMap();
+
+  // Render
+  ctx.clearRect(0, 0, W, H);
+  let bg = ctx.createRadialGradient(W / 2, H / 3, 50, W / 2, H / 2, H);
+  bg.addColorStop(0, '#141428');
+  bg.addColorStop(1, '#0a0a12');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  drawWindArrows();
+  drawCloth();
+  drawTearParticles();
+
+  // Tearing cursor
+  if (mouse.down && isTearing) {
+    ctx.strokeStyle = 'rgba(255,80,60,0.6)';
+    ctx.shadowColor = 'rgba(255,50,30,0.5)';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 20, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Pin mode cursor
+  if (pinMode && !mouse.down) {
+    // Show subtle indicator near mouse
+  }
+}
+
+// --- Controls ---
+const selMaterial = document.getElementById('selMaterial');
+const btnGravity = document.getElementById('btnGravity');
+const btnGyro = document.getElementById('btnGyro');
+const btnWind = document.getElementById('btnWind');
+const btnPin = document.getElementById('btnPin');
+const btnReset = document.getElementById('btnReset');
+
+selMaterial.addEventListener('change', () => {
+  currentMaterial = selMaterial.value;
+});
+
+const gravDirs = [
+  { x: 0, y: 1, label: '重力 ↓' },
+  { x: -1, y: 0, label: '重力 ←' },
+  { x: 0, y: -1, label: '重力 ↑' },
+  { x: 1, y: 0, label: '重力 →' }
+];
+let gravIdx = 0;
+btnGravity.addEventListener('click', () => {
+  if (gyroOn) return;
+  gravIdx = (gravIdx + 1) % gravDirs.length;
+  gravityDir.x = gravDirs[gravIdx].x;
+  gravityDir.y = gravDirs[gravIdx].y;
+  btnGravity.textContent = gravDirs[gravIdx].label;
+});
+
+btnGyro.addEventListener('click', () => {
+  gyroOn = !gyroOn;
+  btnGyro.classList.toggle('active', gyroOn);
+  if (gyroOn) {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') startGyro();
+        else { gyroOn = false; btnGyro.classList.remove('active'); }
+      });
+    } else {
+      startGyro();
+    }
+  } else {
+    window.removeEventListener('deviceorientation', onGyro);
+    gravityDir.x = gravDirs[gravIdx].x;
+    gravityDir.y = gravDirs[gravIdx].y;
+  }
+});
+
+function startGyro() {
+  window.addEventListener('deviceorientation', onGyro);
+}
+function onGyro(e) {
+  if (!gyroOn) return;
+  let beta = (e.beta || 0) * Math.PI / 180;
+  let gamma = (e.gamma || 0) * Math.PI / 180;
+  gravityDir.x = Math.sin(gamma) * 1.2;
+  gravityDir.y = Math.sin(beta) * 1.2;
+  let len = Math.sqrt(gravityDir.x ** 2 + gravityDir.y ** 2);
+  if (len > 1.5) { gravityDir.x /= len / 1.5; gravityDir.y /= len / 1.5; }
+}
+
+btnWind.addEventListener('click', () => {
+  windOn = !windOn;
+  btnWind.classList.toggle('active', windOn);
+});
+
+btnPin.addEventListener('click', () => {
+  pinMode = !pinMode;
+  btnPin.classList.toggle('active', pinMode);
+});
+
+btnReset.addEventListener('click', () => {
+  initCloth();
+});
+
+// --- Init ---
+window.addEventListener('resize', () => { resize(); calcGridSize(); initCloth(); });
+resize();
+calcGridSize();
+initCloth();
+requestAnimationFrame(loop);
+
+// Hide hint after 2s
+setTimeout(() => { hintEl.classList.add('hidden'); }, 2000);
+</script>
+</body>
+</html>
