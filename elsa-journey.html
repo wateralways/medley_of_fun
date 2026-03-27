@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>艾莎的冰雪传奇 — 成长之旅</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Noto+Serif+SC:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,500;0,700;1,300;1,500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ice-deep: #0a1628;
+  --ice-midnight: #0f2042;
+  --ice-blue: #4fc3f7;
+  --ice-cyan: #81d4fa;
+  --ice-crystal: #b3e5fc;
+  --ice-white: #e8f5fe;
+  --aurora-purple: #7c4dff;
+  --aurora-teal: #00e5ff;
+  --aurora-pink: #ea80fc;
+  --frost-silver: #cfd8dc;
+  --warm-gold: #ffd54f;
+  --danger-red: #ef5350;
+  --love-pink: #f48fb1;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ice-deep);
+  color: var(--ice-white);
+  font-family: 'Noto Serif SC', serif;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* Custom cursor trail */
+.cursor-crystal {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, var(--ice-cyan), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  transition: opacity 0.5s;
+}
+
+/* ═══════ HERO SECTION ═══════ */
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(79,195,247,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 30% 70%, rgba(124,77,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 70% 30%, rgba(0,229,255,0.05) 0%, transparent 50%);
+}
+
+#snowCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.hero-title {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  font-weight: 900;
+  text-align: center;
+  background: linear-gradient(135deg, var(--ice-crystal) 0%, var(--ice-cyan) 30%, var(--aurora-teal) 60%, var(--ice-white) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 30px rgba(79,195,247,0.3));
+  animation: titleReveal 2s ease-out forwards;
+  opacity: 0;
+  letter-spacing: 0.05em;
+}
+
+.hero-subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1rem, 2.5vw, 1.6rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--frost-silver);
+  margin-top: 1rem;
+  opacity: 0;
+  animation: fadeUp 1.5s ease-out 0.8s forwards;
+  letter-spacing: 0.15em;
+}
+
+.hero-crystal {
+  position: absolute;
+  opacity: 0;
+  animation: crystalFloat 8s ease-in-out infinite;
+}
+
+.hero-crystal svg {
+  filter: drop-shadow(0 0 10px rgba(79,195,247,0.4));
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 1s ease-out 2s forwards;
+}
+
+.scroll-hint span {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--frost-silver);
+}
+
+.scroll-arrow {
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--ice-cyan), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes titleReveal {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); filter: drop-shadow(0 0 0 transparent) blur(8px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: drop-shadow(0 0 30px rgba(79,195,247,0.3)) blur(0); }
+}
+
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes crystalFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(5deg); }
+  75% { transform: translateY(10px) rotate(-3deg); }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.2); }
+}
+
+/* ═══════ EMOTION CURVE ═══════ */
+.emotion-section {
+  position: relative;
+  padding: 6rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-header h2 {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  background: linear-gradient(90deg, var(--ice-cyan), var(--aurora-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.section-header p {
+  color: var(--frost-silver);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+}
+
+.emotion-chart {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  margin: 2rem 0;
+}
+
+.emotion-chart svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.emotion-label {
+  position: absolute;
+  font-size: 0.7rem;
+  color: var(--frost-silver);
+  transform: translateX(-50%);
+  bottom: -2rem;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+.emotion-label:hover { color: var(--ice-cyan); }
+
+.emotion-dot {
+  cursor: pointer;
+  transition: r 0.3s, filter 0.3s;
+}
+
+.emotion-dot:hover {
+  filter: drop-shadow(0 0 12px rgba(79,195,247,0.8));
+}
+
+.emotion-tooltip {
+  position: fixed;
+  background: rgba(15,32,66,0.95);
+  border: 1px solid var(--ice-cyan);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  font-size: 0.85rem;
+  color: var(--ice-white);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 100;
+  max-width: 240px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(79,195,247,0.2);
+}
+
+.emotion-tooltip.visible { opacity: 1; }
+
+/* ═══════ TIMELINE ═══════ */
+.timeline-section {
+  position: relative;
+  padding: 4rem 0;
+}
+
+.timeline-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom,
+    transparent,
+    var(--ice-blue) 10%,
+    var(--aurora-purple) 50%,
+    var(--ice-cyan) 90%,
+    transparent
+  );
+  transform: translateX(-50%);
+}
+
+.timeline-track::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(79,195,247,0.15) 10%,
+    rgba(124,77,255,0.15) 50%,
+    rgba(0,229,255,0.15) 90%,
+    transparent
+  );
+  filter: blur(3px);
+}
+
+.timeline-item {
+  position: relative;
+  width: 44%;
+  padding: 0 2rem;
+  margin-bottom: 5rem;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.timeline-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.timeline-item.left { margin-left: 4%; text-align: right; }
+.timeline-item.right { margin-left: 52%; text-align: left; }
+
+.timeline-node {
+  position: absolute;
+  top: 1.5rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--ice-cyan);
+  background: var(--ice-deep);
+  z-index: 2;
+  transition: all 0.4s;
+  cursor: pointer;
+}
+
+.timeline-item.left .timeline-node { right: -2.7rem; }
+.timeline-item.right .timeline-node { left: -2.7rem; }
+
+.timeline-node::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--ice-cyan);
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.timeline-item:hover .timeline-node::before,
+.timeline-item.expanded .timeline-node::before {
+  opacity: 1;
+  box-shadow: 0 0 15px var(--ice-cyan);
+}
+
+.timeline-card {
+  background: linear-gradient(135deg, rgba(15,32,66,0.8), rgba(10,22,40,0.9));
+  border: 1px solid rgba(79,195,247,0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.timeline-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(79,195,247,0.05));
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.timeline-card:hover::before,
+.timeline-item.expanded .timeline-card::before { opacity: 1; }
+
+.timeline-card:hover {
+  border-color: rgba(79,195,247,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 20px rgba(79,195,247,0.1);
+}
+
+.timeline-age {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 0.8rem;
+  color: var(--aurora-teal);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-title {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.3rem;
+  color: var(--ice-crystal);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.timeline-icon {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+
+.timeline-preview {
+  font-size: 0.9rem;
+  color: var(--frost-silver);
+  line-height: 1.7;
+}
+
+.timeline-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s, opacity 0.4s;
+  opacity: 0;
+}
+
+.timeline-item.expanded .timeline-detail {
+  max-height: 600px;
+  padding-top: 1.2rem;
+  opacity: 1;
+}
+
+.timeline-detail p {
+  font-size: 0.88rem;
+  color: var(--frost-silver);
+  line-height: 1.9;
+  margin-bottom: 0.8rem;
+}
+
+.timeline-detail .quote {
+  border-left: 2px solid var(--aurora-purple);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ice-cyan);
+}
+
+.detail-tag {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  margin: 0.2rem;
+  border: 1px solid;
+}
+
+.tag-magic { border-color: var(--ice-cyan); color: var(--ice-cyan); }
+.tag-emotion { border-color: var(--aurora-pink); color: var(--aurora-pink); }
+.tag-growth { border-color: var(--warm-gold); color: var(--warm-gold); }
+.tag-love { border-color: var(--love-pink); color: var(--love-pink); }
+
+.expand-hint {
+  font-size: 0.7rem;
+  color: var(--frost-silver);
+  opacity: 0.5;
+  margin-top: 0.8rem;
+  transition: opacity 0.3s;
+}
+
+.timeline-card:hover .expand-hint { opacity: 1; }
+.timeline-item.expanded .expand-hint { display: none; }
+
+/* ═══════ RELATIONSHIPS ═══════ */
+.relationships-section {
+  padding: 6rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.rel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.rel-card {
+  background: linear-gradient(145deg, rgba(15,32,66,0.7), rgba(10,22,40,0.8));
+  border: 1px solid rgba(79,195,247,0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.5s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+.rel-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ice-cyan), var(--aurora-purple));
+  transform: scaleX(0);
+  transition: transform 0.5s;
+}
+
+.rel-card:hover::after { transform: scaleX(1); }
+
+.rel-card:hover {
+  border-color: rgba(79,195,247,0.3);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+}
+
+.rel-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border: 2px solid rgba(79,195,247,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.rel-card:hover .rel-avatar {
+  border-color: var(--ice-cyan);
+  box-shadow: 0 0 20px rgba(79,195,247,0.3);
+}
+
+.rel-name {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.1rem;
+  color: var(--ice-crystal);
+  margin-bottom: 0.3rem;
+}
+
+.rel-role {
+  font-size: 0.75rem;
+  color: var(--aurora-teal);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.rel-desc {
+  font-size: 0.85rem;
+  color: var(--frost-silver);
+  line-height: 1.7;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+}
+
+.rel-bond {
+  margin-top: 1rem;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(79,195,247,0.1);
+  overflow: hidden;
+}
+
+.rel-bond-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 0;
+}
+
+.rel-card.visible .rel-bond-fill { width: var(--bond); }
+
+/* ═══════ MAGIC POWER METER ═══════ */
+.power-section {
+  padding: 6rem 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.power-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.power-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.power-label {
+  width: 140px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--frost-silver);
+  flex-shrink: 0;
+}
+
+.power-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(79,195,247,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.power-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 0;
+  position: relative;
+}
+
+.power-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: inherit;
+  filter: blur(4px);
+}
+
+.power-section.visible .power-fill { width: var(--power); }
+
+.power-value {
+  width: 50px;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 0.8rem;
+  color: var(--ice-cyan);
+}
+
+/* ═══════ ENDING ═══════ */
+.ending-section {
+  padding: 8rem 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.ending-section h2 {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  background: linear-gradient(135deg, var(--ice-cyan), var(--aurora-purple), var(--aurora-teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+}
+
+.ending-section p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: var(--frost-silver);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 2;
+  font-style: italic;
+}
+
+.magic-burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.magic-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media (max-width: 768px) {
+  .timeline-track { left: 2rem; }
+
+  .timeline-item { width: calc(100% - 4rem); margin-left: 4rem !important; text-align: left !important; }
+  .timeline-item .timeline-node { left: -3rem !important; right: auto !important; }
+
+  .emotion-chart { height: 200px; }
+  .power-label { width: 100px; font-size: 0.7rem; }
+
+  .rel-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 2rem; }
+  .timeline-card { padding: 1.2rem; }
+  .timeline-title { font-size: 1.1rem; }
+}
+
+/* ═══════ FROST DIVIDER ═══════ */
+.frost-divider {
+  width: 100%;
+  height: 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.frost-divider svg { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+
+<canvas id="snowCanvas"></canvas>
+
+<div class="emotion-tooltip" id="emotionTooltip"></div>
+
+<!-- ═══════ HERO ═══════ -->
+<section class="hero">
+  <svg class="hero-crystal" style="top:15%;left:10%;width:40px;height:40px;animation-delay:-2s" viewBox="0 0 40 40"><polygon points="20,2 26,14 38,14 28,22 32,36 20,28 8,36 12,22 2,14 14,14" fill="none" stroke="rgba(79,195,247,0.3)" stroke-width="1"/></svg>
+  <svg class="hero-crystal" style="top:20%;right:15%;width:30px;height:30px;animation-delay:-5s" viewBox="0 0 40 40"><polygon points="20,0 40,20 20,40 0,20" fill="none" stroke="rgba(124,77,255,0.25)" stroke-width="1"/></svg>
+  <svg class="hero-crystal" style="bottom:25%;left:20%;width:25px;height:25px;animation-delay:-3s" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(0,229,255,0.2)" stroke-width="1"/></svg>
+  <svg class="hero-crystal" style="top:60%;right:10%;width:35px;height:35px;animation-delay:-7s" viewBox="0 0 40 40"><polygon points="20,4 24,16 36,16 26,24 30,36 20,28 10,36 14,24 4,16 16,16" fill="none" stroke="rgba(79,195,247,0.2)" stroke-width="1"/></svg>
+
+  <h1 class="hero-title">Elsa's Journey</h1>
+  <p class="hero-subtitle">从恐惧到自由 · 一段冰雪传奇的成长之路</p>
+
+  <div class="scroll-hint">
+    <span>探索她的故事</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ═══════ EMOTION CURVE ═══════ -->
+<section class="emotion-section" id="emotionSection">
+  <div class="section-header">
+    <h2>Emotional Arc</h2>
+    <p>她的内心世界，如同冰雪一般复杂而美丽</p>
+  </div>
+  <div class="emotion-chart" id="emotionChart"></div>
+</section>
+
+<div class="frost-divider">
+  <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+    <path d="M0,40 Q150,10 300,40 T600,40 T900,40 T1200,40" stroke="rgba(79,195,247,0.15)" fill="none" stroke-width="1"/>
+    <path d="M0,50 Q200,20 400,50 T800,50 T1200,50" stroke="rgba(124,77,255,0.1)" fill="none" stroke-width="1"/>
+  </svg>
+</div>
+
+<!-- ═══════ TIMELINE ═══════ -->
+<section class="timeline-section" id="timelineSection">
+  <div class="section-header" style="padding:0 2rem">
+    <h2>The Chronicle</h2>
+    <p>点击每个篇章，揭开冰雪之下的秘密</p>
+  </div>
+
+  <div style="position:relative;max-width:1100px;margin:4rem auto 0;padding:0 2rem">
+    <div class="timeline-track"></div>
+
+    <!-- Chapter 1 -->
+    <div class="timeline-item left" data-chapter="1">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">❄️</span>
+        <div class="timeline-age">幼年 · 约5岁</div>
+        <div class="timeline-title">魔法的觉醒</div>
+        <p class="timeline-preview">小小的艾莎发现自己拥有不可思议的冰雪魔力，与妹妹安娜在月光下的舞厅里创造了一个梦幻冰雪世界……</p>
+        <div class="timeline-detail">
+          <p>在阿伦戴尔王宫的大厅里，年幼的艾莎挥动双手，冰晶从指尖绽放，雪花在空中旋转。安娜兴奋地在雪堆间跳跃，两个小公主的笑声回荡在宫殿里。</p>
+          <p>她们一起堆了一个雪人——后来被叫做"雪宝"。那是纯真无忧的时光，魔法只意味着快乐和奇迹。</p>
+          <div class="quote">"你想不想堆个雪人？"</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-magic">冰雪初现</span>
+            <span class="detail-tag tag-love">姐妹之情</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 2 -->
+    <div class="timeline-item right" data-chapter="2">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">💔</span>
+        <div class="timeline-age">幼年 · 事故之夜</div>
+        <div class="timeline-title">伤害与恐惧</div>
+        <p class="timeline-preview">一次意外，艾莎的冰魔法击中了安娜。地精治愈了安娜但抹去了她关于魔法的记忆，而恐惧从此在艾莎心中扎根……</p>
+        <div class="timeline-detail">
+          <p>那一晚改变了一切。在嬉闹中，冰柱越堆越高，安娜跳得越来越快——艾莎的魔法来不及跟上，一道寒冰击中了安娜的头部。</p>
+          <p>国王和王后连夜带着孩子们去找岩石巨人。地精族长帕比警告："恐惧将是你最大的敌人。"安娜被治愈，但所有关于魔法的记忆被抹除。</p>
+          <p>从这一天起，城堡的大门关闭了，姐妹被分隔在两个世界。</p>
+          <div class="quote">"Conceal it, don't feel it. Don't let it show."<br>（隐藏它，不要感受它，不要让它显现。）</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-emotion">恐惧萌芽</span>
+            <span class="detail-tag tag-magic">失控</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 3 -->
+    <div class="timeline-item left" data-chapter="3">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">🚪</span>
+        <div class="timeline-age">少女时期 · 5–18岁</div>
+        <div class="timeline-title">紧闭的门</div>
+        <p class="timeline-preview">十三年的孤独与自我囚禁。艾莎独自在房间里学习控制魔法，一双手套成了她唯一的安全感来源……</p>
+        <div class="timeline-detail">
+          <p>日复一日，年复一年。安娜在门外敲了无数次，但艾莎从不敢打开那扇门。她戴上手套，反复念诵父亲教她的话——"隐藏，不要感受。"</p>
+          <p>窗外的世界在变化，窗内的冰霜却越来越厚。每一次情绪的波动都会让房间里结上新的冰。她不是不爱安娜，她是太害怕再次伤害她。</p>
+          <p>父母出海遇难后，孤独变得更加沉重。整座王宫只剩下两个互相思念却无法靠近的姐妹。</p>
+          <div class="quote">"我只不过是想保护你……即使这意味着要远离你。"</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-emotion">孤独</span>
+            <span class="detail-tag tag-emotion">自我压抑</span>
+            <span class="detail-tag tag-love">沉默的爱</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 4 -->
+    <div class="timeline-item right" data-chapter="4">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">👑</span>
+        <div class="timeline-age">21岁 · 加冕日</div>
+        <div class="timeline-title">加冕与暴露</div>
+        <p class="timeline-preview">加冕典礼上，艾莎努力维持着完美的假象。但安娜与汉斯的闪婚请求引爆了长久压抑的情绪——秘密暴露了……</p>
+        <div class="timeline-detail">
+          <p>大门终于打开的一天。艾莎战战兢兢地拿起权杖和圣球，指尖的冰霜在金属上蔓延。她勉强撑过了仪式，在舞会上甚至和安娜有了短暂的欢笑。</p>
+          <p>但当安娜带着刚认识的汉斯王子要求祝福婚礼时，一切崩塌了。争吵中，冰刺从地面爆出，宾客们惊恐地后退。</p>
+          <p>秘密暴露了。"她是女巫！"——人群的恐惧与自己的恐惧交织在一起，艾莎转身逃离了阿伦戴尔。</p>
+          <div class="quote">"别靠近我！……我不想伤害你们！"</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-magic">魔法暴露</span>
+            <span class="detail-tag tag-emotion">崩溃</span>
+            <span class="detail-tag tag-growth">转折点</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 5 -->
+    <div class="timeline-item left" data-chapter="5">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">🏔️</span>
+        <div class="timeline-age">21岁 · 北山</div>
+        <div class="timeline-title">Let It Go</div>
+        <p class="timeline-preview">独自一人在北山之巅，艾莎第一次释放了全部的魔力。她蜕掉束缚的礼服，建起了属于自己的冰雪宫殿……</p>
+        <div class="timeline-detail">
+          <p>登上北山的那一刻，暴风雪与她同行。但当她停下脚步，回望身后再无追赶的人影时，心中某个枷锁松动了。</p>
+          <p>第一次，她不需要隐藏。冰雪从双手间奔涌而出——不是因为恐惧，而是因为释放。她用魔法编织出一座通体透明的宫殿，每一面墙壁都折射着极光的色彩。</p>
+          <p>她脱下手套，扔掉披风，让冰晶重塑了一件璀璨的长裙。辫子散开，王冠被风吹落。她不再是那个恐惧的公主——至少在这一刻。</p>
+          <div class="quote">"The cold never bothered me anyway."<br>（寒冷从来都不曾困扰我。）</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-magic">冰宫创造</span>
+            <span class="detail-tag tag-growth">自我解放</span>
+            <span class="detail-tag tag-emotion">释然</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 6 -->
+    <div class="timeline-item right" data-chapter="6">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">⚔️</span>
+        <div class="timeline-age">21岁 · 寒冬危机</div>
+        <div class="timeline-title">永恒之冬</div>
+        <p class="timeline-preview">艾莎的出走让整个阿伦戴尔陷入了永恒的寒冬。安娜不顾一切来到北山寻找姐姐，却再次被冰魔法击中——这次是心脏……</p>
+        <div class="timeline-detail">
+          <p>她以为孤独就是答案，但逃避并没有终结寒冬。当安娜出现在冰宫门前时，艾莎的第一反应依然是恐惧——不是怕安娜，而是怕再次伤害她。</p>
+          <p>情绪失控之下，冰的碎片刺入了安娜的心脏。一个冰封的心脏只有"真爱之举"才能解冻。艾莎被卫兵带回阿伦戴尔的地牢，冰雪暴风愈演愈烈。</p>
+          <p>在冰封的海湾上，汉斯举剑要砍向艾莎。安娜用最后一丝力气挡在姐姐面前，在化为冰雕的瞬间——挡住了那一剑。</p>
+          <div class="quote">"安娜……不！不，拜托不……"</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-emotion">绝望</span>
+            <span class="detail-tag tag-love">姐妹之爱</span>
+            <span class="detail-tag tag-growth">觉醒前夜</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 7 -->
+    <div class="timeline-item left" data-chapter="7">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">💕</span>
+        <div class="timeline-age">21岁 · 解冻</div>
+        <div class="timeline-title">爱能融化一切</div>
+        <p class="timeline-preview">安娜的牺牲——真爱之举——不仅救了自己，更让艾莎终于理解：爱，才是控制魔法的关键……</p>
+        <div class="timeline-detail">
+          <p>冰雕的安娜在阳光下开始闪烁，色彩从心脏的位置向外扩散——她活过来了。真爱之举，不是别人的亲吻，而是自我的牺牲。</p>
+          <p>艾莎抱着苏醒的安娜，泪水结成了细小的冰晶。"你为了我牺牲了自己？""我爱你啊。"</p>
+          <p>那一刻，艾莎懂了。爱。原来解开一切的钥匙不是控制，不是隐藏，而是爱。她张开双臂，所有的冰雪飞向天空，化作一朵巨大的雪花，然后化为温暖的夏日。</p>
+          <p>阿伦戴尔重获新生。艾莎不再害怕，因为她终于明白——爱能解冻一切。</p>
+          <div class="quote">"Love will thaw… Love. Of course!"<br>（爱能融化……爱！当然是爱！）</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-love">真爱之举</span>
+            <span class="detail-tag tag-growth">领悟</span>
+            <span class="detail-tag tag-magic">完全掌控</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 8 -->
+    <div class="timeline-item right" data-chapter="8">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">🌊</span>
+        <div class="timeline-age">24岁 · 冰雪奇缘2</div>
+        <div class="timeline-title">Into the Unknown</div>
+        <p class="timeline-preview">一个神秘的声音从北方的魔法森林传来，召唤着艾莎去寻找魔法的起源和自己真正的身份……</p>
+        <div class="timeline-detail">
+          <p>三年过去了，艾莎已经是一位受人爱戴的女王。但夜深人静时，一个只有她能听到的声音在呼唤——来自北方，来自记忆深处。</p>
+          <p>她踏入了被迷雾封锁三十年的魔法森林，遇到了风、火、水、土四大元素精灵。她驯服了水之灵诺克，骑着它穿越了黑暗之海。</p>
+          <p>在阿托哈兰冰川的最深处，她找到了所有的答案：她的母亲是北乌德拉人，她就是第五元素——连接自然与人类的桥梁。</p>
+          <div class="quote">"I am found."<br>（我找到了自己。）</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-growth">身份认同</span>
+            <span class="detail-tag tag-magic">第五元素</span>
+            <span class="detail-tag tag-emotion">归属感</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+    <!-- Chapter 9 -->
+    <div class="timeline-item left" data-chapter="9">
+      <div class="timeline-node"></div>
+      <div class="timeline-card" onclick="toggleChapter(this)">
+        <span class="timeline-icon">✨</span>
+        <div class="timeline-age">24岁 · 新的起点</div>
+        <div class="timeline-title">守护魔法森林</div>
+        <p class="timeline-preview">艾莎将阿伦戴尔的王位交给安娜，自己留在了魔法森林，成为人类与自然之间的守护者和桥梁……</p>
+        <div class="timeline-detail">
+          <p>当迷雾散去，阳光洒入魔法森林时，两个世界重新连接。但艾莎做了一个勇敢的选择——她不回去当女王了。</p>
+          <p>她将王位传给了安娜。不是因为不爱阿伦戴尔，而是因为她终于找到了真正属于自己的位置——在森林与王国之间，在自然与人类之间，做一座桥。</p>
+          <p>安娜成为了阿伦戴尔新的女王，而艾莎在森林里与元素精灵们和谐共处。每周五，她会骑着诺克穿越海峡，回阿伦戴尔和安娜一起过家庭之夜。</p>
+          <p>她不再是那个害怕自己力量的女孩。她是第五元素，是守护者，是自由的灵魂。</p>
+          <div class="quote">"有些人值得为之融化。"—— 雪宝</div>
+          <div style="margin-top:0.8rem">
+            <span class="detail-tag tag-growth">自我实现</span>
+            <span class="detail-tag tag-love">永恒的羁绊</span>
+            <span class="detail-tag tag-magic">和谐共存</span>
+          </div>
+        </div>
+        <div class="expand-hint">— 点击展开 —</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════ RELATIONSHIPS ═══════ -->
+<section class="relationships-section" id="relSection">
+  <div class="section-header">
+    <h2>Bonds of Fate</h2>
+    <p>那些在她生命中留下印记的灵魂</p>
+  </div>
+  <div class="rel-grid">
+    <div class="rel-card" data-bond="95">
+      <div class="rel-avatar" style="background:linear-gradient(135deg,rgba(244,143,177,0.2),rgba(239,83,80,0.1))">👧</div>
+      <div class="rel-name">Anna</div>
+      <div class="rel-role">妹妹 · 挚爱</div>
+      <div class="rel-desc">世界上最勇敢的人，不是不害怕，而是害怕了依然选择去爱。安娜用行动告诉艾莎——没有什么门是打不开的。</div>
+      <div class="rel-bond"><div class="rel-bond-fill" style="--bond:95%;background:linear-gradient(90deg,var(--love-pink),var(--danger-red))"></div></div>
+    </div>
+    <div class="rel-card" data-bond="70">
+      <div class="rel-avatar" style="background:linear-gradient(135deg,rgba(255,213,79,0.2),rgba(255,183,77,0.1))">⛄</div>
+      <div class="rel-name">Olaf</div>
+      <div class="rel-role">雪宝 · 纯真的化身</div>
+      <div class="rel-desc">由艾莎和安娜童年的快乐记忆诞生。他是温暖的冰雪矛盾体——渴望阳光，却由寒冰构成，正如艾莎渴望靠近却害怕伤害。</div>
+      <div class="rel-bond"><div class="rel-bond-fill" style="--bond:70%;background:linear-gradient(90deg,var(--warm-gold),#ffb74d)"></div></div>
+    </div>
+    <div class="rel-card" data-bond="55">
+      <div class="rel-avatar" style="background:linear-gradient(135deg,rgba(79,195,247,0.2),rgba(0,229,255,0.1))">🦌</div>
+      <div class="rel-name">Kristoff</div>
+      <div class="rel-role">安娜的伴侣 · 冰之友</div>
+      <div class="rel-desc">从冰湖边长大的男孩，天生理解冰雪的力量。他不畏惧艾莎的魔法——因为对他来说，冰从来就不是威胁，而是生计与美。</div>
+      <div class="rel-bond"><div class="rel-bond-fill" style="--bond:55%;background:linear-gradient(90deg,var(--ice-cyan),var(--aurora-teal))"></div></div>
+    </div>
+    <div class="rel-card" data-bond="40">
+      <div class="rel-avatar" style="background:linear-gradient(135deg,rgba(124,77,255,0.2),rgba(234,128,252,0.1))">🌊</div>
+      <div class="rel-name">Nokk</div>
+      <div class="rel-role">水之灵 · 伙伴</div>
+      <div class="rel-desc">黑暗之海的守护者，狂暴的水马。只有第五元素才能驯服它——当艾莎冻住它的鬃毛，跃上马背的那一刻，她真正接纳了自己的力量。</div>
+      <div class="rel-bond"><div class="rel-bond-fill" style="--bond:40%;background:linear-gradient(90deg,var(--aurora-purple),var(--aurora-pink))"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ POWER METER ═══════ -->
+<section class="power-section" id="powerSection">
+  <div class="section-header">
+    <h2>Power Evolution</h2>
+    <p>从不敢触碰到创造万物——魔力的觉醒</p>
+  </div>
+  <div class="power-stages">
+    <div class="power-bar">
+      <div class="power-label">幼年 · 本能</div>
+      <div class="power-track"><div class="power-fill" style="--power:20%;background:linear-gradient(90deg,#81d4fa,#4fc3f7)"></div></div>
+      <div class="power-value">20%</div>
+    </div>
+    <div class="power-bar">
+      <div class="power-label">封闭期 · 压抑</div>
+      <div class="power-track"><div class="power-fill" style="--power:10%;background:linear-gradient(90deg,#546e7a,#78909c)"></div></div>
+      <div class="power-value">10%</div>
+    </div>
+    <div class="power-bar">
+      <div class="power-label">加冕 · 失控</div>
+      <div class="power-track"><div class="power-fill" style="--power:55%;background:linear-gradient(90deg,#ef5350,#ff7043)"></div></div>
+      <div class="power-value">55%</div>
+    </div>
+    <div class="power-bar">
+      <div class="power-label">Let It Go · 释放</div>
+      <div class="power-track"><div class="power-fill" style="--power:75%;background:linear-gradient(90deg,#4fc3f7,#00e5ff)"></div></div>
+      <div class="power-value">75%</div>
+    </div>
+    <div class="power-bar">
+      <div class="power-label">解冻 · 掌控</div>
+      <div class="power-track"><div class="power-fill" style="--power:85%;background:linear-gradient(90deg,#7c4dff,#ea80fc)"></div></div>
+      <div class="power-value">85%</div>
+    </div>
+    <div class="power-bar">
+      <div class="power-label">第五元素 · 超越</div>
+      <div class="power-track"><div class="power-fill" style="--power:100%;background:linear-gradient(90deg,var(--aurora-teal),var(--aurora-purple),var(--aurora-pink))"></div></div>
+      <div class="power-value">100%</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ ENDING ═══════ -->
+<section class="ending-section">
+  <h2>Show Yourself</h2>
+  <p>
+    她曾以为魔法是诅咒，<br>
+    后来才明白，那是她最珍贵的礼物。<br><br>
+    她曾以为孤独是保护，<br>
+    后来才明白，爱才是最强大的魔法。<br><br>
+    她不再是被恐惧定义的女孩——<br>
+    她是自己故事的作者，是冰雪间自由的灵魂。
+  </p>
+  <div style="margin-top:3rem;font-family:'Cinzel Decorative',cursive;font-size:0.85rem;color:var(--aurora-teal);letter-spacing:0.3em;opacity:0.6">
+    — FIN —
+  </div>
+</section>
+
+<div style="height:4rem"></div>
+
+<script>
+// ═══════ SNOW PARTICLE SYSTEM ═══════
+const canvas = document.getElementById('snowCanvas');
+const ctx = canvas.getContext('2d');
+let snowflakes = [];
+const SNOW_COUNT = 80;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Snowflake {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * -canvas.height;
+    this.size = Math.random() * 3 + 1;
+    this.speed = Math.random() * 0.8 + 0.2;
+    this.wind = Math.random() * 0.5 - 0.25;
+    this.opacity = Math.random() * 0.5 + 0.2;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.02;
+  }
+  update() {
+    this.y += this.speed;
+    this.x += this.wind + Math.sin(this.y * 0.01) * 0.3;
+    this.rotation += this.rotSpeed;
+    if (this.y > canvas.height + 10) this.reset();
+    if (this.x < -10) this.x = canvas.width + 10;
+    if (this.x > canvas.width + 10) this.x = -10;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.globalAlpha = this.opacity;
+    if (this.size > 2.5) {
+      // Draw crystal shape for larger flakes
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const len = this.size;
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+      }
+      ctx.strokeStyle = 'rgba(200,230,255,0.8)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,230,255,${this.opacity})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+for (let i = 0; i < SNOW_COUNT; i++) {
+  const s = new Snowflake();
+  s.y = Math.random() * canvas.height;
+  snowflakes.push(s);
+}
+
+function animateSnow() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  snowflakes.forEach(s => { s.update(); s.draw(); });
+  requestAnimationFrame(animateSnow);
+}
+animateSnow();
+
+// ═══════ CLICK MAGIC BURST ═══════
+document.addEventListener('click', (e) => {
+  createMagicBurst(e.clientX, e.clientY);
+});
+
+function createMagicBurst(x, y) {
+  const count = 8;
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'magic-particle';
+    const size = Math.random() * 6 + 2;
+    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+    const distance = Math.random() * 60 + 30;
+    const colors = ['#4fc3f7','#81d4fa','#b3e5fc','#7c4dff','#00e5ff','#ea80fc'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    particle.style.cssText = `
+      position:fixed; left:${x}px; top:${y}px;
+      width:${size}px; height:${size}px;
+      background:${color}; border-radius:50%;
+      pointer-events:none; z-index:9998;
+      box-shadow: 0 0 ${size*2}px ${color};
+      transition: all 0.8s cubic-bezier(0.25,0.46,0.45,0.94);
+      opacity:1;
+    `;
+    document.body.appendChild(particle);
+
+    requestAnimationFrame(() => {
+      particle.style.transform = `translate(${Math.cos(angle)*distance}px, ${Math.sin(angle)*distance}px) scale(0)`;
+      particle.style.opacity = '0';
+    });
+
+    setTimeout(() => particle.remove(), 900);
+  }
+}
+
+// ═══════ EMOTION CHART ═══════
+const emotionData = [
+  { label: '幼年', value: 90, tip: '纯真快乐，与安娜嬉戏的无忧时光', color: '#ffd54f' },
+  { label: '事故', value: 25, tip: '恐惧降临，害怕自己的力量', color: '#ef5350' },
+  { label: '封闭期', value: 20, tip: '十三年的孤独与自我压抑', color: '#78909c' },
+  { label: '父母离世', value: 10, tip: '失去最后的依靠，孤独到极致', color: '#546e7a' },
+  { label: '加冕', value: 35, tip: '短暂的希望与不安的交织', color: '#ffa726' },
+  { label: '逃离', value: 55, tip: '逃避却获得了释放的快感', color: '#4fc3f7' },
+  { label: 'Let It Go', value: 80, tip: '前所未有的自由与力量', color: '#00e5ff' },
+  { label: '永恒之冬', value: 15, tip: '安娜被冰冻，绝望到谷底', color: '#ef5350' },
+  { label: '解冻', value: 85, tip: '领悟到爱的真谛，世界重获温暖', color: '#ea80fc' },
+  { label: '魔法森林', value: 75, tip: '追寻未知的声音，探索自我', color: '#7c4dff' },
+  { label: '第五元素', value: 95, tip: '找到真正的自己，与世界和谐共存', color: '#00e5ff' },
+];
+
+function buildEmotionChart() {
+  const container = document.getElementById('emotionChart');
+  const rect = container.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const padding = { top: 20, bottom: 40, left: 10, right: 10 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  const points = emotionData.map((d, i) => ({
+    x: padding.left + (chartW / (emotionData.length - 1)) * i,
+    y: padding.top + chartH - (d.value / 100) * chartH,
+    ...d
+  }));
+
+  // Build smooth curve
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    pathD += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+  }
+
+  // Area fill path
+  const areaD = pathD + ` L ${points[points.length-1].x},${padding.top + chartH} L ${points[0].x},${padding.top + chartH} Z`;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}">
+    <defs>
+      <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#ffd54f"/>
+        <stop offset="30%" stop-color="#78909c"/>
+        <stop offset="50%" stop-color="#4fc3f7"/>
+        <stop offset="70%" stop-color="#ef5350"/>
+        <stop offset="85%" stop-color="#ea80fc"/>
+        <stop offset="100%" stop-color="#00e5ff"/>
+      </linearGradient>
+      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(79,195,247,0.15)"/>
+        <stop offset="100%" stop-color="rgba(79,195,247,0)"/>
+      </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>`;
+
+  // Grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (chartH / 4) * i;
+    svg += `<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="rgba(79,195,247,0.06)" stroke-width="1"/>`;
+  }
+
+  // Area & line
+  svg += `<path d="${areaD}" fill="url(#areaGrad)"/>`;
+  svg += `<path d="${pathD}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>`;
+
+  // Dots
+  points.forEach((p, i) => {
+    svg += `<circle class="emotion-dot" cx="${p.x}" cy="${p.y}" r="5" fill="${p.color}" stroke="var(--ice-deep)" stroke-width="2"
+      data-tip="${p.tip}" data-label="${p.label}" data-value="${p.value}"
+      onmouseenter="showEmotionTip(event)" onmouseleave="hideEmotionTip()"/>`;
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+
+  // Labels
+  points.forEach(p => {
+    const label = document.createElement('div');
+    label.className = 'emotion-label';
+    label.textContent = p.label;
+    label.style.left = p.x + 'px';
+    container.appendChild(label);
+  });
+}
+
+const tooltip = document.getElementById('emotionTooltip');
+
+window.showEmotionTip = function(e) {
+  const el = e.target;
+  tooltip.innerHTML = `<strong>${el.dataset.label}</strong><br><span style="font-size:1.2rem">${el.dataset.value}%</span> 幸福指数<br><span style="opacity:0.7;font-size:0.8rem">${el.dataset.tip}</span>`;
+  tooltip.classList.add('visible');
+  const tx = e.clientX + 15;
+  const ty = e.clientY - 10;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top = ty + 'px';
+  el.setAttribute('r', '8');
+};
+
+window.hideEmotionTip = function() {
+  tooltip.classList.remove('visible');
+  document.querySelectorAll('.emotion-dot').forEach(d => d.setAttribute('r', '5'));
+};
+
+buildEmotionChart();
+window.addEventListener('resize', buildEmotionChart);
+
+// ═══════ TIMELINE EXPAND ═══════
+window.toggleChapter = function(card) {
+  const item = card.closest('.timeline-item');
+  const wasExpanded = item.classList.contains('expanded');
+
+  // Close all others
+  document.querySelectorAll('.timeline-item.expanded').forEach(el => {
+    el.classList.remove('expanded');
+  });
+
+  if (!wasExpanded) {
+    item.classList.add('expanded');
+    setTimeout(() => {
+      item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+};
+
+// ═══════ SCROLL REVEAL ═══════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.timeline-item').forEach(el => observer.observe(el));
+document.querySelectorAll('.rel-card').forEach(el => observer.observe(el));
+
+// Power section observer
+const powerObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.power-section').forEach(el => powerObs.observe(el));
+
+// ═══════ HERO CRYSTALS FADE IN ═══════
+setTimeout(() => {
+  document.querySelectorAll('.hero-crystal').forEach((c, i) => {
+    setTimeout(() => { c.style.opacity = '1'; }, i * 400 + 1000);
+  });
+}, 500);
+
+// ═══════ PARALLAX ON HERO ═══════
+window.addEventListener('scroll', () => {
+  const scroll = window.scrollY;
+  const hero = document.querySelector('.hero');
+  if (scroll < window.innerHeight) {
+    hero.style.transform = `translateY(${scroll * 0.3}px)`;
+    hero.style.opacity = 1 - scroll / window.innerHeight;
+  }
+});
+</script>
+</body>
+</html>
