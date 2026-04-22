@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 小怪兽排排站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:    #FFF4D6;
+    --ink:      #2A2A4A;
+    --ink-soft: #4A4A6A;
+    --coral:    #FF5E5B;
+    --yellow:   #FFC93D;
+    --mint:     #4ECDC4;
+    --blue:     #4D96FF;
+    --purple:   #9B5DE5;
+    --pink:     #FF80B5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,140,66,0.18) 0%, transparent 40%),
+      radial-gradient(circle at 85% 70%, rgba(78,205,196,0.22) 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(155,93,229,0.18) 0%, transparent 40%),
+      var(--cream);
+    background-attachment: fixed;
+  }
+
+  .deco {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+    font-size: 2.5rem;
+    animation: float 6s ease-in-out infinite;
+  }
+  .deco.d1 { top: 6%; left: 4%; animation-delay: 0s; }
+  .deco.d2 { top: 20%; right: 5%; animation-delay: 1.5s; font-size: 2.8rem; }
+  .deco.d3 { top: 70%; left: 3%; animation-delay: 3s; }
+  .deco.d4 { top: 85%; right: 6%; animation-delay: 4s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-18px) rotate(5deg); }
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .title-row {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .sticker {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transform: rotate(-3deg);
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.1;
+    color: var(--ink);
+    text-shadow: 4px 4px 0 var(--yellow), 4px 4px 0 2px var(--ink);
+    margin-bottom: 8px;
+  }
+  .intro {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .hud {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 8px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    min-width: 110px;
+    text-align: center;
+  }
+  .hud-item .label {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .hud-item .value {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.8rem;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .hud-item.min .value { color: var(--coral); }
+
+  .guess-card {
+    background: linear-gradient(135deg, #FFF4D6 0%, #FFE5E5 100%);
+    border: 3px dashed var(--coral);
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    text-align: center;
+    box-shadow: 4px 4px 0 rgba(255, 94, 91, 0.3);
+    animation: popin 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .guess-card.hidden { display: none; }
+  .guess-card p {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .guess-card p b { color: var(--coral); }
+  .guess-row {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .guess-row input {
+    width: 80px;
+    padding: 8px;
+    font-size: 1.6rem;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    text-align: center;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    background: white;
+    color: var(--ink);
+  }
+  .guess-row input:focus { outline: none; border-color: var(--coral); }
+
+  .stage-wrap {
+    background: white;
+    border: 4px solid var(--ink);
+    border-radius: 24px;
+    padding: 24px 14px 20px;
+    box-shadow: 6px 6px 0 var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .stage-wrap::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: var(--yellow);
+    border-radius: 50%;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .stage {
+    position: relative;
+    height: 280px;
+    width: 100%;
+  }
+  .ground {
+    position: absolute;
+    bottom: 40px;
+    left: 8px; right: 8px;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 20px);
+    border-radius: 2px;
+  }
+
+  .monster {
+    position: absolute;
+    bottom: 44px;
+    border-radius: 30px 30px 12px 12px;
+    border: 3px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 6px;
+    transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s;
+    will-change: left;
+  }
+  .monster .face {
+    font-size: 1.5rem;
+    line-height: 1;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  .monster .eyes {
+    position: absolute;
+    bottom: 14px;
+    display: flex;
+    gap: 5px;
+  }
+  .monster .eye {
+    width: 7px; height: 7px;
+    background: var(--ink);
+    border-radius: 50%;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+  .monster.cheer {
+    animation: cheer 0.6s ease-in-out;
+  }
+  @keyframes cheer {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    25%      { transform: translateY(-12px) rotate(-8deg); }
+    50%      { transform: translateY(-8px) rotate(8deg); }
+    75%      { transform: translateY(-14px) rotate(-4deg); }
+  }
+
+  .swap-btn {
+    position: absolute;
+    bottom: 4px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: white;
+    border: 3px solid var(--ink);
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, background 0.2s;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+    padding: 0;
+  }
+  .swap-btn:hover { background: var(--coral); transform: scale(1.15); }
+  .swap-btn:active { transform: scale(0.9); }
+  .swap-btn.pop {
+    animation: pop 0.3s ease-out;
+  }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.3); background: var(--coral); }
+    100% { transform: scale(1); }
+  }
+
+  .hint {
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    margin-top: 12px;
+  }
+  .hint b { color: var(--coral); }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  button.btn {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.1rem;
+    padding: 10px 22px;
+    border-radius: 30px;
+    border: 3px solid var(--ink);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.12s, box-shadow 0.12s;
+    background: white;
+    color: var(--ink);
+  }
+  button.btn.primary { background: var(--yellow); }
+  button.btn.hot     { background: var(--coral); color: white; }
+  button.btn:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); }
+  button.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 10px 22px;
+    font-weight: 700;
+    box-shadow: 4px 4px 0 var(--ink);
+    z-index: 101;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 1rem;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(42, 42, 74, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: white;
+    border: 4px solid var(--ink);
+    border-radius: 24px;
+    padding: 30px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 8px 8px 0 var(--ink);
+    text-align: center;
+    animation: popin 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popin {
+    0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; }
+    60%  { transform: scale(1.05) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .modal h2 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .modal p {
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+  .modal p b { color: var(--coral); }
+  .stars {
+    font-size: 2.6rem;
+    margin: 14px 0;
+    letter-spacing: 8px;
+    animation: pop-stars 0.8s ease-out;
+  }
+  @keyframes pop-stars {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    z-index: 99;
+    pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 16px 10px 40px; }
+    .hud-item { min-width: 90px; padding: 6px 12px; }
+    .hud-item .value { font-size: 1.5rem; }
+    .stage { height: 240px; }
+    .hint { font-size: 0.85rem; }
+    .deco { font-size: 1.6rem !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deco d1">⭐</div>
+<div class="deco d2">🌈</div>
+<div class="deco d3">✨</div>
+<div class="deco d4">🎈</div>
+
+<div class="page">
+  <div class="title-row">
+    <span class="sticker">🎯 动动脑 · 排一排</span>
+    <h1>🌈 小怪兽排排站 🌈</h1>
+    <p class="intro">
+      每次只能交换<b>挨在一起</b>的两只小怪兽。<br>
+      把它们从 <b>矮 → 高</b> 排好，看看最少要几步！
+    </p>
+  </div>
+
+  <div class="hud">
+    <div class="hud-item">
+      <div class="label">关卡</div>
+      <div class="value" id="hud-level">1</div>
+    </div>
+    <div class="hud-item">
+      <div class="label">步数</div>
+      <div class="value" id="hud-steps">0</div>
+    </div>
+    <div class="hud-item min">
+      <div class="label">最少</div>
+      <div class="value" id="hud-min">?</div>
+    </div>
+  </div>
+
+  <div class="guess-card hidden" id="guess-card">
+    <p>🧠 看看这些小怪兽，你觉得<b>最少几步</b>能排好？</p>
+    <div class="guess-row">
+      <input type="number" id="guess-input" min="1" max="99" inputmode="numeric" placeholder="?">
+      <button class="btn hot" id="btn-guess">猜！</button>
+      <button class="btn" id="btn-giveup">不猜了，直接玩</button>
+    </div>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="ground"></div>
+    </div>
+    <p class="hint">👉 点中间的圆按钮 <b>↔</b> 交换两只挨着的小怪兽</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btn-restart">🔄 打乱重来</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Level complete modal -->
+<div class="modal-bg" id="modal-complete">
+  <div class="modal">
+    <h2 id="complete-title">🎉 完成啦！</h2>
+    <div class="stars" id="complete-stars">⭐⭐⭐</div>
+    <p id="complete-text"></p>
+    <div class="actions">
+      <button class="btn primary" id="btn-next">下一关 →</button>
+      <button class="btn" id="btn-retry">再来一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guess-correct skip modal -->
+<div class="modal-bg" id="modal-skip">
+  <div class="modal">
+    <h2>🌟 天才！</h2>
+    <div class="stars">⭐⭐⭐</div>
+    <p id="skip-text"></p>
+    <p style="font-size:0.85rem;">猜对了，这一关直接通关！</p>
+    <div class="actions">
+      <button class="btn primary" id="btn-skip-next">下一关 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const COLORS = ['#FF8FA3','#FFB570','#FFD93D','#95E08E','#7FD8E8','#B39DDB','#F48FB1','#80CBC4'];
+  const FACES  = ['😊','😎','🥳','🤗','😋','🥰','🤩','😄'];
+  const BASE_HEIGHT = 55;
+  const HEIGHT_STEP = 22;
+
+  // --- state ---
+  let level = 1;
+  let values = [];            // values[i] = monster value at position i; sorted = ascending
+  let steps = 0;
+  let minSteps = 0;
+  let locked = false;
+  let showMin = false;        // HUD min visibility for current level
+  let awaitingGuess = false;  // guess card is active (level >= 2, not yet decided)
+
+  // --- elements ---
+  const stage = document.getElementById('stage');
+  const hudLevel = document.getElementById('hud-level');
+  const hudSteps = document.getElementById('hud-steps');
+  const hudMin = document.getElementById('hud-min');
+  const guessCard = document.getElementById('guess-card');
+  const guessInput = document.getElementById('guess-input');
+  const modalComplete = document.getElementById('modal-complete');
+  const modalSkip = document.getElementById('modal-skip');
+  const toastEl = document.getElementById('toast');
+
+  // --- helpers ---
+  function getItemCount(lvl) {
+    return Math.min(3 + lvl, 7); // 4, 5, 6, 7, 7, 7...
+  }
+
+  function shuffleArr(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function inversions(arr) {
+    let c = 0;
+    for (let i = 0; i < arr.length; i++)
+      for (let j = i + 1; j < arr.length; j++)
+        if (arr[i] > arr[j]) c++;
+    return c;
+  }
+
+  function isSorted(arr) {
+    for (let i = 1; i < arr.length; i++)
+      if (arr[i] < arr[i - 1]) return false;
+    return true;
+  }
+
+  function minInvForLevel(lvl) {
+    // keep challenge interesting, within kid range
+    if (lvl === 1) return 2;
+    if (lvl === 2) return 3;
+    return Math.min(4, getItemCount(lvl) - 1);
+  }
+
+  // --- audio (simple WebAudio blips) ---
+  let audioCtx = null;
+  function beep(freq, dur = 0.12, type = 'sine', vol = 0.18) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + dur);
+    } catch (e) { /* ignore */ }
+  }
+  function playSwap() { beep(440 + Math.random() * 120, 0.08, 'triangle'); }
+  function playWin() {
+    [523, 659, 784, 988].forEach((f, i) => setTimeout(() => beep(f, 0.22, 'triangle', 0.22), i * 100));
+  }
+  function playWrong() { beep(220, 0.18, 'square', 0.15); }
+  function playStar() { beep(1200, 0.08, 'sine', 0.2); setTimeout(() => beep(1600, 0.12, 'sine', 0.2), 90); }
+
+  // --- rendering ---
+  function sizes() {
+    const n = values.length || 1;
+    const stageW = stage.clientWidth;
+    const slotW = stageW / n;
+    const itemW = Math.max(36, Math.min(62, slotW - 10));
+    const btnW = Math.max(30, Math.min(44, slotW - 12));
+    return { slotW, itemW, btnW };
+  }
+
+  function buildMonster(val, pos, slotW, itemW) {
+    const el = document.createElement('div');
+    el.className = 'monster';
+    el.dataset.val = val;
+    el.dataset.pos = pos;
+    el.style.width = itemW + 'px';
+    el.style.height = (BASE_HEIGHT + val * HEIGHT_STEP) + 'px';
+    el.style.background = COLORS[(val - 1) % COLORS.length];
+    el.style.left = (pos * slotW + (slotW - itemW) / 2) + 'px';
+    const face = document.createElement('span');
+    face.className = 'face';
+    face.textContent = FACES[(val - 1) % FACES.length];
+    el.appendChild(face);
+    const eyes = document.createElement('div');
+    eyes.className = 'eyes';
+    eyes.innerHTML = '<div class="eye"></div><div class="eye"></div>';
+    el.appendChild(eyes);
+    return el;
+  }
+
+  function buildSwapBtn(slotIdx, slotW, btnW) {
+    const btn = document.createElement('button');
+    btn.className = 'swap-btn';
+    btn.dataset.slot = slotIdx;
+    btn.textContent = '↔';
+    btn.style.width = btnW + 'px';
+    btn.style.height = btnW + 'px';
+    btn.style.fontSize = (btnW * 0.5) + 'px';
+    btn.style.left = ((slotIdx + 1) * slotW - btnW / 2) + 'px';
+    btn.addEventListener('click', () => handleSwap(slotIdx, btn));
+    return btn;
+  }
+
+  function renderStage() {
+    [...stage.querySelectorAll('.monster, .swap-btn')].forEach(el => el.remove());
+    const { slotW, itemW, btnW } = sizes();
+    for (let i = 0; i < values.length; i++) {
+      stage.appendChild(buildMonster(values[i], i, slotW, itemW));
+    }
+    for (let i = 0; i < values.length - 1; i++) {
+      stage.appendChild(buildSwapBtn(i, slotW, btnW));
+    }
+  }
+
+  function updatePositions() {
+    const { slotW, itemW, btnW } = sizes();
+    const monsters = [...stage.querySelectorAll('.monster')];
+    monsters.forEach(el => {
+      const v = parseInt(el.dataset.val, 10);
+      const pos = values.indexOf(v);
+      el.dataset.pos = pos;
+      el.style.width = itemW + 'px';
+      el.style.left = (pos * slotW + (slotW - itemW) / 2) + 'px';
+    });
+    [...stage.querySelectorAll('.swap-btn')].forEach((btn, i) => {
+      btn.style.width = btnW + 'px';
+      btn.style.height = btnW + 'px';
+      btn.style.fontSize = (btnW * 0.5) + 'px';
+      btn.style.left = ((i + 1) * slotW - btnW / 2) + 'px';
+    });
+  }
+
+  function updateHUD() {
+    hudLevel.textContent = level;
+    hudSteps.textContent = steps;
+    hudMin.textContent = showMin ? minSteps : '?';
+  }
+
+  // --- game flow ---
+  function startLevel(lvl, opts = {}) {
+    const allowGuess = opts.allowGuess !== false; // default true; retry passes false
+    level = lvl;
+    steps = 0;
+    locked = false;
+    showMin = false;
+    awaitingGuess = false;
+    const count = getItemCount(lvl);
+    const minInv = minInvForLevel(lvl);
+    let attempts = 0;
+    do {
+      values = shuffleArr(Array.from({ length: count }, (_, i) => i + 1));
+      attempts++;
+      if (attempts > 40) break;
+    } while (isSorted(values) || inversions(values) < minInv);
+    minSteps = inversions(values);
+    renderStage();
+    updateHUD();
+    if (lvl >= 2 && allowGuess) {
+      awaitingGuess = true;
+      locked = true;
+      setTimeout(() => {
+        guessCard.classList.remove('hidden');
+        guessInput.value = '';
+        guessInput.focus();
+      }, 350);
+    } else {
+      guessCard.classList.add('hidden');
+    }
+  }
+
+  function handleSwap(i, btnEl) {
+    if (locked) {
+      if (awaitingGuess) toast('先猜一猜最少几步～');
+      return;
+    }
+    locked = true;
+    if (btnEl) {
+      btnEl.classList.remove('pop');
+      void btnEl.offsetWidth;
+      btnEl.classList.add('pop');
+    }
+    [values[i], values[i + 1]] = [values[i + 1], values[i]];
+    steps++;
+    playSwap();
+    updatePositions();
+    updateHUD();
+    setTimeout(() => {
+      locked = false;
+      if (isSorted(values)) onComplete(false);
+    }, 470);
+  }
+
+  function cheerMonsters() {
+    [...stage.querySelectorAll('.monster')].forEach((el, i) => {
+      setTimeout(() => {
+        el.classList.remove('cheer');
+        void el.offsetWidth;
+        el.classList.add('cheer');
+      }, i * 80);
+    });
+  }
+
+  function onComplete(skipped) {
+    locked = true;
+    showMin = true;
+    updateHUD();
+    cheerMonsters();
+    launchConfetti();
+    playWin();
+
+    const title = document.getElementById('complete-title');
+    const stars = document.getElementById('complete-stars');
+    const text = document.getElementById('complete-text');
+    let starCount;
+    if (steps === minSteps) starCount = 3;
+    else if (steps <= minSteps + 2) starCount = 2;
+    else starCount = 1;
+    stars.textContent = '⭐'.repeat(starCount) + '☆'.repeat(3 - starCount);
+    setTimeout(playStar, 400);
+
+    if (steps === minSteps) {
+      title.textContent = '🏆 完美！';
+      text.innerHTML = `你用了 <b>${steps}</b> 步，就是最少的步数！太厉害啦～`;
+    } else {
+      title.textContent = '🎉 完成啦！';
+      text.innerHTML = `你用了 <b>${steps}</b> 步。<br>💡 最少其实只要 <b>${minSteps}</b> 步哦～`;
+    }
+    setTimeout(() => modalComplete.classList.add('show'), 500);
+  }
+
+  function onGuess() {
+    if (!awaitingGuess) return;
+    const v = parseInt(guessInput.value, 10);
+    if (!v || v < 1) { guessInput.focus(); return; }
+    if (v === minSteps) {
+      // correct → skip this level
+      awaitingGuess = false;
+      guessCard.classList.add('hidden');
+      steps = minSteps;
+      showMin = true;
+      updateHUD();
+      // auto-sort visuals for flair
+      values = Array.from({ length: values.length }, (_, i) => i + 1);
+      updatePositions();
+      cheerMonsters();
+      launchConfetti();
+      playWin();
+      document.getElementById('skip-text').innerHTML =
+        `你一下就猜中了 <b>${minSteps}</b> 步！`;
+      setTimeout(() => modalSkip.classList.add('show'), 600);
+    } else {
+      playWrong();
+      const diff = v > minSteps ? '有点多啦' : '有点少啦';
+      toast(`🤔 不是 ${v} 哦，${diff}！那就来排排看～`);
+      awaitingGuess = false;
+      guessCard.classList.add('hidden');
+      locked = false;
+    }
+  }
+
+  function giveUpGuess() {
+    if (!awaitingGuess) return;
+    awaitingGuess = false;
+    guessCard.classList.add('hidden');
+    locked = false;
+  }
+
+  // --- toast ---
+  let toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  // --- confetti ---
+  function launchConfetti() {
+    const palette = ['#FF5E5B','#FFC93D','#4ECDC4','#4D96FF','#9B5DE5','#FF80B5','#95E08E'];
+    for (let i = 0; i < 70; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.background = palette[Math.floor(Math.random() * palette.length)];
+      c.style.left = (Math.random() * 100) + '%';
+      const size = 6 + Math.random() * 12;
+      c.style.width = size + 'px';
+      c.style.height = (size * (0.4 + Math.random() * 0.8)) + 'px';
+      c.style.animationDuration = (1.4 + Math.random() * 1.8) + 's';
+      c.style.animationDelay = (Math.random() * 0.4) + 's';
+      if (Math.random() < 0.4) c.style.borderRadius = '50%';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3500);
+    }
+  }
+
+  // --- wire up buttons ---
+  document.getElementById('btn-next').onclick = () => {
+    modalComplete.classList.remove('show');
+    startLevel(level + 1);
+  };
+  document.getElementById('btn-retry').onclick = () => {
+    modalComplete.classList.remove('show');
+    startLevel(level, { allowGuess: false });
+  };
+  document.getElementById('btn-skip-next').onclick = () => {
+    modalSkip.classList.remove('show');
+    startLevel(level + 1);
+  };
+  document.getElementById('btn-restart').onclick = () => startLevel(level, { allowGuess: false });
+  document.getElementById('btn-guess').onclick = onGuess;
+  document.getElementById('btn-giveup').onclick = giveUpGuess;
+  guessInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') onGuess();
+  });
+
+  window.addEventListener('resize', () => {
+    if (values.length) updatePositions();
+  });
+
+  // boot
+  startLevel(1);
+})();
+</script>
+</body>
+</html>
