@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日任务卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#F4F0FF;
+  --pool-bg:#FFFFFF;
+  --card-bg:#FFFFFF;
+  --px-min:2.4;
+}
+
+body{
+  font-family:'Noto Sans SC','Nunito',sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* === ambient bg === */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 600px 400px at 15% 10%,rgba(255,183,77,.12),transparent),
+    radial-gradient(ellipse 500px 500px at 85% 85%,rgba(129,212,250,.12),transparent),
+    radial-gradient(ellipse 400px 300px at 50% 50%,rgba(206,147,216,.08),transparent);
+}
+
+/* === header === */
+.header{
+  text-align:center;padding:24px 20px 8px;position:relative;z-index:1;
+}
+.header h1{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:2rem;
+  background:linear-gradient(135deg,#FF6B6B,#FFD93D,#4ECDC4,#6C5CE7);
+  background-size:300% 300%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gShift 5s ease infinite;
+}
+.header p{color:#AAA;font-size:.8rem;margin-top:2px;font-weight:500}
+@keyframes gShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+/* === layout === */
+.layout{
+  display:flex;gap:24px;max-width:960px;margin:0 auto;
+  padding:12px 24px 40px;position:relative;z-index:1;
+  align-items:flex-start;
+}
+
+/* === task pool === */
+.pool{width:260px;flex-shrink:0;position:sticky;top:16px}
+.pool-label{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:1rem;color:#888;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.pool-label::before{content:'🧩';font-size:1.1rem}
+.pool-grid{
+  background:var(--pool-bg);border-radius:16px;padding:12px;
+  display:flex;flex-wrap:wrap;gap:8px;
+  box-shadow:0 2px 16px rgba(0,0,0,.04);border:2px solid #EDE7F6;
+}
+
+/* task chip */
+.chip{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 12px;border-radius:10px;
+  cursor:grab;user-select:none;font-weight:700;font-size:.78rem;
+  border:2px solid transparent;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  position:relative;white-space:nowrap;
+}
+.chip:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.chip:active{cursor:grabbing;transform:scale(1.06);z-index:99}
+.chip .ico{font-size:1rem;line-height:1}
+.chip .dur{
+  font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:12px;
+  background:rgba(255,255,255,.55);margin-left:2px;
+}
+.chip.used{opacity:.3;pointer-events:none;transform:scale(.94)}
+
+/* chip colors */
+.chip[data-t="abc"]{background:#FFE0E0;border-color:#FF6B6B;color:#D32F2F}
+.chip[data-t="daily"]{background:#D4F5F2;border-color:#4ECDC4;color:#00796B}
+.chip[data-t="piano"]{background:#FFF4CC;border-color:#FFD93D;color:#F57F17}
+.chip[data-t="sgmath"]{background:#E4E0FF;border-color:#6C5CE7;color:#4527A0}
+.chip[data-t="mathbook"]{background:#FFE4D6;border-color:#FF8A5C;color:#BF360C}
+.chip[data-t="writing"]{background:#E0F7ED;border-color:#66BB6A;color:#2E7D32}
+.chip[data-t="reading"]{background:#FFE0F0;border-color:#FF78C4;color:#AD1457}
+.chip[data-t="rwi"]{background:#D6F0F8;border-color:#45B7D1;color:#0277BD}
+.chip[data-t="calli"]{background:#FDE0F5;border-color:#F97FD9;color:#8E24AA}
+.chip[data-t="parkour"]{background:#D4F7E5;border-color:#26DE81;color:#1B5E20}
+
+/* === card area === */
+.card-area{flex:1;min-width:0}
+
+.card-toolbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;
+}
+.btn{
+  padding:6px 16px;border:none;border-radius:8px;
+  font-family:'Noto Sans SC',sans-serif;font-weight:700;font-size:.78rem;
+  cursor:pointer;transition:all .15s;
+}
+.btn-clear{background:#FFE0E0;color:#E53935}
+.btn-clear:hover{background:#FFCDD2;transform:translateY(-1px)}
+.btn-print{background:#E8EAF6;color:#5C6BC0}
+.btn-print:hover{background:#C5CAE9;transform:translateY(-1px)}
+
+/* === the card === */
+.card{
+  background:var(--card-bg);border-radius:20px;
+  box-shadow:0 4px 24px rgba(0,0,0,.06);
+  overflow:hidden;border:3px solid #EDE7F6;
+  position:relative;
+}
+
+.card-head{
+  background:linear-gradient(135deg,#FF6B6B 0%,#FF8A5C 25%,#FFD93D 50%,#4ECDC4 75%,#6C5CE7 100%);
+  padding:20px 24px 22px;position:relative;overflow:hidden;
+}
+.card-head::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:18px;
+  background:var(--card-bg);border-radius:50% 50% 0 0 / 100% 100% 0 0;
+}
+.card-head .dots{
+  position:absolute;top:10px;right:14px;display:flex;gap:5px;
+}
+.card-head .dots i{
+  width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);display:block;
+}
+.card-head .title{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:1.5rem;color:#fff;
+  text-shadow:0 2px 6px rgba(0,0,0,.12);
+  outline:none;background:none;border:none;cursor:text;display:block;
+  min-width:80px;
+}
+.card-head .date{
+  color:rgba(255,255,255,.85);font-size:.72rem;font-weight:600;margin-top:1px;
+}
+
+/* drop body */
+.card-body{padding:16px 20px 8px;position:relative}
+
+.drop{
+  min-height:200px;display:flex;flex-direction:column;gap:6px;
+  border-radius:12px;transition:background .2s;position:relative;
+}
+.drop.over{background:rgba(108,92,231,.04)}
+
+.drop-hint{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;
+  color:#CCC;font-size:.85rem;gap:6px;
+}
+.drop-hint .arr{font-size:2.2rem;animation:bob 2s ease infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.drop-hint.hide{display:none}
+
+/* === schedule block (on card) === */
+.block{
+  display:flex;align-items:center;border-radius:12px;
+  cursor:grab;position:relative;
+  transition:transform .12s,box-shadow .12s;
+  overflow:hidden;
+}
+.block:hover{transform:scale(1.015);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.block:active{cursor:grabbing}
+.block.dragging{opacity:.35;transform:scale(.97)}
+
+.block .bar{
+  flex:1;display:flex;align-items:center;gap:10px;
+  padding:0 14px;position:relative;
+}
+.block .bar .ico{font-size:1.15rem}
+.block .bar .name{font-weight:700;font-size:.85rem}
+.block .bar .mins{
+  font-size:.68rem;font-weight:800;
+  padding:2px 8px;border-radius:10px;
+  background:rgba(255,255,255,.5);
+  margin-left:auto;
+}
+
+.block .rm{
+  position:absolute;top:5px;right:6px;width:18px;height:18px;
+  border-radius:50%;border:none;background:rgba(0,0,0,.08);color:rgba(0,0,0,.3);
+  font-size:.62rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s,background .15s;
+}
+.block:hover .rm{opacity:1}
+.block .rm:hover{background:rgba(255,0,0,.15);color:rgba(255,0,0,.6)}
+
+/* block colors */
+.block[data-t="abc"]{background:linear-gradient(135deg,#FFE0E0,#FFF5F5);border-left:5px solid #FF6B6B}
+.block[data-t="abc"] .bar .name{color:#D32F2F}
+.block[data-t="daily"]{background:linear-gradient(135deg,#D4F5F2,#F0FDFC);border-left:5px solid #4ECDC4}
+.block[data-t="daily"] .bar .name{color:#00796B}
+.block[data-t="piano"]{background:linear-gradient(135deg,#FFF4CC,#FFFDF0);border-left:5px solid #FFD93D}
+.block[data-t="piano"] .bar .name{color:#F57F17}
+.block[data-t="sgmath"]{background:linear-gradient(135deg,#E4E0FF,#F5F3FF);border-left:5px solid #6C5CE7}
+.block[data-t="sgmath"] .bar .name{color:#4527A0}
+.block[data-t="mathbook"]{background:linear-gradient(135deg,#FFE4D6,#FFF8F4);border-left:5px solid #FF8A5C}
+.block[data-t="mathbook"] .bar .name{color:#BF360C}
+.block[data-t="writing"]{background:linear-gradient(135deg,#E0F7ED,#F4FFF8);border-left:5px solid #66BB6A}
+.block[data-t="writing"] .bar .name{color:#2E7D32}
+.block[data-t="reading"]{background:linear-gradient(135deg,#FFE0F0,#FFF5FA);border-left:5px solid #FF78C4}
+.block[data-t="reading"] .bar .name{color:#AD1457}
+.block[data-t="rwi"]{background:linear-gradient(135deg,#D6F0F8,#F0FAFD);border-left:5px solid #45B7D1}
+.block[data-t="rwi"] .bar .name{color:#0277BD}
+.block[data-t="calli"]{background:linear-gradient(135deg,#FDE0F5,#FFF5FC);border-left:5px solid #F97FD9}
+.block[data-t="calli"] .bar .name{color:#8E24AA}
+.block[data-t="parkour"]{background:linear-gradient(135deg,#D4F7E5,#F0FFF5);border-left:5px solid #26DE81}
+.block[data-t="parkour"] .bar .name{color:#1B5E20}
+
+/* drop indicator line */
+.ind{
+  height:3px;border-radius:2px;background:#6C5CE7;
+  margin:0 4px;box-shadow:0 0 8px rgba(108,92,231,.35);
+  flex-shrink:0;
+}
+
+/* card footer */
+.card-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 20px 16px;border-top:2px dashed #EDE7F6;margin:4px 14px 0;
+}
+.card-foot .total{font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:#AAA}
+.card-foot .total b{color:#6C5CE7;font-size:1.05rem}
+.card-foot .cnt{font-size:.72rem;color:#CCC;font-weight:600}
+
+/* === print === */
+@media print{
+  body{background:#fff !important}
+  body::before,.pool,.card-toolbar,.header,.rm{display:none !important}
+  .layout{padding:0;justify-content:center}
+  .card{border:2px solid #ddd;box-shadow:none}
+  .card-area{flex:none;width:100%;max-width:440px}
+}
+
+/* === mobile === */
+@media(max-width:720px){
+  .layout{flex-direction:column;padding:8px 14px 32px;gap:14px}
+  .pool{width:100%;position:static}
+  .pool-grid{gap:6px}
+  .chip{padding:6px 9px;font-size:.72rem}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>每日任务卡</h1>
+  <p>从左侧拖拽任务，搭建今日学习计划</p>
+</div>
+
+<div class="layout">
+  <div class="pool">
+    <div class="pool-label">任务积木</div>
+    <div class="pool-grid" id="pool"></div>
+  </div>
+  <div class="card-area">
+    <div class="card-toolbar">
+      <span style="flex:1"></span>
+      <button class="btn btn-clear" id="btnClear">清空</button>
+      <button class="btn btn-print" id="btnPrint">打印</button>
+    </div>
+    <div class="card" id="card">
+      <div class="card-head">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="title" contenteditable="true" spellcheck="false">今日任务</div>
+        <div class="date" id="dateEl"></div>
+      </div>
+      <div class="card-body">
+        <div class="drop" id="drop">
+          <div class="drop-hint" id="hint">
+            <div class="arr">⬇</div>
+            <div>把任务积木拖到这里</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <div class="total">合计 <b id="totalEl">0</b> 分钟</div>
+        <div class="cnt" id="cntEl">0 个任务</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TASKS=[
+  {id:'abc1',   t:'abc',     name:'ABC Reading', min:20, ico:'📖'},
+  {id:'abc2',   t:'abc',     name:'ABC Reading', min:20, ico:'📖'},
+  {id:'daily',  t:'daily',   name:'天天练',       min:15, ico:'✏️'},
+  {id:'piano',  t:'piano',   name:'练钢琴',       min:15, ico:'🎹'},
+  {id:'sgmath', t:'sgmath',  name:'新加坡数学',    min:60, ico:'🧮'},
+  {id:'mathbook',t:'mathbook',name:'数学练习册',   min:15, ico:'📐'},
+  {id:'writing',t:'writing', name:'写字',         min:20, ico:'🖊️'},
+  {id:'reading',t:'reading', name:'读书',         min:10, ico:'📚'},
+  {id:'rwi',    t:'rwi',     name:'RWI阅读',     min:15, ico:'🔤'},
+  {id:'calli',  t:'calli',   name:'练字课',       min:60, ico:'🖌️'},
+  {id:'parkour',t:'parkour', name:'跑酷课',       min:50, ico:'🤸'},
+];
+
+const PX=2.4; // px per minute
+let sched=[];
+let dragId=null, fromSched=false;
+
+const poolEl=document.getElementById('pool');
+const dropEl=document.getElementById('drop');
+const hintEl=document.getElementById('hint');
+const totalEl=document.getElementById('totalEl');
+const cntEl=document.getElementById('cntEl');
+const dateEl=document.getElementById('dateEl');
+
+(function init(){
+  const d=new Date();
+  const w=['日','一','二','三','四','五','六'];
+  dateEl.textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${w[d.getDay()]}`;
+  render();
+  document.getElementById('btnClear').onclick=()=>{sched=[];render()};
+  document.getElementById('btnPrint').onclick=()=>window.print();
+  dropEl.addEventListener('dragover',onDropOver);
+  dropEl.addEventListener('dragleave',onDropLeave);
+  dropEl.addEventListener('drop',onDrop);
+})();
+
+/* ---- render ---- */
+function render(){
+  // pool
+  poolEl.innerHTML='';
+  TASKS.forEach(t=>{
+    const el=document.createElement('div');
+    el.className='chip'+(sched.includes(t.id)?' used':'');
+    el.dataset.t=t.t;el.dataset.id=t.id;el.draggable=true;
+    el.innerHTML=`<span class="ico">${t.ico}</span><span>${t.name}</span><span class="dur">${t.min}分</span>`;
+    el.addEventListener('dragstart',onChipDragStart);
+    el.addEventListener('dragend',onDragEnd);
+    poolEl.appendChild(el);
+  });
+
+  // drop zone
+  dropEl.querySelectorAll('.block,.ind').forEach(e=>e.remove());
+  hintEl.classList.toggle('hide',sched.length>0);
+
+  sched.forEach((id,i)=>{
+    const t=TASKS.find(x=>x.id===id);if(!t)return;
+    const h=Math.max(t.min*PX,40);
+    const el=document.createElement('div');
+    el.className='block';el.dataset.t=t.t;el.dataset.id=id;el.dataset.i=i;
+    el.draggable=true;
+    el.style.minHeight=h+'px';
+    el.innerHTML=`
+      <div class="bar">
+        <span class="ico">${t.ico}</span>
+        <span class="name">${t.name}</span>
+        <span class="mins">${t.min} 分钟</span>
+      </div>
+      <button class="rm" title="移除">✕</button>
+    `;
+    el.querySelector('.rm').addEventListener('click',e=>{e.stopPropagation();sched.splice(i,1);render()});
+    el.addEventListener('dragstart',onBlockDragStart);
+    el.addEventListener('dragend',onDragEnd);
+    el.addEventListener('dragover',onBlockOver);
+    el.addEventListener('drop',onBlockDrop);
+    dropEl.appendChild(el);
+  });
+
+  const tot=sched.reduce((s,id)=>{const t=TASKS.find(x=>x.id===id);return s+(t?t.min:0)},0);
+  totalEl.textContent=tot;
+  cntEl.textContent=sched.length+' 个任务';
+}
+
+/* ---- pool drag ---- */
+function onChipDragStart(e){
+  dragId=e.currentTarget.dataset.id;fromSched=false;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',dragId);
+  e.currentTarget.style.opacity='.4';
+}
+
+/* ---- block drag (reorder) ---- */
+function onBlockDragStart(e){
+  dragId=e.currentTarget.dataset.id;fromSched=true;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',dragId);
+  e.currentTarget.classList.add('dragging');
+}
+
+function onDragEnd(e){
+  e.currentTarget.style.opacity='';
+  e.currentTarget.classList.remove('dragging');
+  dragId=null;fromSched=false;
+  dropEl.classList.remove('over');
+  dropEl.querySelectorAll('.ind').forEach(x=>x.remove());
+}
+
+/* ---- drop zone ---- */
+function onDropOver(e){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  dropEl.classList.add('over');
+  if(e.target===dropEl||e.target===hintEl||e.target.closest('.drop-hint')){
+    clearInd();showInd(sched.length);
+  }
+}
+function onDropLeave(e){
+  if(!dropEl.contains(e.relatedTarget)){dropEl.classList.remove('over');clearInd()}
+}
+function onDrop(e){
+  e.preventDefault();dropEl.classList.remove('over');clearInd();
+  const id=e.dataTransfer.getData('text/plain');if(!id)return;
+  if(fromSched){
+    const oi=sched.indexOf(id);if(oi>-1){sched.splice(oi,1);sched.push(id)}
+  }else{
+    if(!sched.includes(id))sched.push(id);
+  }
+  render();
+}
+
+/* ---- block dragover / drop (reorder) ---- */
+function onBlockOver(e){
+  e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';
+  const el=e.currentTarget,r=el.getBoundingClientRect();
+  const idx=+el.dataset.i,ins=e.clientY<r.top+r.height/2?idx:idx+1;
+  clearInd();showInd(ins);
+}
+function onBlockDrop(e){
+  e.preventDefault();e.stopPropagation();clearInd();
+  const id=e.dataTransfer.getData('text/plain');if(!id)return;
+  const el=e.currentTarget,r=el.getBoundingClientRect();
+  let ins=+el.dataset.i;if(e.clientY>=r.top+r.height/2)ins++;
+  if(fromSched){
+    const oi=sched.indexOf(id);if(oi>-1){sched.splice(oi,1);if(ins>oi)ins--;sched.splice(ins,0,id)}
+  }else{
+    if(!sched.includes(id))sched.splice(ins,0,id);
+  }
+  render();
+}
+
+/* ---- helpers ---- */
+function clearInd(){dropEl.querySelectorAll('.ind').forEach(x=>x.remove())}
+function showInd(at){
+  const d=document.createElement('div');d.className='ind';
+  const items=dropEl.querySelectorAll('.block');
+  at>=items.length?dropEl.appendChild(d):dropEl.insertBefore(d,items[at]);
+}
+</script>
+</body>
+</html>

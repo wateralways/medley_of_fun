@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 乘法的奇妙世界</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:    #FFF4D6;
+    --coral:    #FF5E5B;
+    --yellow:   #FFC93D;
+    --mint:     #4ECDC4;
+    --blue:     #4D96FF;
+    --purple:   #9B5DE5;
+    --pink:     #FF80B5;
+    --orange:   #FF8C42;
+    --sunset:   #FF6B35;
+    --ink:      #2A2A4A;
+    --ink-soft: #4A4A6A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--cream);
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,140,66,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(78,205,196,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(155,93,229,0.08) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+
+  .deco {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+    animation: float 6s ease-in-out infinite;
+  }
+  .deco.d1 { top: 8%; left: 4%; font-size: 2.5rem; animation-delay: 0s; }
+  .deco.d2 { top: 25%; right: 5%; font-size: 3rem; animation-delay: 1.5s; }
+  .deco.d3 { top: 60%; left: 3%; font-size: 2rem; animation-delay: 3s; }
+  .deco.d4 { top: 80%; right: 8%; font-size: 2.5rem; animation-delay: 4s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 30px 20px 50px;
+    position: relative;
+  }
+  .hero .sticker {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transform: rotate(-3deg);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 20px;
+    text-shadow: 5px 5px 0 var(--yellow);
+    letter-spacing: 2px;
+  }
+  .hero h1 .x {
+    display: inline-block;
+    color: var(--coral);
+    transform: scale(1.4) rotate(15deg);
+    margin: 0 8px;
+    text-shadow: 4px 4px 0 var(--ink);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 500px;
+    margin: 0 auto;
+    font-weight: 500;
+  }
+
+  .card {
+    background: white;
+    border: 4px solid var(--ink);
+    border-radius: 32px;
+    padding: 36px 32px;
+    margin-bottom: 50px;
+    box-shadow: 10px 10px 0 var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .card .tag {
+    position: absolute;
+    top: 0;
+    right: 30px;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    padding: 8px 20px 12px;
+    border-radius: 0 0 18px 18px;
+    font-size: 1.1rem;
+  }
+  .card h2 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card h2 .emoji { font-size: 2.5rem; }
+  .card .subtitle {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-bottom: 30px;
+    padding-left: 50px;
+  }
+
+  .card-1 { background: linear-gradient(135deg, #FFF4D6 0%, #FFE8B0 100%); }
+  .card-1 .tag, .card-1 h2 .num { color: var(--orange); }
+  .card-2 { background: linear-gradient(135deg, #E0F7F4 0%, #BCEBE5 100%); }
+  .card-2 .tag, .card-2 h2 .num { color: var(--mint); }
+  .card-3 { background: linear-gradient(135deg, #F0E5FF 0%, #DCC8FF 100%); }
+  .card-3 .tag, .card-3 h2 .num { color: var(--purple); }
+  .card-4 { background: linear-gradient(135deg, #FFE0EB 0%, #FFC8DC 100%); }
+  .card-4 .tag, .card-4 h2 .num { color: var(--pink); }
+  .card-5 { background: linear-gradient(135deg, #FFE5D0 0%, #FFCAA0 100%); }
+  .card-5 .tag, .card-5 h2 .num { color: var(--sunset); }
+
+  .controls {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: rgba(255,255,255,0.7);
+    border: 3px dashed var(--ink);
+    border-radius: 20px;
+  }
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ctrl label {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .stepper button {
+    background: transparent;
+    border: none;
+    width: 38px;
+    height: 38px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .stepper button:hover { background: var(--yellow); }
+  .stepper button:active { transform: scale(0.92); }
+  .stepper .val {
+    min-width: 40px;
+    text-align: center;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-left: 3px solid var(--ink);
+    border-right: 3px solid var(--ink);
+    padding: 0 4px;
+  }
+
+  .stage {
+    background: rgba(255,255,255,0.6);
+    border-radius: 20px;
+    padding: 24px;
+    min-height: 200px;
+    border: 2px solid rgba(42,42,74,0.15);
+  }
+
+  /* ----- Section 1 ----- */
+  .groups-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+  }
+  .group {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 4px 4px 0 var(--ink);
+    display: grid;
+    gap: 6px;
+    min-width: 70px;
+    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .apple {
+    width: 28px;
+    height: 28px;
+    background: var(--coral);
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    position: relative;
+    animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .apple::before {
+    content: '';
+    position: absolute;
+    top: -4px; left: 12px;
+    width: 4px; height: 6px;
+    background: #4a8c2a;
+    border-radius: 2px;
+    transform: rotate(20deg);
+  }
+  .plus-sign {
+    font-family: "Fredoka", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--orange);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  .equation {
+    text-align: center;
+    margin-top: 24px;
+    font-family: "Fredoka", sans-serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    color: var(--ink);
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    word-break: break-word;
+  }
+  .equation .hi { color: var(--coral); }
+  .equation .res { color: var(--mint); font-size: 1.3em; }
+
+  /* ----- Section 2 ----- */
+  .grid-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .grid-wrapper { padding: 28px 20px 20px 28px; }
+  .dot-grid {
+    display: grid;
+    gap: 8px;
+    background: white;
+    padding: 14px;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .dot {
+    width: 28px; height: 28px;
+    background: var(--mint);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+
+  /* ----- Section 3 ----- */
+  .algebra-stage {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+  }
+  @media (max-width: 700px) {
+    .algebra-stage { grid-template-columns: 1fr; }
+    .algebra-stage .equals { transform: rotate(90deg); }
+  }
+  .alg-box {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .alg-grid {
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .alg-dot {
+    width: 22px; height: 22px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .alg-dot.a { background: var(--purple); }
+  .alg-dot.b { background: var(--yellow); }
+  .alg-formula {
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .equals {
+    font-family: "Fredoka", sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--purple);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .alg-conclusion {
+    margin-top: 24px;
+    text-align: center;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 14px 20px;
+    border-radius: 20px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .alg-conclusion .formula {
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 4px 12px;
+    border-radius: 10px;
+    margin: 0 4px;
+    display: inline-block;
+  }
+
+  /* ----- Section 4 ----- */
+  .cube-stage {
+    perspective: 800px;
+    height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.4);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+  .cube-stage::before {
+    content: '';
+    position: absolute;
+    bottom: 30%;
+    left: 10%;
+    right: 10%;
+    height: 10px;
+    background: rgba(42,42,74,0.1);
+    border-radius: 50%;
+    filter: blur(8px);
+  }
+  .cube-world {
+    transform-style: preserve-3d;
+    animation: rotateWorld 16s linear infinite;
+  }
+  @keyframes rotateWorld {
+    0%   { transform: rotateX(-25deg) rotateY(0deg); }
+    100% { transform: rotateX(-25deg) rotateY(360deg); }
+  }
+  .small-cube {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    transform-style: preserve-3d;
+    animation: dropIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .face {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--ink);
+    box-sizing: border-box;
+  }
+  @keyframes dropIn {
+    0%   { transform: translate3d(var(--tx), -200px, var(--tz)); opacity: 0; }
+    100% { transform: translate3d(var(--tx), var(--ty), var(--tz)); opacity: 1; }
+  }
+  .axis-labels {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .axis-pill {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.05rem;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .axis-pill .num { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 1.3rem; }
+  .axis-pill.x { color: var(--coral); }
+  .axis-pill.y { color: #c79a2c; background: #fffbe5; }
+  .axis-pill.z { color: var(--pink); background: #fff0f5; }
+  .axis-pill.v { background: var(--ink); color: var(--yellow); }
+
+  /* ========== Section 5: Stretch / Compress ========== */
+  .stretch-stage {
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    padding: 28px 20px;
+    border: 2px solid rgba(42,42,74,0.15);
+  }
+
+  /* Multiplier picker (replaces stepper for the multiplier) */
+  .mult-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 5px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .mult-btn {
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 42px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mult-btn:hover { background: rgba(255,140,66,0.15); }
+  .mult-btn.compress { color: var(--blue); }
+  .mult-btn.stretch  { color: var(--sunset); }
+  .mult-btn.one      { color: var(--ink-soft); }
+  .mult-btn.active {
+    background: var(--ink);
+    color: white !important;
+    transform: scale(1.05);
+  }
+  .mult-btn .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.95;
+    font-size: 0.85rem;
+    padding: 0 2px;
+  }
+  .mult-btn .frac .top { border-bottom: 2px solid currentColor; padding: 0 4px 1px; }
+  .mult-btn .frac .bot { padding-top: 2px; }
+
+  /* Stretch visual */
+  .stretch-track {
+    position: relative;
+    padding-top: 6px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    min-height: 56px;
+  }
+  .bar-label {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.05rem;
+    color: var(--ink);
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    position: relative;
+    height: 50px;
+    background: rgba(42,42,74,0.05);
+    border-radius: 12px;
+  }
+  .stretch-bar {
+    position: absolute;
+    left: 0; top: 0;
+    height: 50px;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--ink);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: white;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.05rem;
+    transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s;
+    min-width: 38px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .stretch-bar.original {
+    background: linear-gradient(90deg, #FFB088 0%, #FF8C42 100%);
+  }
+  .stretch-bar.result.stretch  { background: linear-gradient(90deg, #FF8C42 0%, var(--sunset) 50%, var(--coral) 100%); }
+  .stretch-bar.result.compress { background: linear-gradient(90deg, #6BB5FF 0%, var(--blue) 100%); }
+  .stretch-bar.result.same     { background: linear-gradient(90deg, #FFB088 0%, #FF8C42 100%); }
+
+  .stretch-bar .balloon {
+    position: absolute;
+    right: -6px;
+    top: -28px;
+    font-size: 1.6rem;
+    animation: bob 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .multiply-arrow {
+    text-align: center;
+    margin: 4px 0 14px;
+    margin-left: 82px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .multiply-arrow .badge {
+    color: white;
+    padding: 6px 16px;
+    border-radius: 14px;
+    border: 3px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    font-size: 1.3rem;
+    animation: wiggle 1.4s ease-in-out infinite;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.4s;
+  }
+  .multiply-arrow .badge.stretch  { background: var(--sunset); }
+  .multiply-arrow .badge.compress { background: var(--blue); }
+  .multiply-arrow .badge.same     { background: var(--ink-soft); }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .multiply-arrow .down {
+    font-size: 1.4rem;
+    color: var(--ink);
+  }
+  .multiply-arrow .effect-label {
+    font-size: 1.2rem;
+    color: var(--ink);
+    margin-left: auto;
+    background: white;
+    padding: 4px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--ink);
+    transition: all 0.4s;
+  }
+  .multiply-arrow .effect-label.stretch  { color: var(--sunset); }
+  .multiply-arrow .effect-label.compress { color: var(--blue); }
+
+  .ruler {
+    position: relative;
+    height: 30px;
+    margin-top: 8px;
+    margin-left: 82px;
+    border-top: 3px solid var(--ink);
+  }
+  .ruler-tick {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    background: var(--ink);
+  }
+  .ruler-tick.major { height: 12px; width: 3px; }
+  .ruler-tick.minor { height: 6px; }
+  .ruler-num {
+    position: absolute;
+    top: 14px;
+    transform: translateX(-50%);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    color: var(--ink-soft);
+    font-size: 1.2rem;
+  }
+  .footer .stars { font-size: 2rem; margin-bottom: 8px; letter-spacing: 8px; }
+
+  /* ========== Section 6: Quiz / Challenge ========== */
+  .card-6 {
+    background: linear-gradient(135deg, #FFF5C2 0%, #FFE680 100%);
+  }
+  .card-6 .tag, .card-6 h2 .num { color: #c79a2c; }
+
+  .quiz-stage {
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    padding: 24px;
+    border: 2px solid rgba(42,42,74,0.15);
+    min-height: 360px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .pip {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    background: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .pip.current { background: var(--yellow); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,201,61,0.4); }
+  .pip.correct { background: var(--mint); color: white; }
+  .pip.wrong   { background: var(--coral); color: white; }
+
+  .quiz-question {
+    text-align: center;
+    margin-bottom: 24px;
+    animation: questionIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes questionIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .quiz-tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  .quiz-q-text {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 0 12px;
+  }
+  .quiz-q-text .num {
+    color: var(--coral);
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 1.15em;
+  }
+
+  .quiz-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  @media (max-width: 480px) {
+    .quiz-options { grid-template-columns: 1fr; }
+  }
+
+  .quiz-opt {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 56px;
+  }
+  .quiz-opt:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+    background: #fffbe5;
+  }
+  .quiz-opt:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.correct {
+    background: var(--mint);
+    color: white;
+    animation: bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-opt.wrong {
+    background: var(--coral);
+    color: white;
+    animation: shake 0.4s ease;
+  }
+  .quiz-opt .opt-letter {
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .quiz-opt.correct .opt-letter { background: white; }
+  .quiz-opt.wrong   .opt-letter { background: white; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-8px); }
+    75%      { transform: translateX(8px); }
+  }
+
+  .quiz-feedback {
+    text-align: center;
+    margin-top: 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.15rem;
+    min-height: 30px;
+    color: var(--ink);
+  }
+  .quiz-feedback.correct { color: var(--mint); }
+  .quiz-feedback.wrong   { color: var(--coral); }
+
+  .quiz-next {
+    display: block;
+    margin: 18px auto 0;
+    background: var(--ink);
+    color: var(--yellow);
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--coral);
+    transition: transform 0.15s;
+  }
+  .quiz-next:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--coral); }
+  .quiz-next:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--coral); }
+
+  /* Final result screen */
+  .quiz-result {
+    text-align: center;
+    padding: 20px 10px;
+    animation: resultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes resultIn {
+    0% { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .quiz-result .trophy {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    display: inline-block;
+    animation: trophy 1.4s ease-in-out infinite;
+  }
+  @keyframes trophy {
+    0%, 100% { transform: rotate(-8deg); }
+    50%      { transform: rotate(8deg); }
+  }
+  .quiz-result h3 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2rem;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .quiz-result .score {
+    font-family: "Fredoka", sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--coral);
+    margin: 8px 0 14px;
+  }
+  .quiz-result .stars {
+    font-size: 2.4rem;
+    letter-spacing: 6px;
+    margin: 12px 0 18px;
+  }
+  .quiz-result .star {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-result .star.filled { animation: starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+  .quiz-result .star.empty  { opacity: 0.25; filter: grayscale(0.8); }
+  @keyframes starPop {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .quiz-result .msg {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  .quiz-result button {
+    background: var(--coral);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s;
+  }
+  .quiz-result button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .quiz-result button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+  /* Confetti */
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    pointer-events: none;
+    animation: confettiFall 1.4s ease-out forwards;
+    z-index: 10;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translate(0, 0) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--cx), 280px) rotate(720deg); }
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 24px 16px; border-radius: 24px; box-shadow: 6px 6px 0 var(--ink); }
+    .card .subtitle { padding-left: 0; }
+    .card h2 { font-size: 1.6rem; }
+    .card h2 .emoji { font-size: 2rem; }
+    .controls { gap: 14px; padding: 14px; }
+    .equation { font-size: 1.2rem; padding: 12px; }
+    .apple, .face, .small-cube { width: 22px; height: 22px; }
+    .face { width: 22px; height: 22px; }
+    .bar-label { min-width: 50px; font-size: 0.95rem; }
+    .multiply-arrow { margin-left: 62px; flex-wrap: wrap; }
+    .multiply-arrow .effect-label { margin-left: 0; }
+    .ruler { margin-left: 62px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deco d1">⭐</div>
+<div class="deco d2">🎈</div>
+<div class="deco d3">🌈</div>
+<div class="deco d4">✨</div>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="sticker">🎉 数学小冒险</span>
+    <h1>乘法的<br>奇<span class="x">×</span>妙世界</h1>
+    <p>原来一个小小的乘号,藏着 <b>5 个超级有趣的秘密</b>!<br>跟着小狐狸一起,动手玩一玩吧!🦊</p>
+  </header>
+
+  <!-- CARD 1: COUNTING -->
+  <section class="card card-1">
+    <div class="tag">第 <span class="num">1</span> 个秘密</div>
+    <h2><span class="emoji">🍎</span>计数的秘密</h2>
+    <p class="subtitle">乘法,就是 <b>"几个几"</b> 加在一起的快捷方式!</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>有几堆?</label>
+        <div class="stepper" data-target="groups">
+          <button data-act="dec">−</button>
+          <div class="val" id="g-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每堆几个🍎?</label>
+        <div class="stepper" data-target="perGroup">
+          <button data-act="dec">−</button>
+          <div class="val" id="p-val">4</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="groups-container" id="groups-container"></div>
+    </div>
+
+    <div class="equation" id="eq-1"></div>
+  </section>
+
+  <!-- CARD 2: GEOMETRIC -->
+  <section class="card card-2">
+    <div class="tag">第 <span class="num">2</span> 个秘密</div>
+    <h2><span class="emoji">🟩</span>方阵的秘密</h2>
+    <p class="subtitle">乘法,可以画成一个 <b>整整齐齐的方阵</b>!像巧克力一样~</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>几行?</label>
+        <div class="stepper" data-target="rows">
+          <button data-act="dec">−</button>
+          <div class="val" id="r-val">4</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>几列?</label>
+        <div class="stepper" data-target="cols">
+          <button data-act="dec">−</button>
+          <div class="val" id="c-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage grid-stage">
+      <div class="grid-wrapper">
+        <div class="dot-grid" id="dot-grid"></div>
+      </div>
+    </div>
+
+    <div class="equation" id="eq-2"></div>
+  </section>
+
+  <!-- CARD 3: ALGEBRAIC -->
+  <section class="card card-3">
+    <div class="tag">第 <span class="num">3</span> 个秘密</div>
+    <h2><span class="emoji">🔄</span>魔法的秘密</h2>
+    <p class="subtitle">不管谁先谁后,<b>3×4 永远等于 4×3</b>!转一转就明白~</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>第一个数 a =</label>
+        <div class="stepper" data-target="aNum">
+          <button data-act="dec">−</button>
+          <div class="val" id="a-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>第二个数 b =</label>
+        <div class="stepper" data-target="bNum">
+          <button data-act="dec">−</button>
+          <div class="val" id="b-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="algebra-stage">
+        <div class="alg-box">
+          <div class="alg-grid" id="alg-grid-1"></div>
+          <div class="alg-formula"><span style="color:var(--purple)">a</span> × <span style="color:#c79a2c">b</span> = <span id="alg-f1">15</span></div>
+        </div>
+        <div class="equals">=</div>
+        <div class="alg-box">
+          <div class="alg-grid" id="alg-grid-2"></div>
+          <div class="alg-formula"><span style="color:#c79a2c">b</span> × <span style="color:var(--purple)">a</span> = <span id="alg-f2">15</span></div>
+        </div>
+      </div>
+      <div class="alg-conclusion">
+        🎩 这叫 <b>"交换律"</b>:
+        <span class="formula">a × b = b × a</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 4: SPATIAL -->
+  <section class="card card-4">
+    <div class="tag">第 <span class="num">4</span> 个秘密</div>
+    <h2><span class="emoji">🧊</span>立体的秘密</h2>
+    <p class="subtitle">三个数相乘,可以搭出一个 <b>真实的小盒子</b>!像积木一样!</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>长 (x)</label>
+        <div class="stepper" data-target="lenX">
+          <button data-act="dec">−</button>
+          <div class="val" id="x-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>宽 (z)</label>
+        <div class="stepper" data-target="lenZ">
+          <button data-act="dec">−</button>
+          <div class="val" id="z-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>高 (y)</label>
+        <div class="stepper" data-target="lenY">
+          <button data-act="dec">−</button>
+          <div class="val" id="y-val">2</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cube-stage">
+      <div class="cube-world" id="cube-world"></div>
+    </div>
+
+    <div class="axis-labels">
+      <div class="axis-pill x">长 = <span class="num" id="xa">3</span></div>
+      <div class="axis-pill y">高 = <span class="num" id="ya">2</span></div>
+      <div class="axis-pill z">宽 = <span class="num" id="za">3</span></div>
+      <div class="axis-pill v">总积木 = <span class="num" id="va">18</span> 块!</div>
+    </div>
+
+    <div class="equation" id="eq-4"></div>
+  </section>
+
+  <!-- CARD 5: STRETCH / COMPRESS -->
+  <section class="card card-5">
+    <div class="tag">第 <span class="num">5</span> 个秘密</div>
+    <h2><span class="emoji">🎈</span>拉伸 & 压缩的秘密</h2>
+    <p class="subtitle">乘以 <b>大的数</b> → 变长(拉伸)📏  &nbsp; 乘以 <b>小的数</b>(½、⅓)→ 变短(压缩)🤏</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>原长</label>
+        <div class="stepper" data-target="origLen">
+          <button data-act="dec">−</button>
+          <div class="val" id="o-val">6</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>乘几?</label>
+        <div class="mult-picker" id="mult-picker">
+          <button class="mult-btn compress" data-mult="0.3333">
+            <span class="frac"><span class="top">1</span><span class="bot">3</span></span>
+          </button>
+          <button class="mult-btn compress" data-mult="0.5">
+            <span class="frac"><span class="top">1</span><span class="bot">2</span></span>
+          </button>
+          <button class="mult-btn one"      data-mult="1">1</button>
+          <button class="mult-btn stretch"  data-mult="2">2</button>
+          <button class="mult-btn stretch"  data-mult="3">3</button>
+          <button class="mult-btn stretch"  data-mult="4">4</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stretch-stage">
+      <div class="stretch-track">
+        <div class="bar-row">
+          <span class="bar-label">原来</span>
+          <div class="bar-track">
+            <div class="stretch-bar original" id="bar-orig">
+              <span id="orig-text">6</span>
+              <div class="balloon">🎈</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="multiply-arrow">
+          <span class="down">↓</span>
+          <span class="badge stretch" id="mult-badge">× 1</span>
+          <span class="down">↓</span>
+          <span class="effect-label" id="effect-label">没变化</span>
+        </div>
+
+        <div class="bar-row">
+          <span class="bar-label" id="result-label">变成</span>
+          <div class="bar-track">
+            <div class="stretch-bar result same" id="bar-result">
+              <span id="result-text">6</span>
+              <div class="balloon">🎈</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ruler" id="ruler"></div>
+      </div>
+    </div>
+
+    <div class="equation" id="eq-5"></div>
+
+    <div class="alg-conclusion" style="margin-top: 20px; background: linear-gradient(90deg, var(--blue) 0%, var(--ink) 50%, var(--sunset) 100%);">
+      💡 <b style="color:#BCE0FF;">乘以 ½ → 压缩一半</b> &nbsp;|&nbsp;
+      <b style="color:#FFD9B0;">乘以 2 → 拉长一倍</b>
+    </div>
+  </section>
+
+  <!-- CARD 6: QUIZ / CHALLENGE -->
+  <section class="card card-6">
+    <div class="tag">🏆 终极挑战</div>
+    <h2><span class="emoji">🎯</span>来挑战吧!</h2>
+    <p class="subtitle">学完了 <b>5 个秘密</b>?来答 <b>5 道题</b>,赢取小星星!</p>
+
+    <div class="quiz-stage">
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <div id="quiz-body"></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div class="stars">⭐ ⭐ ⭐ ⭐ ⭐</div>
+    乘法,真的很奇妙吧!🦊✨
+  </div>
+
+</div>
+
+<script>
+  const state = {
+    groups: 3,    perGroup: 4,
+    rows: 4,      cols: 5,
+    aNum: 3,      bNum: 5,
+    lenX: 3,      lenY: 2, lenZ: 3,
+    origLen: 6,   multiplier: 1   // multiplier can be 0.3333, 0.5, 1, 2, 3, 4
+  };
+
+  const limits = {
+    groups: [1, 8],   perGroup: [1, 10],
+    rows:   [1, 10],  cols:     [1, 12],
+    aNum:   [1, 6],   bNum:     [1, 6],
+    lenX:   [1, 5],   lenY:     [1, 4], lenZ: [1, 5],
+    origLen:[1, 9]
+  };
+
+  // Stepper wiring
+  document.querySelectorAll('.stepper').forEach(stepper => {
+    const target = stepper.dataset.target;
+    stepper.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.act;
+        const [min, max] = limits[target];
+        let v = state[target];
+        v += (act === 'inc') ? 1 : -1;
+        v = Math.max(min, Math.min(max, v));
+        state[target] = v;
+        renderAll();
+      });
+    });
+  });
+
+  // Multiplier picker wiring
+  document.querySelectorAll('.mult-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = parseFloat(btn.dataset.mult);
+      state.multiplier = m;
+      renderStretching();
+    });
+  });
+
+  // ===== Section 1 =====
+  function renderCounting() {
+    const { groups, perGroup } = state;
+    document.getElementById('g-val').textContent = groups;
+    document.getElementById('p-val').textContent = perGroup;
+
+    const wrap = document.getElementById('groups-container');
+    wrap.innerHTML = '';
+    for (let i = 0; i < groups; i++) {
+      const g = document.createElement('div');
+      g.className = 'group';
+      const cols = Math.min(perGroup, Math.ceil(Math.sqrt(perGroup)));
+      g.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+      for (let j = 0; j < perGroup; j++) {
+        const a = document.createElement('div');
+        a.className = 'apple';
+        a.style.animationDelay = (i * 0.1 + j * 0.04) + 's';
+        g.appendChild(a);
+      }
+      wrap.appendChild(g);
+      if (i < groups - 1) {
+        const plus = document.createElement('div');
+        plus.className = 'plus-sign';
+        plus.textContent = '+';
+        wrap.appendChild(plus);
+      }
+    }
+
+    const additionStr = Array(groups).fill(perGroup).join(' + ');
+    const product = groups * perGroup;
+    document.getElementById('eq-1').innerHTML =
+      `<span class="hi">${groups} × ${perGroup}</span> = ${additionStr} = <span class="res">${product}</span>`;
+  }
+
+  // ===== Section 2 =====
+  function renderGeometric() {
+    const { rows, cols } = state;
+    document.getElementById('r-val').textContent = rows;
+    document.getElementById('c-val').textContent = cols;
+
+    const grid = document.getElementById('dot-grid');
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+    for (let i = 0; i < rows * cols; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.style.animationDelay = (i * 0.015) + 's';
+      const hue = 165 + (i / (rows * cols)) * 30;
+      d.style.background = `hsl(${hue}, 60%, 55%)`;
+      grid.appendChild(d);
+    }
+
+    const product = rows * cols;
+    document.getElementById('eq-2').innerHTML =
+      `<span class="hi">${rows} 行 × ${cols} 列</span> = <span class="res">${product}</span> 个小方块!`;
+  }
+
+  // ===== Section 3 =====
+  function renderAlgebraic() {
+    const { aNum, bNum } = state;
+    document.getElementById('a-val').textContent = aNum;
+    document.getElementById('b-val').textContent = bNum;
+
+    const g1 = document.getElementById('alg-grid-1');
+    g1.innerHTML = '';
+    g1.style.gridTemplateColumns = `repeat(${bNum}, 22px)`;
+    for (let i = 0; i < aNum * bNum; i++) {
+      const d = document.createElement('div');
+      d.className = 'alg-dot a';
+      d.style.animationDelay = (i * 0.03) + 's';
+      g1.appendChild(d);
+    }
+
+    const g2 = document.getElementById('alg-grid-2');
+    g2.innerHTML = '';
+    g2.style.gridTemplateColumns = `repeat(${aNum}, 22px)`;
+    for (let i = 0; i < aNum * bNum; i++) {
+      const d = document.createElement('div');
+      d.className = 'alg-dot b';
+      d.style.animationDelay = (i * 0.03) + 's';
+      g2.appendChild(d);
+    }
+
+    document.getElementById('alg-f1').textContent = aNum * bNum;
+    document.getElementById('alg-f2').textContent = aNum * bNum;
+  }
+
+  // ===== Section 4 =====
+  function renderSpatial() {
+    const { lenX, lenY, lenZ } = state;
+    document.getElementById('x-val').textContent = lenX;
+    document.getElementById('y-val').textContent = lenY;
+    document.getElementById('z-val').textContent = lenZ;
+    document.getElementById('xa').textContent = lenX;
+    document.getElementById('ya').textContent = lenY;
+    document.getElementById('za').textContent = lenZ;
+    document.getElementById('va').textContent = lenX * lenY * lenZ;
+
+    const world = document.getElementById('cube-world');
+    world.innerHTML = '';
+    const isMobile = window.innerWidth < 600;
+    const cubeSize = isMobile ? 22 : 32;
+    const halfX = (lenX - 1) * cubeSize / 2;
+    const halfY = (lenY - 1) * cubeSize / 2;
+    const halfZ = (lenZ - 1) * cubeSize / 2;
+
+    let n = 0;
+    for (let y = 0; y < lenY; y++) {
+      for (let z = 0; z < lenZ; z++) {
+        for (let x = 0; x < lenX; x++) {
+          const c = document.createElement('div');
+          c.className = 'small-cube';
+          c.style.width = cubeSize + 'px';
+          c.style.height = cubeSize + 'px';
+          const tx = x * cubeSize - halfX;
+          const ty = -y * cubeSize + halfY;
+          const tz = z * cubeSize - halfZ;
+          c.style.setProperty('--tx', tx + 'px');
+          c.style.setProperty('--ty', ty + 'px');
+          c.style.setProperty('--tz', tz + 'px');
+          c.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px)`;
+          c.style.animationDelay = (n * 0.04) + 's';
+
+          const colors = {
+            front:  '#FF80B5',  back: '#d65a86',
+            right:  '#b84770',  left: '#FF5E5B',
+            top:    '#FFC93D',  bottom: '#c79a2c'
+          };
+          ['front','back','right','left','top','bottom'].forEach(side => {
+            const f = document.createElement('div');
+            f.className = 'face';
+            f.style.width = cubeSize + 'px';
+            f.style.height = cubeSize + 'px';
+            f.style.background = colors[side];
+            const half = cubeSize / 2;
+            switch(side){
+              case 'front':  f.style.transform = `translateZ(${half}px)`; break;
+              case 'back':   f.style.transform = `translateZ(-${half}px) rotateY(180deg)`; break;
+              case 'right':  f.style.transform = `rotateY(90deg) translateZ(${half}px)`; break;
+              case 'left':   f.style.transform = `rotateY(-90deg) translateZ(${half}px)`; break;
+              case 'top':    f.style.transform = `rotateX(90deg) translateZ(${half}px)`; break;
+              case 'bottom': f.style.transform = `rotateX(-90deg) translateZ(${half}px)`; break;
+            }
+            c.appendChild(f);
+          });
+          world.appendChild(c);
+          n++;
+        }
+      }
+    }
+
+    const product = lenX * lenY * lenZ;
+    document.getElementById('eq-4').innerHTML =
+      `<span class="hi">${lenX} × ${lenY} × ${lenZ}</span> = <span class="res">${product}</span> 块小积木!`;
+  }
+
+  // ===== Section 5: Stretch / Compress =====
+  // Format a number nicely (handle 1/3 case)
+  function fmtNum(n) {
+    if (Math.abs(n - Math.round(n)) < 0.001) return Math.round(n).toString();
+    // Try halves
+    const doubled = n * 2;
+    if (Math.abs(doubled - Math.round(doubled)) < 0.001) {
+      return (Math.round(doubled) / 2).toString();
+    }
+    return n.toFixed(1);
+  }
+  function fmtMult(m) {
+    if (Math.abs(m - 0.3333) < 0.01) return '⅓';
+    if (Math.abs(m - 0.5) < 0.01) return '½';
+    return m.toString();
+  }
+  function fmtMultLong(m) {
+    if (Math.abs(m - 0.3333) < 0.01) return '<span style="display:inline-flex;flex-direction:column;vertical-align:middle;line-height:0.9;font-size:0.7em;"><span style="border-bottom:2px solid currentColor;padding:0 4px;">1</span><span style="padding-top:1px;">3</span></span>';
+    if (Math.abs(m - 0.5) < 0.01) return '<span style="display:inline-flex;flex-direction:column;vertical-align:middle;line-height:0.9;font-size:0.7em;"><span style="border-bottom:2px solid currentColor;padding:0 4px;">1</span><span style="padding-top:1px;">2</span></span>';
+    return m.toString();
+  }
+
+  function renderStretching() {
+    const { origLen, multiplier } = state;
+    document.getElementById('o-val').textContent = origLen;
+
+    // Highlight active multiplier button
+    document.querySelectorAll('.mult-btn').forEach(b => {
+      const m = parseFloat(b.dataset.mult);
+      b.classList.toggle('active', Math.abs(m - multiplier) < 0.01);
+    });
+
+    const newLen = origLen * multiplier;
+
+    // Determine mode
+    let mode;
+    if (multiplier > 1.001)      mode = 'stretch';
+    else if (multiplier < 0.999) mode = 'compress';
+    else                          mode = 'same';
+
+    // Width math: orig at default 6, max stretch 9*4=36 → use unit width based on max possible
+    const maxPossible = 9 * 4; // origLen max × multiplier max
+    const track = document.querySelector('#bar-orig').parentElement;
+    const trackWidth = track.clientWidth || 500;
+    // Cap unit width so big numbers don't blow out
+    const unitWidth = Math.min(28, (trackWidth - 20) / Math.max(maxPossible / 2, 12));
+
+    const origPx = Math.max(34, origLen * unitWidth);
+    const newPx  = Math.max(28, newLen  * unitWidth);
+
+    document.getElementById('bar-orig').style.width = origPx + 'px';
+    const resultBar = document.getElementById('bar-result');
+    resultBar.style.width = newPx + 'px';
+
+    document.getElementById('orig-text').textContent = origLen;
+    document.getElementById('result-text').textContent = fmtNum(newLen);
+
+    // Update result bar color class
+    resultBar.classList.remove('stretch', 'compress', 'same');
+    resultBar.classList.add(mode);
+
+    // Update badge
+    const badge = document.getElementById('mult-badge');
+    badge.classList.remove('stretch', 'compress', 'same');
+    badge.classList.add(mode);
+    badge.innerHTML = '× ' + fmtMultLong(multiplier);
+
+    // Update effect label
+    const effect = document.getElementById('effect-label');
+    effect.classList.remove('stretch', 'compress');
+    if (mode === 'stretch') {
+      effect.classList.add('stretch');
+      effect.innerHTML = '📏 拉伸啦!';
+    } else if (mode === 'compress') {
+      effect.classList.add('compress');
+      effect.innerHTML = '🤏 压缩啦!';
+    } else {
+      effect.innerHTML = '— 没变化 —';
+    }
+
+    // Update result row label
+    const rl = document.getElementById('result-label');
+    if (mode === 'stretch')      rl.textContent = '拉长后';
+    else if (mode === 'compress') rl.textContent = '压缩后';
+    else                          rl.textContent = '一样长';
+
+    // Build ruler
+    const ruler = document.getElementById('ruler');
+    ruler.innerHTML = '';
+    const maxShow = Math.max(Math.ceil(Math.max(origLen, newLen)) + 2, 9);
+    const showUnits = Math.min(36, maxShow);
+    for (let i = 0; i <= showUnits; i++) {
+      const tick = document.createElement('div');
+      tick.className = 'ruler-tick ' + (i % 5 === 0 ? 'major' : 'minor');
+      tick.style.left = (i * unitWidth) + 'px';
+      ruler.appendChild(tick);
+      if (i % 2 === 0) {
+        const num = document.createElement('div');
+        num.className = 'ruler-num';
+        num.style.left = (i * unitWidth) + 'px';
+        num.textContent = i;
+        ruler.appendChild(num);
+      }
+    }
+    // Highlight tick at newLen
+    if (newLen >= 0 && newLen <= showUnits) {
+      const tick = document.createElement('div');
+      tick.className = 'ruler-tick major';
+      tick.style.left = (newLen * unitWidth) + 'px';
+      tick.style.background = (mode === 'compress') ? 'var(--blue)' : 'var(--sunset)';
+      tick.style.height = '16px';
+      tick.style.width = '4px';
+      ruler.appendChild(tick);
+      const num = document.createElement('div');
+      num.className = 'ruler-num';
+      num.style.left = (newLen * unitWidth) + 'px';
+      num.textContent = fmtNum(newLen);
+      num.style.color = (mode === 'compress') ? 'var(--blue)' : 'var(--sunset)';
+      num.style.fontWeight = 800;
+      num.style.fontSize = '0.95rem';
+      num.style.top = '20px';
+      ruler.appendChild(num);
+    }
+
+    // Equation
+    const arrow = (mode === 'stretch') ? '📏 拉伸!' :
+                  (mode === 'compress') ? '🤏 压缩!' : '没变化';
+    const arrowColor = (mode === 'compress') ? 'var(--blue)' : 'var(--sunset)';
+    document.getElementById('eq-5').innerHTML =
+      `<span class="hi">${origLen} × ${fmtMultLong(multiplier)}</span> = <span class="res">${fmtNum(newLen)}</span> ` +
+      `<span style="color:${arrowColor}; font-size:0.7em;">(${arrow})</span>`;
+  }
+
+  function renderAll() {
+    renderCounting();
+    renderGeometric();
+    renderAlgebraic();
+    renderSpatial();
+    renderStretching();
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      renderSpatial();
+      renderStretching();
+    }, 200);
+  });
+
+  // ===== Section 6: Quiz =====
+  const quiz = {
+    questions: [],
+    idx: 0,
+    score: 0,
+    answered: false,
+    results: []  // 'correct' | 'wrong' per question
+  };
+
+  function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function makeOptions(correct, range) {
+    const opts = new Set([correct]);
+    let attempts = 0;
+    while (opts.size < 4 && attempts < 50) {
+      let delta = rand(-range, range);
+      if (delta === 0) delta = rand(1, range);
+      const v = correct + delta;
+      if (v > 0) opts.add(v);
+      attempts++;
+    }
+    while (opts.size < 4) opts.add(correct + opts.size);
+    return shuffle([...opts]);
+  }
+
+  // Build a fresh set of 5 questions — direct calculations covering each meaning
+  function makeQuestions() {
+    const qs = [];
+
+    // Q1: Basic multiplication (counting meaning)
+    {
+      const a = rand(3, 6), b = rand(3, 6);
+      const ans = a * b;
+      qs.push({
+        tag: '🍎 计数',
+        text: `<span class="num">${a}</span> × <span class="num">${b}</span> = ?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(3, Math.floor(ans / 3))),
+        suffix: ''
+      });
+    }
+
+    // Q2: Slightly bigger multiplication (array meaning)
+    {
+      const a = rand(4, 8), b = rand(5, 9);
+      const ans = a * b;
+      qs.push({
+        tag: '🟩 方阵',
+        text: `<span class="num">${a}</span> × <span class="num">${b}</span> = ?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(4, Math.floor(ans / 4))),
+        suffix: ''
+      });
+    }
+
+    // Q3: Commutative — fill in the swapped form
+    {
+      const a = rand(3, 8), b = rand(3, 8);
+      qs.push({
+        tag: '🔄 交换律',
+        text: `如果 <span class="num">${a}</span> × <span class="num">${b}</span> = <span class="num">${a*b}</span>,那么 <span class="num">${b}</span> × <span class="num">${a}</span> = ?`,
+        answer: a * b,
+        options: makeOptions(a * b, Math.max(4, Math.floor(a * b / 3))),
+        suffix: ''
+      });
+    }
+
+    // Q4: Three-number multiplication (volume meaning)
+    {
+      const x = rand(2, 4), y = rand(2, 3), z = rand(2, 4);
+      const ans = x * y * z;
+      qs.push({
+        tag: '🧊 立体',
+        text: `<span class="num">${x}</span> × <span class="num">${y}</span> × <span class="num">${z}</span> = ?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(4, Math.floor(ans / 3))),
+        suffix: ''
+      });
+    }
+
+    // Q5: Multiply by a fraction — stretch or compress
+    {
+      const fracHtml = (top, bot) => `<span style="display:inline-flex;flex-direction:column;vertical-align:middle;line-height:0.9;font-size:0.85em;color:var(--coral);font-family:Fredoka,sans-serif;font-weight:700;"><span style="border-bottom:2px solid currentColor;padding:0 4px;">${top}</span><span style="padding-top:1px;">${bot}</span></span>`;
+      const flavor = rand(0, 2);
+      if (flavor === 0) {
+        // Stretch: a × b
+        const orig = rand(3, 7), m = rand(2, 4);
+        const ans = orig * m;
+        qs.push({
+          tag: '🎈 拉伸',
+          text: `<span class="num">${orig}</span> × <span class="num">${m}</span> = ?`,
+          answer: ans,
+          options: makeOptions(ans, Math.max(3, Math.floor(ans / 3))),
+          suffix: ''
+        });
+      } else if (flavor === 1) {
+        // Compress by ½
+        const halfAns = rand(2, 6);
+        const orig = halfAns * 2;
+        qs.push({
+          tag: '🤏 压缩',
+          text: `<span class="num">${orig}</span> × ${fracHtml(1, 2)} = ?`,
+          answer: halfAns,
+          options: makeOptions(halfAns, Math.max(2, halfAns - 1)),
+          suffix: ''
+        });
+      } else {
+        // Compress by ⅓
+        const thirdAns = rand(2, 5);
+        const orig = thirdAns * 3;
+        qs.push({
+          tag: '🤏 压缩',
+          text: `<span class="num">${orig}</span> × ${fracHtml(1, 3)} = ?`,
+          answer: thirdAns,
+          options: makeOptions(thirdAns, Math.max(2, thirdAns - 1)),
+          suffix: ''
+        });
+      }
+    }
+
+    return qs;
+  }
+
+  function renderQuiz() {
+    const progress = document.getElementById('quiz-progress');
+    progress.innerHTML = '';
+    for (let i = 0; i < quiz.questions.length; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'pip';
+      if (quiz.results[i] === 'correct') pip.classList.add('correct');
+      else if (quiz.results[i] === 'wrong') pip.classList.add('wrong');
+      else if (i === quiz.idx) pip.classList.add('current');
+      pip.textContent = (i + 1).toString();
+      progress.appendChild(pip);
+    }
+
+    const body = document.getElementById('quiz-body');
+
+    if (quiz.idx >= quiz.questions.length) {
+      // Final result
+      const score = quiz.score;
+      const stars = score >= 5 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+      const trophies = ['😢', '🌱', '⭐', '🏆'];
+      const messages = [
+        '别灰心!再试一次吧~',
+        '不错!继续加油 💪',
+        '很棒!再来一次拿满分 ✨',
+        '完美!你是乘法小冠军!🎉'
+      ];
+      let starsHtml = '';
+      for (let i = 0; i < 3; i++) {
+        const filled = i < stars;
+        starsHtml += `<span class="star ${filled ? 'filled' : 'empty'}" style="animation-delay:${i*0.2}s">${filled ? '⭐' : '☆'}</span>`;
+      }
+      body.innerHTML = `
+        <div class="quiz-result">
+          <div class="trophy">${trophies[stars]}</div>
+          <h3>挑战完成!</h3>
+          <div class="score">${score} / 5</div>
+          <div class="stars">${starsHtml}</div>
+          <div class="msg">${messages[stars]}</div>
+          <button id="quiz-restart">🔄 再玩一次</button>
+        </div>
+      `;
+      document.getElementById('quiz-restart').addEventListener('click', startQuiz);
+      return;
+    }
+
+    const q = quiz.questions[quiz.idx];
+    const letters = ['A', 'B', 'C', 'D'];
+    body.innerHTML = `
+      <div class="quiz-question">
+        <div class="quiz-tag">${q.tag} · 第 ${quiz.idx + 1} 题</div>
+        <div class="quiz-q-text">${q.text}</div>
+      </div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+    `;
+    const optsBox = document.getElementById('quiz-options');
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.dataset.value = opt;
+      btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}${q.suffix}`;
+      btn.addEventListener('click', () => handleAnswer(btn, opt));
+      optsBox.appendChild(btn);
+    });
+    quiz.answered = false;
+  }
+
+  function handleAnswer(btn, value) {
+    if (quiz.answered) return;
+    quiz.answered = true;
+    const q = quiz.questions[quiz.idx];
+    const isCorrect = value === q.answer;
+    const feedback = document.getElementById('quiz-feedback');
+
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      b.disabled = true;
+      const v = parseInt(b.dataset.value);
+      if (v === q.answer) b.classList.add('correct');
+      else if (b === btn) b.classList.add('wrong');
+    });
+
+    if (isCorrect) {
+      quiz.score++;
+      quiz.results[quiz.idx] = 'correct';
+      feedback.className = 'quiz-feedback correct';
+      feedback.textContent = '🎉 答对啦!太棒了!';
+      launchConfetti(btn);
+    } else {
+      quiz.results[quiz.idx] = 'wrong';
+      feedback.className = 'quiz-feedback wrong';
+      feedback.innerHTML = `差一点!正确答案是 <b>${q.answer}${q.suffix}</b>`;
+    }
+
+    // Update progress pips
+    const pips = document.querySelectorAll('#quiz-progress .pip');
+    pips[quiz.idx]?.classList.remove('current');
+    pips[quiz.idx]?.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    // Add next button
+    const next = document.createElement('button');
+    next.className = 'quiz-next';
+    next.textContent = quiz.idx === quiz.questions.length - 1 ? '🏁 看结果' : '👉 下一题';
+    next.addEventListener('click', () => {
+      quiz.idx++;
+      renderQuiz();
+    });
+    document.getElementById('quiz-body').appendChild(next);
+  }
+
+  function launchConfetti(originEl) {
+    const stage = document.querySelector('.quiz-stage');
+    const stageRect = stage.getBoundingClientRect();
+    const btnRect = originEl.getBoundingClientRect();
+    const ox = btnRect.left - stageRect.left + btnRect.width / 2;
+    const oy = btnRect.top  - stageRect.top  + btnRect.height / 2;
+    const colors = ['#FF5E5B', '#FFC93D', '#4ECDC4', '#9B5DE5', '#FF80B5', '#FF8C42', '#4D96FF'];
+    for (let i = 0; i < 24; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = ox + 'px';
+      c.style.top  = oy + 'px';
+      c.style.background = colors[i % colors.length];
+      c.style.borderRadius = (i % 3 === 0) ? '50%' : '2px';
+      const cx = (Math.random() - 0.5) * 360;
+      c.style.setProperty('--cx', cx + 'px');
+      c.style.animationDuration = (1 + Math.random() * 0.6) + 's';
+      stage.appendChild(c);
+      setTimeout(() => c.remove(), 2000);
+    }
+  }
+
+  function startQuiz() {
+    quiz.questions = makeQuestions();
+    quiz.idx = 0;
+    quiz.score = 0;
+    quiz.answered = false;
+    quiz.results = [];
+    renderQuiz();
+  }
+
+  // Initialize default multiplier as 2 so the user immediately sees stretching
+  state.multiplier = 2;
+  renderAll();
+  startQuiz();
+</script>
+
+</body>
+</html>
