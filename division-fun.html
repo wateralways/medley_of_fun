@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 除法的奇妙世界</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:    #FFF4D6;
+    --coral:    #FF5E5B;
+    --yellow:   #FFC93D;
+    --mint:     #4ECDC4;
+    --blue:     #4D96FF;
+    --purple:   #9B5DE5;
+    --pink:     #FF80B5;
+    --orange:   #FF8C42;
+    --sunset:   #FF6B35;
+    --ink:      #2A2A4A;
+    --ink-soft: #4A4A6A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--cream);
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,140,66,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(78,205,196,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(155,93,229,0.08) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+
+  .deco {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+    animation: float 6s ease-in-out infinite;
+  }
+  .deco.d1 { top: 8%; left: 4%; font-size: 2.5rem; animation-delay: 0s; }
+  .deco.d2 { top: 25%; right: 5%; font-size: 3rem; animation-delay: 1.5s; }
+  .deco.d3 { top: 60%; left: 3%; font-size: 2rem; animation-delay: 3s; }
+  .deco.d4 { top: 80%; right: 8%; font-size: 2.5rem; animation-delay: 4s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 30px 20px 50px;
+    position: relative;
+  }
+  .hero .sticker {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transform: rotate(-3deg);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 20px;
+    text-shadow: 5px 5px 0 var(--yellow);
+    letter-spacing: 2px;
+  }
+  .hero h1 .x {
+    display: inline-block;
+    color: var(--coral);
+    transform: scale(1.4) rotate(15deg);
+    margin: 0 8px;
+    text-shadow: 4px 4px 0 var(--ink);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 500px;
+    margin: 0 auto;
+    font-weight: 500;
+  }
+
+  .card {
+    background: white;
+    border: 4px solid var(--ink);
+    border-radius: 32px;
+    padding: 36px 32px;
+    margin-bottom: 50px;
+    box-shadow: 10px 10px 0 var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .card .tag {
+    position: absolute;
+    top: 0;
+    right: 30px;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    padding: 8px 20px 12px;
+    border-radius: 0 0 18px 18px;
+    font-size: 1.1rem;
+  }
+  .card h2 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card h2 .emoji { font-size: 2.5rem; }
+  .card .subtitle {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-bottom: 30px;
+    padding-left: 50px;
+  }
+
+  .card-1 { background: linear-gradient(135deg, #FFF4D6 0%, #FFE8B0 100%); }
+  .card-1 .tag, .card-1 h2 .num { color: var(--orange); }
+  .card-2 { background: linear-gradient(135deg, #E0F7F4 0%, #BCEBE5 100%); }
+  .card-2 .tag, .card-2 h2 .num { color: var(--mint); }
+  .card-3 { background: linear-gradient(135deg, #F0E5FF 0%, #DCC8FF 100%); }
+  .card-3 .tag, .card-3 h2 .num { color: var(--purple); }
+  .card-4 { background: linear-gradient(135deg, #FFE0EB 0%, #FFC8DC 100%); }
+  .card-4 .tag, .card-4 h2 .num { color: var(--pink); }
+  .card-5 { background: linear-gradient(135deg, #FFE5D0 0%, #FFCAA0 100%); }
+  .card-5 .tag, .card-5 h2 .num { color: var(--sunset); }
+
+  .controls {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: rgba(255,255,255,0.7);
+    border: 3px dashed var(--ink);
+    border-radius: 20px;
+  }
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ctrl label {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .stepper button {
+    background: transparent;
+    border: none;
+    width: 38px;
+    height: 38px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .stepper button:hover { background: var(--yellow); }
+  .stepper button:active { transform: scale(0.92); }
+  .stepper .val {
+    min-width: 40px;
+    text-align: center;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-left: 3px solid var(--ink);
+    border-right: 3px solid var(--ink);
+    padding: 0 4px;
+  }
+
+  .stage {
+    background: rgba(255,255,255,0.6);
+    border-radius: 20px;
+    padding: 24px;
+    min-height: 200px;
+    border: 2px solid rgba(42,42,74,0.15);
+  }
+
+  /* ----- Section 1: Sharing ----- */
+  .share-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .share-bowl {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 4px 4px 0 var(--ink);
+    display: grid;
+    gap: 6px;
+    min-width: 70px;
+    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .candy {
+    width: 28px;
+    height: 28px;
+    background: var(--coral);
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    position: relative;
+    animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .candy::before {
+    content: '';
+    position: absolute;
+    top: 7px; left: 7px;
+    width: 8px; height: 8px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+  }
+  .share-label {
+    text-align: center;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .divide-sign {
+    font-family: "Fredoka", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--orange);
+    align-self: center;
+  }
+  .arrow-down {
+    font-size: 1.5rem;
+    color: var(--ink-soft);
+    text-align: center;
+    width: 100%;
+    margin: 4px 0;
+  }
+  .result-box {
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 10px 24px;
+    border-radius: 16px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    text-align: center;
+    box-shadow: 4px 4px 0 var(--coral);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  .equation {
+    text-align: center;
+    margin-top: 24px;
+    font-family: "Fredoka", sans-serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    color: var(--ink);
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    word-break: break-word;
+  }
+  .equation .hi { color: var(--coral); }
+  .equation .res { color: var(--mint); font-size: 1.3em; }
+
+  /* ----- Section 2: Grouping ----- */
+  .group-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .group-pile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    max-width: 600px;
+    padding: 14px;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .grouped-box {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .grouped-box .candy {
+    width: 22px;
+    height: 22px;
+    animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+
+  /* ----- Section 3: Inverse ----- */
+  .inverse-stage {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+  }
+  @media (max-width: 700px) {
+    .inverse-stage { grid-template-columns: 1fr; }
+    .inverse-stage .equals { transform: rotate(90deg); }
+  }
+  .inv-box {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .inv-grid {
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .inv-dot {
+    width: 22px; height: 22px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .inv-dot.a { background: var(--purple); }
+  .inv-dot.b { background: var(--yellow); }
+  .inv-formula {
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .equals {
+    font-family: "Fredoka", sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--purple);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .inv-conclusion {
+    margin-top: 24px;
+    text-align: center;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 14px 20px;
+    border-radius: 20px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .inv-conclusion .formula {
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 4px 12px;
+    border-radius: 10px;
+    margin: 0 4px;
+    display: inline-block;
+  }
+
+  /* ----- Section 4: Measurement ----- */
+  .measure-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .ruler-track {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 80px;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
+    overflow: hidden;
+  }
+  .measure-bar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    height: 28px;
+    background: linear-gradient(90deg, var(--pink) 0%, var(--coral) 100%);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: white;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.9rem;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  .measure-unit {
+    position: absolute;
+    top: 46px;
+    height: 20px;
+    background: var(--mint);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: left 0.3s;
+  }
+  .measure-count {
+    position: absolute;
+    bottom: -2px;
+    height: 10px;
+    width: 2px;
+    background: var(--ink);
+  }
+  .measure-count-num {
+    position: absolute;
+    bottom: -22px;
+    transform: translateX(-50%);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .measure-labels {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 600px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .measure-pill {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.05rem;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .measure-pill .num { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 1.3rem; }
+
+  /* ----- Section 5: Divide by Fraction ----- */
+  .frac-stage {
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    padding: 28px 20px;
+    border: 2px solid rgba(42,42,74,0.15);
+  }
+  .frac-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    padding: 5px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .frac-btn {
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 42px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .frac-btn:hover { background: rgba(255,140,66,0.15); }
+  .frac-btn.active {
+    background: var(--ink);
+    color: white !important;
+    transform: scale(1.05);
+  }
+  .frac-btn .frac-inline {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.95;
+    font-size: 0.85rem;
+  }
+  .frac-btn .frac-inline .top { border-bottom: 2px solid currentColor; padding: 0 4px 1px; }
+  .frac-btn .frac-inline .bot { padding-top: 2px; }
+
+  .frac-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .frac-bar-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .frac-bar {
+    width: 200px;
+    height: 50px;
+    background: linear-gradient(90deg, #FFB088 0%, #FF8C42 100%);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--ink);
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .frac-bar .label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    color: white;
+    font-size: 1.1rem;
+  }
+  .frac-segment {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-right: 2px dashed var(--ink);
+  }
+  .frac-segment:last-child { border-right: none; }
+  .frac-segment .seg-label {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .frac-arrow {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.3rem;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .frac-arrow .badge {
+    background: var(--sunset);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.1rem;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    color: var(--ink-soft);
+    font-size: 1.2rem;
+  }
+  .footer .stars { font-size: 2rem; margin-bottom: 8px; letter-spacing: 8px; }
+
+  /* ========== Section 6: Quiz / Challenge ========== */
+  .card-6 {
+    background: linear-gradient(135deg, #FFF5C2 0%, #FFE680 100%);
+  }
+  .card-6 .tag, .card-6 h2 .num { color: #c79a2c; }
+
+  .quiz-stage {
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    padding: 24px;
+    border: 2px solid rgba(42,42,74,0.15);
+    min-height: 360px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .pip {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    background: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .pip.current { background: var(--yellow); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,201,61,0.4); }
+  .pip.correct { background: var(--mint); color: white; }
+  .pip.wrong   { background: var(--coral); color: white; }
+
+  .quiz-question {
+    text-align: center;
+    margin-bottom: 24px;
+    animation: questionIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes questionIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .quiz-tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  .quiz-q-text {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 0 12px;
+  }
+  .quiz-q-text .num {
+    color: var(--coral);
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 1.15em;
+  }
+
+  .quiz-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  @media (max-width: 480px) {
+    .quiz-options { grid-template-columns: 1fr; }
+  }
+
+  .quiz-opt {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 56px;
+  }
+  .quiz-opt:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+    background: #fffbe5;
+  }
+  .quiz-opt:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.correct {
+    background: var(--mint);
+    color: white;
+    animation: bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-opt.wrong {
+    background: var(--coral);
+    color: white;
+    animation: shake 0.4s ease;
+  }
+  .quiz-opt .opt-letter {
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .quiz-opt.correct .opt-letter { background: white; }
+  .quiz-opt.wrong   .opt-letter { background: white; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-8px); }
+    75%      { transform: translateX(8px); }
+  }
+
+  .quiz-feedback {
+    text-align: center;
+    margin-top: 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.15rem;
+    min-height: 30px;
+    color: var(--ink);
+  }
+  .quiz-feedback.correct { color: var(--mint); }
+  .quiz-feedback.wrong   { color: var(--coral); }
+
+  .quiz-next {
+    display: block;
+    margin: 18px auto 0;
+    background: var(--ink);
+    color: var(--yellow);
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--coral);
+    transition: transform 0.15s;
+  }
+  .quiz-next:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--coral); }
+  .quiz-next:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--coral); }
+
+  /* Final result screen */
+  .quiz-result {
+    text-align: center;
+    padding: 20px 10px;
+    animation: resultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes resultIn {
+    0% { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .quiz-result .trophy {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    display: inline-block;
+    animation: trophy 1.4s ease-in-out infinite;
+  }
+  @keyframes trophy {
+    0%, 100% { transform: rotate(-8deg); }
+    50%      { transform: rotate(8deg); }
+  }
+  .quiz-result h3 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2rem;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .quiz-result .score {
+    font-family: "Fredoka", sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--coral);
+    margin: 8px 0 14px;
+  }
+  .quiz-result .stars {
+    font-size: 2.4rem;
+    letter-spacing: 6px;
+    margin: 12px 0 18px;
+  }
+  .quiz-result .star {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-result .star.filled { animation: starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+  .quiz-result .star.empty  { opacity: 0.25; filter: grayscale(0.8); }
+  @keyframes starPop {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .quiz-result .msg {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  .quiz-result button {
+    background: var(--coral);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s;
+  }
+  .quiz-result button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .quiz-result button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+  /* Confetti */
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    pointer-events: none;
+    animation: confettiFall 1.4s ease-out forwards;
+    z-index: 10;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translate(0, 0) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--cx), 280px) rotate(720deg); }
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 24px 16px; border-radius: 24px; box-shadow: 6px 6px 0 var(--ink); }
+    .card .subtitle { padding-left: 0; }
+    .card h2 { font-size: 1.6rem; }
+    .card h2 .emoji { font-size: 2rem; }
+    .controls { gap: 14px; padding: 14px; }
+    .equation { font-size: 1.2rem; padding: 12px; }
+    .candy { width: 22px; height: 22px; }
+    .frac-bar { width: 140px; }
+    .measure-bar { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deco d1">⭐</div>
+<div class="deco d2">🎈</div>
+<div class="deco d3">🌈</div>
+<div class="deco d4">✨</div>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="sticker">🎉 数学小冒险</span>
+    <h1>除法的<br>奇<span class="x">÷</span>妙世界</h1>
+    <p>原来一个小小的除号,藏着 <b>5 个超级有趣的秘密</b>!<br>跟着小兔子一起,动手玩一玩吧!🐰</p>
+  </header>
+
+  <!-- CARD 1: SHARING -->
+  <section class="card card-1">
+    <div class="tag">第 <span class="num">1</span> 个秘密</div>
+    <h2><span class="emoji">🍬</span>平均分配的秘密</h2>
+    <p class="subtitle">除法,就是 <b>"把东西平均分给大家"</b> 的魔法!</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>总共几个🍬?</label>
+        <div class="stepper" data-target="totalCandy">
+          <button data-act="dec">−</button>
+          <div class="val" id="tc-val">12</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>分给几个人?</label>
+        <div class="stepper" data-target="people">
+          <button data-act="dec">−</button>
+          <div class="val" id="p-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="share-container" id="share-container"></div>
+    </div>
+
+    <div class="equation" id="eq-1"></div>
+  </section>
+
+  <!-- CARD 2: GROUPING -->
+  <section class="card card-2">
+    <div class="tag">第 <span class="num">2</span> 个秘密</div>
+    <h2><span class="emoji">📦</span>装箱的秘密</h2>
+    <p class="subtitle">除法还可以问: <b>"一共能装几箱?"</b> 每箱装固定数量~</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>总共几个🍬?</label>
+        <div class="stepper" data-target="groupTotal">
+          <button data-act="dec">−</button>
+          <div class="val" id="gt-val">15</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每箱装几个?</label>
+        <div class="stepper" data-target="perBox">
+          <button data-act="dec">−</button>
+          <div class="val" id="pb-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage group-stage">
+      <div class="group-pile" id="group-pile"></div>
+      <div id="grouped-result"></div>
+    </div>
+
+    <div class="equation" id="eq-2"></div>
+  </section>
+
+  <!-- CARD 3: INVERSE -->
+  <section class="card card-3">
+    <div class="tag">第 <span class="num">3</span> 个秘密</div>
+    <h2><span class="emoji">🔄</span>逆运算的秘密</h2>
+    <p class="subtitle">除法是乘法的 <b>"倒着走"</b>! 乘过去,除回来~</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>被除数 a =</label>
+        <div class="stepper" data-target="divA">
+          <button data-act="dec">−</button>
+          <div class="val" id="da-val">15</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>除数 b =</label>
+        <div class="stepper" data-target="divB">
+          <button data-act="dec">−</button>
+          <div class="val" id="db-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="inverse-stage">
+        <div class="inv-box">
+          <div class="inv-grid" id="inv-grid-1"></div>
+          <div class="inv-formula"><span style="color:var(--purple)">a</span> ÷ <span style="color:#c79a2c">b</span> = <span id="inv-f1">5</span></div>
+        </div>
+        <div class="equals">↔</div>
+        <div class="inv-box">
+          <div class="inv-grid" id="inv-grid-2"></div>
+          <div class="inv-formula"><span style="color:#c79a2c">b</span> × <span style="color:var(--purple)">?</span> = <span style="color:var(--purple)">a</span></div>
+        </div>
+      </div>
+      <div class="inv-conclusion">
+        🎩 这叫 <b>"乘除互逆"</b>:
+        <span class="formula">a ÷ b = c ↔ b × c = a</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 4: MEASUREMENT -->
+  <section class="card card-4">
+    <div class="tag">第 <span class="num">4</span> 个秘密</div>
+    <h2><span class="emoji">📏</span>测量的秘密</h2>
+    <p class="subtitle">除法可以 <b>"量一量"</b>: 大长度里包含几个小长度!</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>总长度</label>
+        <div class="stepper" data-target="totalLen">
+          <button data-act="dec">−</button>
+          <div class="val" id="tl-val">12</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每段多长?</label>
+        <div class="stepper" data-target="unitLen">
+          <button data-act="dec">−</button>
+          <div class="val" id="ul-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage measure-stage">
+      <div class="ruler-track" id="ruler-track"></div>
+      <div class="measure-labels">
+        <div class="measure-pill">总长 = <span class="num" id="mla">12</span></div>
+        <div class="measure-pill">每段 = <span class="num" id="mlb">3</span></div>
+        <div class="measure-pill">能分 <span class="num" id="mlc">4</span> 段!</div>
+      </div>
+    </div>
+
+    <div class="equation" id="eq-4"></div>
+  </section>
+
+  <!-- CARD 5: DIVIDE BY FRACTION -->
+  <section class="card card-5">
+    <div class="tag">第 <span class="num">5</span> 个秘密</div>
+    <h2><span class="emoji">🔍</span>倒过来的秘密</h2>
+    <p class="subtitle">除以 <b>½</b> → 反而 <b>变大</b>! 除以分数等于 <b>乘倒数</b> 🔮</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>原来的长度</label>
+        <div class="stepper" data-target="fracOrig">
+          <button data-act="dec">−</button>
+          <div class="val" id="fo-val">4</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>除以几?</label>
+        <div class="frac-picker" id="frac-picker">
+          <button class="frac-btn active" data-div="1">1</button>
+          <button class="frac-btn" data-div="2">2</button>
+          <button class="frac-btn" data-div="3">3</button>
+          <button class="frac-btn" data-div="4">4</button>
+          <button class="frac-btn" data-div="0.5">
+            <span class="frac-inline"><span class="top">1</span><span class="bot">2</span></span>
+          </button>
+          <button class="frac-btn" data-div="0.3333">
+            <span class="frac-inline"><span class="top">1</span><span class="bot">3</span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="frac-stage">
+      <div class="frac-visual" id="frac-visual"></div>
+    </div>
+
+    <div class="equation" id="eq-5"></div>
+
+    <div class="inv-conclusion" style="margin-top: 20px; background: linear-gradient(90deg, var(--blue) 0%, var(--ink) 50%, var(--sunset) 100%);">
+      💡 <b style="color:#BCE0FF;">除以 ½ = 乘以 2</b> &nbsp;|&nbsp;
+      <b style="color:#FFD9B0;">除以 ⅓ = 乘以 3</b>
+    </div>
+  </section>
+
+  <!-- CARD 6: QUIZ / CHALLENGE -->
+  <section class="card card-6">
+    <div class="tag">🏆 终极挑战</div>
+    <h2><span class="emoji">🎯</span>来挑战吧!</h2>
+    <p class="subtitle">学完了 <b>5 个秘密</b>?来答 <b>5 道题</b>,赢取小星星!</p>
+
+    <div class="quiz-stage">
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <div id="quiz-body"></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div class="stars">⭐ ⭐ ⭐ ⭐ ⭐</div>
+    除法,真的很奇妙吧!🐰✨
+  </div>
+
+</div>
+
+<script>
+  const state = {
+    totalCandy: 12,  people: 3,
+    groupTotal: 15,  perBox: 5,
+    divA: 15,        divB: 3,
+    totalLen: 12,    unitLen: 3,
+    fracOrig: 4,     fracDiv: 1
+  };
+
+  const limits = {
+    totalCandy: [2, 24],  people:   [2, 8],
+    groupTotal: [2, 24],  perBox:   [2, 6],
+    divA:       [4, 24],  divB:     [2, 6],
+    totalLen:   [4, 20],  unitLen:  [2, 5],
+    fracOrig:   [2, 8]
+  };
+
+  // Stepper wiring
+  document.querySelectorAll('.stepper').forEach(stepper => {
+    const target = stepper.dataset.target;
+    stepper.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.act;
+        const [min, max] = limits[target];
+        let v = state[target];
+        v += (act === 'inc') ? 1 : -1;
+        v = Math.max(min, Math.min(max, v));
+        state[target] = v;
+        renderAll();
+      });
+    });
+  });
+
+  // Fraction divider picker wiring
+  document.querySelectorAll('.frac-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = parseFloat(btn.dataset.div);
+      state.fracDiv = d;
+      renderFrac();
+    });
+  });
+
+  // ===== Section 1: Sharing =====
+  function renderSharing() {
+    const { totalCandy, people } = state;
+    document.getElementById('tc-val').textContent = totalCandy;
+    document.getElementById('p-val').textContent = people;
+
+    const wrap = document.getElementById('share-container');
+    wrap.innerHTML = '';
+
+    const perPerson = Math.floor(totalCandy / people);
+    const remainder = totalCandy % people;
+
+    for (let i = 0; i < people; i++) {
+      const bowl = document.createElement('div');
+      bowl.className = 'share-bowl';
+      const cols = Math.min(perPerson, 4);
+      bowl.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+      for (let j = 0; j < perPerson; j++) {
+        const c = document.createElement('div');
+        c.className = 'candy';
+        c.style.animationDelay = (i * 0.1 + j * 0.04) + 's';
+        bowl.appendChild(c);
+      }
+      const label = document.createElement('div');
+      label.className = 'share-label';
+      label.textContent = `小朋友 ${i + 1}`;
+      bowl.appendChild(label);
+      wrap.appendChild(bowl);
+      if (i < people - 1) {
+        const div = document.createElement('div');
+        div.className = 'divide-sign';
+        div.textContent = '÷';
+        wrap.appendChild(div);
+      }
+    }
+
+    if (remainder > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'arrow-down';
+      arrow.textContent = '↓';
+      wrap.appendChild(arrow);
+      const remBox = document.createElement('div');
+      remBox.className = 'result-box';
+      remBox.textContent = `还剩 ${remainder} 颗分不完!`;
+      remBox.style.background = 'var(--coral)';
+      remBox.style.color = 'white';
+      wrap.appendChild(remBox);
+    } else {
+      const arrow = document.createElement('div');
+      arrow.className = 'arrow-down';
+      arrow.textContent = '↓';
+      wrap.appendChild(arrow);
+      const eqBox = document.createElement('div');
+      eqBox.className = 'result-box';
+      eqBox.innerHTML = `每人 <b>${perPerson}</b> 颗!`;
+      wrap.appendChild(eqBox);
+    }
+
+    const eq = document.getElementById('eq-1');
+    if (remainder === 0) {
+      eq.innerHTML = `<span class="hi">${totalCandy} ÷ ${people}</span> = <span class="res">${perPerson}</span> (每人 ${perPerson} 颗)`;
+    } else {
+      eq.innerHTML = `<span class="hi">${totalCandy} ÷ ${people}</span> = <span class="res">${perPerson}</span> ... 余 ${remainder}`;
+    }
+  }
+
+  // ===== Section 2: Grouping =====
+  function renderGrouping() {
+    const { groupTotal, perBox } = state;
+    document.getElementById('gt-val').textContent = groupTotal;
+    document.getElementById('pb-val').textContent = perBox;
+
+    const pile = document.getElementById('group-pile');
+    pile.innerHTML = '';
+    for (let i = 0; i < groupTotal; i++) {
+      const c = document.createElement('div');
+      c.className = 'candy';
+      c.style.animationDelay = (i * 0.02) + 's';
+      pile.appendChild(c);
+    }
+
+    const resultWrap = document.getElementById('grouped-result');
+    resultWrap.innerHTML = '';
+
+    const boxes = Math.floor(groupTotal / perBox);
+    const remainder = groupTotal % perBox;
+
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.flexWrap = 'wrap';
+    row.style.gap = '12px';
+    row.style.justifyContent = 'center';
+    row.style.marginTop = '16px';
+
+    for (let i = 0; i < boxes; i++) {
+      const box = document.createElement('div');
+      box.className = 'grouped-box';
+      const cols = Math.min(perBox, 5);
+      box.style.gridTemplateColumns = `repeat(${cols}, 22px)`;
+      for (let j = 0; j < perBox; j++) {
+        const c = document.createElement('div');
+        c.className = 'candy';
+        c.style.animationDelay = (i * 0.08 + j * 0.03) + 's';
+        box.appendChild(c);
+      }
+      row.appendChild(box);
+    }
+
+    if (remainder > 0) {
+      const remBox = document.createElement('div');
+      remBox.className = 'grouped-box';
+      remBox.style.border = '3px dashed var(--coral)';
+      remBox.style.background = '#fff0f0';
+      const cols = Math.min(remainder, 5);
+      remBox.style.gridTemplateColumns = `repeat(${cols}, 22px)`;
+      for (let j = 0; j < remainder; j++) {
+        const c = document.createElement('div');
+        c.className = 'candy';
+        c.style.animationDelay = (boxes * 0.08 + j * 0.03) + 's';
+        remBox.appendChild(c);
+      }
+      const remLabel = document.createElement('div');
+      remLabel.style.gridColumn = '1 / -1';
+      remLabel.style.textAlign = 'center';
+      remLabel.style.fontSize = '0.7rem';
+      remLabel.style.color = 'var(--coral)';
+      remLabel.textContent = `剩 ${remainder} 个`;
+      remBox.appendChild(remLabel);
+      row.appendChild(remBox);
+    }
+
+    resultWrap.appendChild(row);
+
+    const eq = document.getElementById('eq-2');
+    if (remainder === 0) {
+      eq.innerHTML = `<span class="hi">${groupTotal} ÷ ${perBox}</span> = <span class="res">${boxes}</span> 箱!`;
+    } else {
+      eq.innerHTML = `<span class="hi">${groupTotal} ÷ ${perBox}</span> = <span class="res">${boxes}</span> 箱 ... 余 ${remainder} 个`;
+    }
+  }
+
+  // ===== Section 3: Inverse =====
+  function renderInverse() {
+    const { divA, divB } = state;
+    document.getElementById('da-val').textContent = divA;
+    document.getElementById('db-val').textContent = divB;
+
+    const quotient = Math.floor(divA / divB);
+    const remainder = divA % divB;
+
+    const g1 = document.getElementById('inv-grid-1');
+    g1.innerHTML = '';
+    g1.style.gridTemplateColumns = `repeat(${divB}, 22px)`;
+    for (let i = 0; i < divA; i++) {
+      const d = document.createElement('div');
+      d.className = 'inv-dot a';
+      d.style.animationDelay = (i * 0.03) + 's';
+      g1.appendChild(d);
+    }
+
+    const g2 = document.getElementById('inv-grid-2');
+    g2.innerHTML = '';
+    g2.style.gridTemplateColumns = `repeat(${quotient}, 22px)`;
+    for (let i = 0; i < quotient; i++) {
+      for (let j = 0; j < divB; j++) {
+        const d = document.createElement('div');
+        d.className = 'inv-dot b';
+        d.style.animationDelay = (i * 0.1 + j * 0.03) + 's';
+        g2.appendChild(d);
+      }
+    }
+
+    document.getElementById('inv-f1').textContent = remainder === 0 ? quotient : `${quotient} ... ${remainder}`;
+  }
+
+  // ===== Section 4: Measurement =====
+  function renderMeasurement() {
+    const { totalLen, unitLen } = state;
+    document.getElementById('tl-val').textContent = totalLen;
+    document.getElementById('ul-val').textContent = unitLen;
+    document.getElementById('mla').textContent = totalLen;
+    document.getElementById('mlb').textContent = unitLen;
+
+    const segments = Math.floor(totalLen / unitLen);
+    const remainder = totalLen % unitLen;
+    document.getElementById('mlc').textContent = segments;
+
+    const track = document.getElementById('ruler-track');
+    track.innerHTML = '';
+
+    const maxVal = Math.max(totalLen, unitLen * 5);
+    const unitPx = Math.min(28, (track.clientWidth || 600) / (maxVal + 1));
+
+    const bar = document.createElement('div');
+    bar.className = 'measure-bar';
+    bar.style.width = (totalLen * unitPx) + 'px';
+    bar.textContent = `总长 ${totalLen}`;
+    track.appendChild(bar);
+
+    for (let i = 0; i < segments; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'measure-unit';
+      seg.style.left = (10 + i * unitLen * unitPx) + 'px';
+      seg.style.width = (unitLen * unitPx - 2) + 'px';
+      seg.textContent = unitLen;
+      track.appendChild(seg);
+    }
+
+    // Ticks
+    for (let i = 0; i <= totalLen; i++) {
+      const tick = document.createElement('div');
+      tick.className = 'measure-count';
+      tick.style.left = (10 + i * unitPx) + 'px';
+      track.appendChild(tick);
+      if (i % unitLen === 0 || i === totalLen) {
+        const num = document.createElement('div');
+        num.className = 'measure-count-num';
+        num.style.left = (10 + i * unitPx) + 'px';
+        num.textContent = i;
+        track.appendChild(num);
+      }
+    }
+
+    const eq = document.getElementById('eq-4');
+    if (remainder === 0) {
+      eq.innerHTML = `<span class="hi">${totalLen} ÷ ${unitLen}</span> = <span class="res">${segments}</span> 段!`;
+    } else {
+      eq.innerHTML = `<span class="hi">${totalLen} ÷ ${unitLen}</span> = <span class="res">${segments}</span> 段 ... 余 ${remainder}`;
+    }
+  }
+
+  // ===== Section 5: Divide by Fraction =====
+  function fmtFracLong(n) {
+    if (Math.abs(n - 0.3333) < 0.01) return '<span class="frac-inline"><span class="top">1</span><span class="bot">3</span></span>';
+    if (Math.abs(n - 0.5) < 0.01) return '<span class="frac-inline"><span class="top">1</span><span class="bot">2</span></span>';
+    return n.toString();
+  }
+  function fmtFracText(n) {
+    if (Math.abs(n - 0.3333) < 0.01) return '⅓';
+    if (Math.abs(n - 0.5) < 0.01) return '½';
+    return n.toString();
+  }
+
+  function renderFrac() {
+    const { fracOrig, fracDiv } = state;
+    document.getElementById('fo-val').textContent = fracOrig;
+
+    document.querySelectorAll('.frac-btn').forEach(b => {
+      const d = parseFloat(b.dataset.div);
+      b.classList.toggle('active', Math.abs(d - fracDiv) < 0.01);
+    });
+
+    const result = fracOrig / fracDiv;
+    const visual = document.getElementById('frac-visual');
+    visual.innerHTML = '';
+
+    const origBox = document.createElement('div');
+    origBox.className = 'frac-bar-box';
+    const origBar = document.createElement('div');
+    origBar.className = 'frac-bar';
+    origBar.innerHTML = `<span class="label">${fracOrig}</span>`;
+    origBox.appendChild(origBar);
+    const origLabel = document.createElement('div');
+    origLabel.style.fontFamily = '"ZCOOL KuaiLe", sans-serif';
+    origLabel.style.color = 'var(--ink-soft)';
+    origLabel.textContent = '原来的长度';
+    origBox.appendChild(origLabel);
+    visual.appendChild(origBox);
+
+    const arrow = document.createElement('div');
+    arrow.className = 'frac-arrow';
+    arrow.innerHTML = `<span>÷ ${fmtFracText(fracDiv)}</span><span class="badge">= ${Number.isInteger(result) ? result : result.toFixed(2)}</span>`;
+    visual.appendChild(arrow);
+
+    const resBox = document.createElement('div');
+    resBox.className = 'frac-bar-box';
+    const resBar = document.createElement('div');
+    resBar.className = 'frac-bar';
+    resBar.style.background = fracDiv < 1
+      ? 'linear-gradient(90deg, var(--sunset) 0%, var(--coral) 100%)'
+      : 'linear-gradient(90deg, var(--blue) 0%, #6BB5FF 100%)';
+    resBar.innerHTML = `<span class="label">${Number.isInteger(result) ? result : result.toFixed(2)}</span>`;
+
+    // Show segments on result bar
+    if (fracDiv >= 1) {
+      for (let i = 1; i < fracDiv; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'frac-segment';
+        seg.style.left = (i / fracDiv * 100) + '%';
+        resBar.appendChild(seg);
+      }
+    }
+
+    resBox.appendChild(resBar);
+    const resLabel = document.createElement('div');
+    resLabel.style.fontFamily = '"ZCOOL KuaiLe", sans-serif';
+    resLabel.style.color = fracDiv < 1 ? 'var(--sunset)' : 'var(--blue)';
+    resLabel.style.fontWeight = 'bold';
+    resLabel.textContent = fracDiv < 1 ? '📏 变大了!' : '🤏 变小了!';
+    resBox.appendChild(resLabel);
+    visual.appendChild(resBox);
+
+    // Equation
+    const eq = document.getElementById('eq-5');
+    let extra = '';
+    if (Math.abs(fracDiv - 0.5) < 0.01) extra = ' (= × 2)';
+    else if (Math.abs(fracDiv - 0.3333) < 0.01) extra = ' (= × 3)';
+    else if (fracDiv === 2) extra = ' (= × ½)';
+    else if (fracDiv === 3) extra = ' (= × ⅓)';
+    eq.innerHTML = `<span class="hi">${fracOrig} ÷ ${fmtFracLong(fracDiv)}</span> = <span class="res">${Number.isInteger(result) ? result : result.toFixed(2)}</span><span style="color:var(--sunset);font-size:0.7em;">${extra}</span>`;
+  }
+
+  function renderAll() {
+    renderSharing();
+    renderGrouping();
+    renderInverse();
+    renderMeasurement();
+    renderFrac();
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      renderMeasurement();
+    }, 200);
+  });
+
+  // ===== Section 6: Quiz =====
+  const quiz = {
+    questions: [],
+    idx: 0,
+    score: 0,
+    answered: false,
+    results: []
+  };
+
+  function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function makeOptions(correct, range) {
+    const opts = new Set([correct]);
+    let attempts = 0;
+    while (opts.size < 4 && attempts < 50) {
+      let delta = rand(-range, range);
+      if (delta === 0) delta = rand(1, range);
+      const v = correct + delta;
+      if (v > 0) opts.add(v);
+      attempts++;
+    }
+    while (opts.size < 4) opts.add(correct + opts.size);
+    return shuffle([...opts]);
+  }
+
+  function makeQuestions() {
+    const qs = [];
+
+    // Q1: Basic sharing division
+    {
+      const total = rand(6, 18);
+      const people = rand(2, 4);
+      const ans = Math.floor(total / people);
+      qs.push({
+        tag: '🍬 平均分',
+        text: `把 <span class="num">${total}</span> 颗糖果平均分给 <span class="num">${people}</span> 个小朋友,每人几颗?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(2, Math.floor(ans / 2) + 1)),
+        suffix: '颗'
+      });
+    }
+
+    // Q2: Grouping division
+    {
+      const total = rand(10, 24);
+      const perBox = rand(2, 5);
+      const ans = Math.floor(total / perBox);
+      qs.push({
+        tag: '📦 装箱',
+        text: `<span class="num">${total}</span> 个苹果,每 <span class="num">${perBox}</span> 个装一箱,能装几箱?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(2, Math.floor(ans / 2) + 1)),
+        suffix: '箱'
+      });
+    }
+
+    // Q3: Inverse relationship
+    {
+      const a = rand(3, 8), b = rand(2, 6);
+      const product = a * b;
+      qs.push({
+        tag: '🔄 乘除互逆',
+        text: `如果 <span class="num">${a}</span> × <span class="num">${b}</span> = <span class="num">${product}</span>,那么 <span class="num">${product}</span> ÷ <span class="num">${a}</span> = ?`,
+        answer: b,
+        options: makeOptions(b, Math.max(2, b)),
+        suffix: ''
+      });
+    }
+
+    // Q4: Measurement division
+    {
+      const unit = rand(2, 4);
+      const seg = rand(3, 6);
+      const total = unit * seg;
+      qs.push({
+        tag: '📏 测量',
+        text: `一根长 <span class="num">${total}</span> 厘米的绳子,每 <span class="num">${unit}</span> 厘米剪一段,能剪几段?`,
+        answer: seg,
+        options: makeOptions(seg, Math.max(2, Math.floor(seg / 2) + 1)),
+        suffix: '段'
+      });
+    }
+
+    // Q5: Divide by fraction
+    {
+      const flavor = rand(0, 1);
+      if (flavor === 0) {
+        const orig = rand(2, 6);
+        qs.push({
+          tag: '🔍 除以分数',
+          text: `<span class="num">${orig}</span> ÷ ½ = ?`,
+          answer: orig * 2,
+          options: makeOptions(orig * 2, Math.max(3, orig)),
+          suffix: ''
+        });
+      } else {
+        const orig = rand(3, 9);
+        qs.push({
+          tag: '🔍 除以分数',
+          text: `<span class="num">${orig}</span> ÷ ⅓ = ?`,
+          answer: orig * 3,
+          options: makeOptions(orig * 3, Math.max(4, orig * 2)),
+          suffix: ''
+        });
+      }
+    }
+
+    return qs;
+  }
+
+  function renderQuiz() {
+    const progress = document.getElementById('quiz-progress');
+    progress.innerHTML = '';
+    for (let i = 0; i < quiz.questions.length; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'pip';
+      if (quiz.results[i] === 'correct') pip.classList.add('correct');
+      else if (quiz.results[i] === 'wrong') pip.classList.add('wrong');
+      else if (i === quiz.idx) pip.classList.add('current');
+      pip.textContent = (i + 1).toString();
+      progress.appendChild(pip);
+    }
+
+    const body = document.getElementById('quiz-body');
+
+    if (quiz.idx >= quiz.questions.length) {
+      const score = quiz.score;
+      const stars = score >= 5 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+      const trophies = ['😢', '🌱', '⭐', '🏆'];
+      const messages = [
+        '别灰心!再试一次吧~',
+        '不错!继续加油 💪',
+        '很棒!再来一次拿满分 ✨',
+        '完美!你是除法小冠军!🎉'
+      ];
+      let starsHtml = '';
+      for (let i = 0; i < 3; i++) {
+        const filled = i < stars;
+        starsHtml += `<span class="star ${filled ? 'filled' : 'empty'}" style="animation-delay:${i*0.2}s">${filled ? '⭐' : '☆'}</span>`;
+      }
+      body.innerHTML = `
+        <div class="quiz-result">
+          <div class="trophy">${trophies[stars]}</div>
+          <h3>挑战完成!</h3>
+          <div class="score">${score} / 5</div>
+          <div class="stars">${starsHtml}</div>
+          <div class="msg">${messages[stars]}</div>
+          <button id="quiz-restart">🔄 再玩一次</button>
+        </div>
+      `;
+      document.getElementById('quiz-restart').addEventListener('click', startQuiz);
+      return;
+    }
+
+    const q = quiz.questions[quiz.idx];
+    const letters = ['A', 'B', 'C', 'D'];
+    body.innerHTML = `
+      <div class="quiz-question">
+        <div class="quiz-tag">${q.tag} · 第 ${quiz.idx + 1} 题</div>
+        <div class="quiz-q-text">${q.text}</div>
+      </div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+    `;
+    const optsBox = document.getElementById('quiz-options');
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.dataset.value = opt;
+      btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}${q.suffix}`;
+      btn.addEventListener('click', () => handleAnswer(btn, opt));
+      optsBox.appendChild(btn);
+    });
+    quiz.answered = false;
+  }
+
+  function handleAnswer(btn, value) {
+    if (quiz.answered) return;
+    quiz.answered = true;
+    const q = quiz.questions[quiz.idx];
+    const isCorrect = value === q.answer;
+    const feedback = document.getElementById('quiz-feedback');
+
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      b.disabled = true;
+      const v = parseInt(b.dataset.value);
+      if (v === q.answer) b.classList.add('correct');
+      else if (b === btn) b.classList.add('wrong');
+    });
+
+    if (isCorrect) {
+      quiz.score++;
+      quiz.results[quiz.idx] = 'correct';
+      feedback.className = 'quiz-feedback correct';
+      feedback.textContent = '🎉 答对啦!太棒了!';
+      launchConfetti(btn);
+    } else {
+      quiz.results[quiz.idx] = 'wrong';
+      feedback.className = 'quiz-feedback wrong';
+      feedback.innerHTML = `差一点!正确答案是 <b>${q.answer}${q.suffix}</b>`;
+    }
+
+    const pips = document.querySelectorAll('#quiz-progress .pip');
+    pips[quiz.idx]?.classList.remove('current');
+    pips[quiz.idx]?.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    const next = document.createElement('button');
+    next.className = 'quiz-next';
+    next.textContent = quiz.idx === quiz.questions.length - 1 ? '🏁 看结果' : '👉 下一题';
+    next.addEventListener('click', () => {
+      quiz.idx++;
+      renderQuiz();
+    });
+    document.getElementById('quiz-body').appendChild(next);
+  }
+
+  function launchConfetti(originEl) {
+    const stage = document.querySelector('.quiz-stage');
+    const stageRect = stage.getBoundingClientRect();
+    const btnRect = originEl.getBoundingClientRect();
+    const ox = btnRect.left - stageRect.left + btnRect.width / 2;
+    const oy = btnRect.top  - stageRect.top  + btnRect.height / 2;
+    const colors = ['#FF5E5B', '#FFC93D', '#4ECDC4', '#9B5DE5', '#FF80B5', '#FF8C42', '#4D96FF'];
+    for (let i = 0; i < 24; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = ox + 'px';
+      c.style.top  = oy + 'px';
+      c.style.background = colors[i % colors.length];
+      c.style.borderRadius = (i % 3 === 0) ? '50%' : '2px';
+      const cx = (Math.random() - 0.5) * 360;
+      c.style.setProperty('--cx', cx + 'px');
+      c.style.animationDuration = (1 + Math.random() * 0.6) + 's';
+      stage.appendChild(c);
+      setTimeout(() => c.remove(), 2000);
+    }
+  }
+
+  function startQuiz() {
+    quiz.questions = makeQuestions();
+    quiz.idx = 0;
+    quiz.score = 0;
+    quiz.answered = false;
+    quiz.results = [];
+    renderQuiz();
+  }
+
+  renderAll();
+  startQuiz();
+</script>
+
+</body>
+</html>

@@ -21,6 +21,7 @@ Visit: **https://wateralways.github.io/medley_of_fun/**
 | [beat-sequencer.html](beat-sequencer.html) | Drum machine & melody beat sequencer |
 | [maze-game.html](maze-game.html) | Random maze challenge game |
 | [physics-pinball.html](physics-pinball.html) | Draw-line physics pinball |
+| [division-fun.html](division-fun.html) | Five secrets of division — sharing, grouping, inverse, measurement, divide by fractions |
 
 ## About
 
