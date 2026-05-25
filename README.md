@@ -21,7 +21,11 @@ Visit: **https://wateralways.github.io/medley_of_fun/**
 | [beat-sequencer.html](beat-sequencer.html) | Drum machine & melody beat sequencer |
 | [maze-game.html](maze-game.html) | Random maze challenge game |
 | [physics-pinball.html](physics-pinball.html) | Draw-line physics pinball |
+| [multiplication-fun.html](multiplication-fun.html) | Multiplication learning game |
+| [sorting-fun.html](sorting-fun.html) | Adjacent-swap sorting game for kids |
+| [schedule-planner.html](schedule-planner.html) | Drag-and-drop daily schedule builder |
+| [cambridge/](cambridge/) | Cambridge University interactive exploration — heroes, colleges, quiz |
 
 ## About
 
-Each file is a standalone HTML page — no build tools, no dependencies. Just open in a browser and enjoy!
+Most pages are standalone HTML files — no build tools, no dependencies. The Cambridge explorer is a React app built with Vite (source in `剑桥趣味网页/`, build output in `cambridge/`).
