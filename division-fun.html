@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 除法的奇妙世界</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:    #FFF4D6;
+    --coral:    #FF5E5B;
+    --yellow:   #FFC93D;
+    --mint:     #4ECDC4;
+    --blue:     #4D96FF;
+    --purple:   #9B5DE5;
+    --pink:     #FF80B5;
+    --orange:   #FF8C42;
+    --sunset:   #FF6B35;
+    --ink:      #2A2A4A;
+    --ink-soft: #4A4A6A;
+    --green:    #6BCB77;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--cream);
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,140,66,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(78,205,196,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(155,93,229,0.08) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+
+  .deco {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+    animation: float 6s ease-in-out infinite;
+  }
+  .deco.d1 { top: 8%; left: 4%; font-size: 2.5rem; animation-delay: 0s; }
+  .deco.d2 { top: 25%; right: 5%; font-size: 3rem; animation-delay: 1.5s; }
+  .deco.d3 { top: 60%; left: 3%; font-size: 2rem; animation-delay: 3s; }
+  .deco.d4 { top: 80%; right: 8%; font-size: 2.5rem; animation-delay: 4s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 30px 20px 50px;
+    position: relative;
+  }
+  .hero .sticker {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transform: rotate(-3deg);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 20px;
+    text-shadow: 5px 5px 0 var(--yellow);
+    letter-spacing: 2px;
+  }
+  .hero h1 .x {
+    display: inline-block;
+    color: var(--coral);
+    transform: scale(1.4) rotate(15deg);
+    margin: 0 8px;
+    text-shadow: 4px 4px 0 var(--ink);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 560px;
+    margin: 0 auto;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .card {
+    background: white;
+    border: 4px solid var(--ink);
+    border-radius: 32px;
+    padding: 36px 32px;
+    margin-bottom: 50px;
+    box-shadow: 10px 10px 0 var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .card .tag {
+    position: absolute;
+    top: 0;
+    right: 30px;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    padding: 8px 20px 12px;
+    border-radius: 0 0 18px 18px;
+    font-size: 1.1rem;
+  }
+  .card h2 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card h2 .emoji { font-size: 2.5rem; }
+  .card .subtitle {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-bottom: 30px;
+    padding-left: 50px;
+    line-height: 1.6;
+  }
+
+  .card-1 { background: linear-gradient(135deg, #FFF4D6 0%, #FFE8B0 100%); }
+  .card-1 .tag, .card-1 h2 .num { color: var(--orange); }
+  .card-2 { background: linear-gradient(135deg, #E0F7F4 0%, #BCEBE5 100%); }
+  .card-2 .tag, .card-2 h2 .num { color: var(--mint); }
+  .card-3 { background: linear-gradient(135deg, #F0E5FF 0%, #DCC8FF 100%); }
+  .card-3 .tag, .card-3 h2 .num { color: var(--purple); }
+  .card-4 { background: linear-gradient(135deg, #FFE0EB 0%, #FFC8DC 100%); }
+  .card-4 .tag, .card-4 h2 .num { color: var(--pink); }
+  .card-5 { background: linear-gradient(135deg, #FFE5D0 0%, #FFCAA0 100%); }
+  .card-5 .tag, .card-5 h2 .num { color: var(--sunset); }
+
+  .controls {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: rgba(255,255,255,0.7);
+    border: 3px dashed var(--ink);
+    border-radius: 20px;
+  }
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ctrl label {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .stepper button {
+    background: transparent;
+    border: none;
+    width: 38px;
+    height: 38px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .stepper button:hover { background: var(--yellow); }
+  .stepper button:active { transform: scale(0.92); }
+  .stepper .val {
+    min-width: 44px;
+    text-align: center;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-left: 3px solid var(--ink);
+    border-right: 3px solid var(--ink);
+    padding: 0 4px;
+  }
+
+  .stage {
+    background: rgba(255,255,255,0.6);
+    border-radius: 20px;
+    padding: 24px;
+    min-height: 200px;
+    border: 2px solid rgba(42,42,74,0.15);
+  }
+
+  .equation {
+    text-align: center;
+    margin-top: 24px;
+    font-family: "Fredoka", sans-serif;
+    font-size: clamp(1.3rem, 4vw, 1.9rem);
+    font-weight: 700;
+    color: var(--ink);
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    word-break: break-word;
+  }
+  .equation .hi { color: var(--coral); }
+  .equation .res { color: var(--mint); font-size: 1.3em; }
+  .equation .rem { color: var(--orange); font-size: 1.1em; }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  /* ========== CARD 1: Remainder ========== */
+  .remainder-stage { display: flex; flex-direction: column; gap: 24px; }
+  .rem-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .rem-group {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 4px 4px 0 var(--ink);
+    display: grid;
+    gap: 5px;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .rem-label {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .rem-remainder-box {
+    background: #fff0f0;
+    border: 3px dashed var(--coral);
+    border-radius: 16px;
+    padding: 12px;
+    display: grid;
+    gap: 5px;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .rem-remainder-box .rem-label { color: var(--coral); }
+
+  .cycle-demo {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    text-align: center;
+  }
+  .cycle-wheel {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .cycle-day {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: white;
+    transition: all 0.3s;
+  }
+  .cycle-day.highlight {
+    background: var(--yellow);
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(255,201,61,0.4);
+  }
+  .cycle-day.rem-day {
+    background: var(--coral);
+    color: white;
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  /* ========== CARD 2: Two Faces ========== */
+  .two-face-stage {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 700px) {
+    .two-face-stage { grid-template-columns: 1fr; }
+    .two-face-stage .face-divider { display: none; }
+  }
+  .face-box {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .face-box h3 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .face-box.equal h3 { color: var(--mint); }
+  .face-box.contain h3 { color: var(--blue); }
+  .face-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+    min-height: 80px;
+  }
+  .face-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .face-sep {
+    width: 2px;
+    height: 30px;
+    background: var(--ink);
+    opacity: 0.2;
+  }
+  .face-pile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+  .mini-candy {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .face-answer {
+    text-align: center;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .face-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--purple);
+  }
+  .same-formula {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 16px;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 14px 20px;
+    border-radius: 20px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+  }
+  .same-formula .formula {
+    background: var(--yellow);
+    color: var(--ink);
+    padding: 4px 12px;
+    border-radius: 10px;
+    margin: 0 4px;
+    display: inline-block;
+  }
+
+  /* ========== CARD 3: Number Line ========== */
+  .numberline-stage { display: flex; flex-direction: column; gap: 20px; }
+  .nl-track {
+    position: relative;
+    height: 100px;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
+    overflow: hidden;
+  }
+  .nl-line {
+    position: absolute;
+    left: 20px; right: 20px;
+    top: 60px;
+    height: 4px;
+    background: var(--ink);
+    border-radius: 2px;
+  }
+  .nl-tick {
+    position: absolute;
+    top: 54px;
+    width: 3px;
+    height: 16px;
+    background: var(--ink);
+  }
+  .nl-num {
+    position: absolute;
+    top: 72px;
+    transform: translateX(-50%);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .nl-jumper {
+    position: absolute;
+    top: 14px;
+    width: 40px; height: 40px;
+    background: var(--coral);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 5;
+  }
+  .nl-arc {
+    position: absolute;
+    top: 26px;
+    height: 30px;
+    border-top: 3px dashed var(--blue);
+    border-radius: 50% 50% 0 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .nl-arc.show { opacity: 1; }
+  .nl-jump-label {
+    position: absolute;
+    top: 0;
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--blue);
+    transform: translateX(-50%);
+  }
+  .nl-jump-btn {
+    background: var(--blue);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    padding: 10px 24px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.15s;
+    align-self: center;
+  }
+  .nl-jump-btn:hover { transform: translate(-2px, -2px); }
+  .nl-jump-btn:active { transform: translate(2px, 2px); }
+  .nl-jump-btn:disabled {
+    background: var(--ink-soft);
+    cursor: not-allowed;
+  }
+  .nl-status {
+    text-align: center;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    min-height: 28px;
+  }
+
+  /* ========== CARD 4: Area Model ========== */
+  .area-stage { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+  .area-grid-box {
+    position: relative;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .area-grid {
+    display: grid;
+    gap: 3px;
+  }
+  .area-cell {
+    width: 28px; height: 28px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .area-cell.known { background: var(--mint); }
+  .area-cell.unknown { background: var(--pink); }
+  .area-dims {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 400px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .dim-pill {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.05rem;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .dim-pill .num { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 1.3rem; }
+  .dim-pill.area { background: var(--ink); color: var(--yellow); }
+
+  /* ========== CARD 5: Divide by Fraction ========== */
+  .frac-stage { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+  .frac-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 500px;
+  }
+  .frac-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .frac-label {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    color: var(--ink);
+    min-width: 60px;
+    text-align: right;
+  }
+  .frac-track {
+    flex: 1;
+    height: 50px;
+    background: rgba(42,42,74,0.05);
+    border-radius: 12px;
+    position: relative;
+  }
+  .frac-bar {
+    position: absolute;
+    left: 0; top: 0;
+    height: 50px;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--ink);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: white;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1rem;
+    transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .frac-bar.whole {
+    background: linear-gradient(90deg, #FFB088 0%, #FF8C42 100%);
+  }
+  .frac-bar.parts {
+    background: linear-gradient(90deg, var(--sunset) 0%, var(--coral) 100%);
+  }
+  .frac-seg-line {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--ink);
+    opacity: 0.6;
+  }
+  .frac-seg-num {
+    position: absolute;
+    top: -20px;
+    transform: translateX(-50%);
+    font-family: "Fredoka", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .frac-concept {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    text-align: center;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    max-width: 500px;
+    width: 100%;
+  }
+  .frac-formula {
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 4px 12px;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 0 4px;
+  }
+
+  /* ========== Quiz ========== */
+  .card-6 {
+    background: linear-gradient(135deg, #FFF5C2 0%, #FFE680 100%);
+  }
+  .card-6 .tag, .card-6 h2 .num { color: #c79a2c; }
+
+  .quiz-stage {
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+    padding: 24px;
+    border: 2px solid rgba(42,42,74,0.15);
+    min-height: 360px;
+    position: relative;
+    overflow: hidden;
+  }
+  .quiz-progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .pip {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    background: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .pip.current { background: var(--yellow); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,201,61,0.4); }
+  .pip.correct { background: var(--mint); color: white; }
+  .pip.wrong   { background: var(--coral); color: white; }
+
+  .quiz-question {
+    text-align: center;
+    margin-bottom: 24px;
+    animation: questionIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes questionIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .quiz-tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+  .quiz-q-text {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 0 12px;
+  }
+  .quiz-q-text .num {
+    color: var(--coral);
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 1.15em;
+  }
+  .quiz-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  @media (max-width: 480px) {
+    .quiz-options { grid-template-columns: 1fr; }
+  }
+  .quiz-opt {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 56px;
+  }
+  .quiz-opt:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+    background: #fffbe5;
+  }
+  .quiz-opt:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.correct {
+    background: var(--mint);
+    color: white;
+    animation: bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-opt.wrong {
+    background: var(--coral);
+    color: white;
+    animation: shake 0.4s ease;
+  }
+  .quiz-opt .opt-letter {
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .quiz-opt.correct .opt-letter { background: white; }
+  .quiz-opt.wrong   .opt-letter { background: white; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-8px); }
+    75%      { transform: translateX(8px); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .quiz-feedback {
+    text-align: center;
+    margin-top: 18px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.15rem;
+    min-height: 30px;
+    color: var(--ink);
+  }
+  .quiz-feedback.correct { color: var(--mint); }
+  .quiz-feedback.wrong   { color: var(--coral); }
+  .quiz-next {
+    display: block;
+    margin: 18px auto 0;
+    background: var(--ink);
+    color: var(--yellow);
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--coral);
+    transition: transform 0.15s;
+  }
+  .quiz-next:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--coral); }
+  .quiz-next:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--coral); }
+
+  .quiz-result {
+    text-align: center;
+    padding: 20px 10px;
+    animation: resultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes resultIn {
+    0% { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .quiz-result .trophy {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    display: inline-block;
+    animation: trophyAnim 1.4s ease-in-out infinite;
+  }
+  @keyframes trophyAnim {
+    0%, 100% { transform: rotate(-8deg); }
+    50%      { transform: rotate(8deg); }
+  }
+  .quiz-result h3 {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 2rem;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .quiz-result .score {
+    font-family: "Fredoka", sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--coral);
+    margin: 8px 0 14px;
+  }
+  .quiz-result .stars {
+    font-size: 2.4rem;
+    letter-spacing: 6px;
+    margin: 12px 0 18px;
+  }
+  .quiz-result .star {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .quiz-result .star.filled { animation: starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+  .quiz-result .star.empty  { opacity: 0.25; filter: grayscale(0.8); }
+  @keyframes starPop {
+    0% { transform: scale(0) rotate(-180deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .quiz-result .msg {
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  .quiz-result button {
+    background: var(--coral);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.15s;
+  }
+  .quiz-result button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .quiz-result button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+  .confetti {
+    position: absolute;
+    width: 10px; height: 14px;
+    pointer-events: none;
+    animation: confettiFall 1.4s ease-out forwards;
+    z-index: 10;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translate(0, 0) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--cx), 280px) rotate(720deg); }
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    font-family: "ZCOOL KuaiLe", sans-serif;
+    color: var(--ink-soft);
+    font-size: 1.2rem;
+  }
+  .footer .stars { font-size: 2rem; margin-bottom: 8px; letter-spacing: 8px; }
+
+  @media (max-width: 600px) {
+    .card { padding: 24px 16px; border-radius: 24px; box-shadow: 6px 6px 0 var(--ink); }
+    .card .subtitle { padding-left: 0; }
+    .card h2 { font-size: 1.6rem; }
+    .card h2 .emoji { font-size: 2rem; }
+    .controls { gap: 14px; padding: 14px; }
+    .equation { font-size: 1.2rem; padding: 12px; }
+    .area-cell { width: 22px; height: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deco d1">⭐</div>
+<div class="deco d2">🎈</div>
+<div class="deco d3">🌈</div>
+<div class="deco d4">✨</div>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="sticker">🎉 数学小冒险</span>
+    <h1>除法的<br>奇<span class="x">÷</span>妙世界</h1>
+    <p>除法不只是"平均分"!它藏着 <b>5 个深刻的数学秘密</b>。<br>从余数到几何，从数轴到倒数，带你真正理解除法!🐰</p>
+  </header>
+
+  <!-- ===== CARD 1: REMAINDER & CYCLIC ===== -->
+  <section class="card card-1">
+    <div class="tag">第 <span class="num">1</span> 个秘密</div>
+    <h2><span class="emoji">🔄</span>余数 & 周期的秘密</h2>
+    <p class="subtitle">除法不总是整除!<b>余数</b>告诉我们"剩下多少"，还藏着<b>周期循环</b>的规律。</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>总数</label>
+        <div class="stepper" data-target="remTotal">
+          <button data-act="dec">−</button>
+          <div class="val" id="rt-val">17</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每份几个?</label>
+        <div class="stepper" data-target="remDiv">
+          <button data-act="dec">−</button>
+          <div class="val" id="rd-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage remainder-stage">
+      <div class="rem-visual" id="rem-visual"></div>
+
+      <div class="cycle-demo">
+        <div style="font-family:'ZCOOL KuaiLe',sans-serif;font-size:1.1rem;margin-bottom:8px;">💡 生活中的周期：今天是 <b>星期一</b>，<span id="cycle-days">17</span> 天后是星期几?</div>
+        <div class="cycle-wheel" id="cycle-wheel"></div>
+        <div id="cycle-answer" style="font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;color:var(--coral);"></div>
+      </div>
+    </div>
+
+    <div class="equation" id="eq-1"></div>
+  </section>
+
+  <!-- ===== CARD 2: Two Faces of Division ===== -->
+  <section class="card card-2">
+    <div class="tag">第 <span class="num">2</span> 个秘密</div>
+    <h2><span class="emoji">⚖️</span>两种面孔的秘密</h2>
+    <p class="subtitle">同一个算式 <b>12 ÷ 3 = 4</b>，可以回答两种<b>完全不同</b>的问题!这是除法最神奇的地方。</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>总数</label>
+        <div class="stepper" data-target="faceTotal">
+          <button data-act="dec">−</button>
+          <div class="val" id="ft-val">12</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>除数</label>
+        <div class="stepper" data-target="faceDiv">
+          <button data-act="dec">−</button>
+          <div class="val" id="fd-val">3</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="two-face-stage" id="two-face-stage"></div>
+    </div>
+
+    <div class="equation" id="eq-2"></div>
+  </section>
+
+  <!-- ===== CARD 3: Number Line ===== -->
+  <section class="card card-3">
+    <div class="tag">第 <span class="num">3</span> 个秘密</div>
+    <h2><span class="emoji">📏</span>数轴的秘密</h2>
+    <p class="subtitle">在数轴上看除法：<b>反复往回跳</b>，能跳几次? 余数就是最后停的位置!</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>起点</label>
+        <div class="stepper" data-target="nlStart">
+          <button data-act="dec">−</button>
+          <div class="val" id="ns-val">17</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每次跳几格?</label>
+        <div class="stepper" data-target="nlJump">
+          <button data-act="dec">−</button>
+          <div class="val" id="nj-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage numberline-stage">
+      <div class="nl-status" id="nl-status">点击按钮，看小兔子在数轴上跳!</div>
+      <div class="nl-track" id="nl-track">
+        <div class="nl-line"></div>
+      </div>
+      <button class="nl-jump-btn" id="nl-jump-btn">🐰 跳一次!</button>
+      <button class="nl-jump-btn" id="nl-reset-btn" style="background:var(--mint);">↺ 重置</button>
+    </div>
+
+    <div class="equation" id="eq-3"></div>
+  </section>
+
+  <!-- ===== CARD 4: Area Model ===== -->
+  <section class="card card-4">
+    <div class="tag">第 <span class="num">4</span> 个秘密</div>
+    <h2><span class="emoji">📐</span>面积的秘密</h2>
+    <p class="subtitle">乘法"拼出"矩形面积，除法"拆开"矩形!<b>已知面积和一边，求另一边</b> — 这就是除法的几何本质。</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>面积 = 长 × 宽</label>
+        <div class="stepper" data-target="areaW">
+          <button data-act="dec">−</button>
+          <div class="val" id="aw-val">5</div>
+          <button data-act="inc">+</button>
+        </div>
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;">×</span>
+        <div class="stepper" data-target="areaH">
+          <button data-act="dec">−</button>
+          <div class="val" id="ah-val">4</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage area-stage">
+      <div class="area-grid-box">
+        <div class="area-grid" id="area-grid"></div>
+      </div>
+      <div class="area-dims" id="area-dims"></div>
+    </div>
+
+    <div class="equation" id="eq-4"></div>
+  </section>
+
+  <!-- ===== CARD 5: Divide by Fraction / Reciprocal ===== -->
+  <section class="card card-5">
+    <div class="tag">第 <span class="num">5</span> 个秘密</div>
+    <h2><span class="emoji">🔮</span>倒数 & 分数除法的秘密</h2>
+    <p class="subtitle">除以 ½ 为什么等于 <b>乘以 2</b>? 因为 <b>除以一个数 = 乘它的倒数</b>!这是除法最深层的秘密。</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>单位"1"的长度</label>
+        <div class="stepper" data-target="fracTotal">
+          <button data-act="dec">−</button>
+          <div class="val" id="f-total">1</div>
+          <button data-act="inc">+</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>每份多长?</label>
+        <div class="stepper" data-target="fracPart">
+          <button data-act="dec">−</button>
+          <div class="val" id="f-part">2</div>
+          <button data-act="inc">+</button>
+        </div>
+        <span style="font-family:'ZCOOL KuaiLe',sans-serif;">(分母)</span>
+      </div>
+    </div>
+
+    <div class="stage frac-stage">
+      <div class="frac-bar-container" id="frac-bar-container"></div>
+      <div class="frac-concept" id="frac-concept"></div>
+    </div>
+
+    <div class="equation" id="eq-5"></div>
+  </section>
+
+  <!-- ===== CARD 6: Quiz ===== -->
+  <section class="card card-6">
+    <div class="tag">🏆 终极挑战</div>
+    <h2><span class="emoji">🎯</span>来挑战吧!</h2>
+    <p class="subtitle">学完了 <b>5 个秘密</b>?来答 <b>5 道题</b>，赢取小星星!</p>
+
+    <div class="quiz-stage">
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <div id="quiz-body"></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div class="stars">⭐ ⭐ ⭐ ⭐ ⭐</div>
+    除法的世界，比你想象的更深邃! 🐰✨
+  </div>
+
+</div>
+
+<script>
+  const state = {
+    remTotal: 17,  remDiv: 5,
+    faceTotal: 12, faceDiv: 3,
+    nlStart: 17,   nlJump: 5,    nlCurrent: 17, nlJumps: 0,
+    areaW: 5,      areaH: 4,
+    fracTotal: 1,  fracPart: 2,
+  };
+
+  const limits = {
+    remTotal: [2, 30],   remDiv: [2, 9],
+    faceTotal: [4, 24],  faceDiv: [2, 8],
+    nlStart: [5, 30],    nlJump: [2, 8],
+    areaW: [2, 8],       areaH: [2, 6],
+    fracTotal: [1, 4],   fracPart: [2, 5],
+  };
+
+  // Stepper wiring
+  document.querySelectorAll('.stepper').forEach(stepper => {
+    const target = stepper.dataset.target;
+    stepper.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.act;
+        const [min, max] = limits[target];
+        let v = state[target];
+        v += (act === 'inc') ? 1 : -1;
+        v = Math.max(min, Math.min(max, v));
+        state[target] = v;
+        // Reset number line if changed
+        if (target === 'nlStart' || target === 'nlJump') {
+          state.nlCurrent = state.nlStart;
+          state.nlJumps = 0;
+        }
+        renderAll();
+      });
+    });
+  });
+
+  // Number line buttons
+  document.getElementById('nl-jump-btn').addEventListener('click', () => {
+    if (state.nlCurrent >= state.nlJump) {
+      state.nlCurrent -= state.nlJump;
+      state.nlJumps++;
+      renderNumberLine();
+      updateNLEquation();
+    }
+  });
+  document.getElementById('nl-reset-btn').addEventListener('click', () => {
+    state.nlCurrent = state.nlStart;
+    state.nlJumps = 0;
+    renderNumberLine();
+    updateNLEquation();
+  });
+
+  // ===== CARD 1: Remainder =====
+  const DAY_NAMES = ['日','一','二','三','四','五','六'];
+  const DAY_COLORS = ['#FF5E5B','#FF8C42','#FFC93D','#6BCB77','#4ECDC4','#4D96FF','#9B5DE5'];
+
+  function renderRemainder() {
+    const { remTotal, remDiv } = state;
+    document.getElementById('rt-val').textContent = remTotal;
+    document.getElementById('rd-val').textContent = remDiv;
+    document.getElementById('cycle-days').textContent = remTotal;
+
+    const q = Math.floor(remTotal / remDiv);
+    const r = remTotal % remDiv;
+
+    // Visual groups
+    const visual = document.getElementById('rem-visual');
+    visual.innerHTML = '';
+    for (let i = 0; i < q; i++) {
+      const g = document.createElement('div');
+      g.className = 'rem-group';
+      const cols = Math.min(remDiv, 5);
+      g.style.gridTemplateColumns = `repeat(${cols}, 24px)`;
+      for (let j = 0; j < remDiv; j++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.style.background = DAY_COLORS[j % 7];
+        d.style.animationDelay = (i * 0.08 + j * 0.03) + 's';
+        g.appendChild(d);
+      }
+      const lbl = document.createElement('div');
+      lbl.className = 'rem-label';
+      lbl.textContent = `第 ${i + 1} 组`;
+      g.appendChild(lbl);
+      visual.appendChild(g);
+    }
+    if (r > 0) {
+      const rem = document.createElement('div');
+      rem.className = 'rem-remainder-box';
+      const cols = Math.min(r, 5);
+      rem.style.gridTemplateColumns = `repeat(${cols}, 24px)`;
+      for (let j = 0; j < r; j++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.style.background = '#FF5E5B';
+        d.style.animationDelay = (q * 0.08 + j * 0.03) + 's';
+        rem.appendChild(d);
+      }
+      const lbl = document.createElement('div');
+      lbl.className = 'rem-label';
+      lbl.textContent = `余 ${r} 个`;
+      rem.appendChild(lbl);
+      visual.appendChild(rem);
+    }
+
+    // Cycle wheel
+    const wheel = document.getElementById('cycle-wheel');
+    wheel.innerHTML = '';
+    const startDay = 1; // Monday
+    const endDay = (startDay + remTotal) % 7;
+    for (let i = 0; i < 7; i++) {
+      const d = document.createElement('div');
+      d.className = 'cycle-day';
+      d.textContent = DAY_NAMES[i];
+      d.style.borderColor = DAY_COLORS[i];
+      if (i === startDay) {
+        d.classList.add('highlight');
+        d.style.background = DAY_COLORS[i];
+        d.style.color = 'white';
+      }
+      if (i === endDay) {
+        d.classList.add('rem-day');
+        d.style.background = '#FF5E5B';
+        d.style.color = 'white';
+      }
+      wheel.appendChild(d);
+    }
+
+    const ans = document.getElementById('cycle-answer');
+    ans.innerHTML = `${remTotal} ÷ 7 = ${Math.floor(remTotal/7)} ... 余 ${remTotal%7} → 星期${DAY_NAMES[endDay]}`;
+
+    // Equation
+    const eq = document.getElementById('eq-1');
+    if (r === 0) {
+      eq.innerHTML = `<span class="hi">${remTotal} ÷ ${remDiv}</span> = <span class="res">${q}</span> (正好分完!)`;
+    } else {
+      eq.innerHTML = `<span class="hi">${remTotal} ÷ ${remDiv}</span> = <span class="res">${q}</span> ... <span class="rem">余 ${r}</span>`;
+    }
+  }
+
+  // ===== CARD 2: Two Faces =====
+  function renderTwoFaces() {
+    const { faceTotal, faceDiv } = state;
+    document.getElementById('ft-val').textContent = faceTotal;
+    document.getElementById('fd-val').textContent = faceDiv;
+
+    const q = Math.floor(faceTotal / faceDiv);
+    const r = faceTotal % faceDiv;
+
+    const stage = document.getElementById('two-face-stage');
+    stage.innerHTML = '';
+
+    // Equal division side
+    const eqBox = document.createElement('div');
+    eqBox.className = 'face-box equal';
+    eqBox.innerHTML = `<h3>🍬 等分除</h3><div style="text-align:center;color:var(--ink-soft);font-size:0.9rem;margin-bottom:10px;">把 ${faceTotal} 颗糖<b>平均</b>分给 ${faceDiv} 人</div>`;
+    const eqVis = document.createElement('div');
+    eqVis.className = 'face-visual';
+    for (let i = 0; i < faceDiv; i++) {
+      const row = document.createElement('div');
+      row.className = 'face-row';
+      for (let j = 0; j < q; j++) {
+        const c = document.createElement('div');
+        c.className = 'mini-candy';
+        c.style.background = DAY_COLORS[i % 7];
+        c.style.animationDelay = (i * 0.1 + j * 0.03) + 's';
+        row.appendChild(c);
+      }
+      eqVis.appendChild(row);
+      if (i < faceDiv - 1) {
+        const sep = document.createElement('div');
+        sep.className = 'face-sep';
+        eqVis.appendChild(sep);
+      }
+    }
+    eqBox.appendChild(eqVis);
+    const eqAns = document.createElement('div');
+    eqAns.className = 'face-answer';
+    eqAns.innerHTML = `每人 <span style="color:var(--mint);font-size:1.3em;">${q}</span> 颗`;
+    eqBox.appendChild(eqAns);
+    stage.appendChild(eqBox);
+
+    // Divider
+    const divEl = document.createElement('div');
+    divEl.className = 'face-divider';
+    divEl.innerHTML = `<span>=</span><span style="font-size:1rem;color:var(--ink-soft);">都是</span><span style="font-size:1.5rem;">${faceTotal}÷${faceDiv}</span>`;
+    stage.appendChild(divEl);
+
+    // Containment side
+    const coBox = document.createElement('div');
+    coBox.className = 'face-box contain';
+    coBox.innerHTML = `<h3>📦 包含除</h3><div style="text-align:center;color:var(--ink-soft);font-size:0.9rem;margin-bottom:10px;">${faceTotal} 颗糖，每 ${faceDiv} 颗装一袋</div>`;
+    const coVis = document.createElement('div');
+    coVis.className = 'face-visual';
+    for (let i = 0; i < q; i++) {
+      const row = document.createElement('div');
+      row.className = 'face-row';
+      for (let j = 0; j < faceDiv; j++) {
+        const c = document.createElement('div');
+        c.className = 'mini-candy';
+        c.style.background = DAY_COLORS[j % 7];
+        c.style.animationDelay = (i * 0.1 + j * 0.03) + 's';
+        row.appendChild(c);
+      }
+      coVis.appendChild(row);
+      if (i < q - 1) {
+        const sep = document.createElement('div');
+        sep.className = 'face-sep';
+        coVis.appendChild(sep);
+      }
+    }
+    if (r > 0) {
+      const remRow = document.createElement('div');
+      remRow.className = 'face-row';
+      remRow.style.border = '2px dashed var(--coral)';
+      remRow.style.borderRadius = '8px';
+      remRow.style.padding = '4px';
+      for (let j = 0; j < r; j++) {
+        const c = document.createElement('div');
+        c.className = 'mini-candy';
+        c.style.background = '#FF5E5B';
+        remRow.appendChild(c);
+      }
+      coVis.appendChild(remRow);
+    }
+    coBox.appendChild(coVis);
+    const coAns = document.createElement('div');
+    coAns.className = 'face-answer';
+    coAns.innerHTML = `能装 <span style="color:var(--blue);font-size:1.3em;">${q}</span> 袋`;
+    coBox.appendChild(coAns);
+    stage.appendChild(coBox);
+
+    // Bottom summary
+    const summary = document.createElement('div');
+    summary.className = 'same-formula';
+    summary.innerHTML = `⚖️ 两种问法，同一个算式：<span class="formula">${faceTotal} ÷ ${faceDiv} = ${q}</span>`;
+    stage.appendChild(summary);
+
+    // Equation
+    const eq = document.getElementById('eq-2');
+    if (r === 0) {
+      eq.innerHTML = `<span class="hi">${faceTotal} ÷ ${faceDiv}</span> = <span class="res">${q}</span>`;
+    } else {
+      eq.innerHTML = `<span class="hi">${faceTotal} ÷ ${faceDiv}</span> = <span class="res">${q}</span> ... <span class="rem">余 ${r}</span>`;
+    }
+  }
+
+  // ===== CARD 3: Number Line =====
+  function renderNumberLine() {
+    const { nlStart, nlJump, nlCurrent, nlJumps } = state;
+    document.getElementById('ns-val').textContent = nlStart;
+    document.getElementById('nj-val').textContent = nlJump;
+
+    const track = document.getElementById('nl-track');
+    // Keep only the line
+    track.innerHTML = '<div class="nl-line"></div>';
+
+    const maxShow = Math.max(nlStart, nlJump * 3) + 2;
+    const trackWidth = track.clientWidth || 600;
+    const unitPx = Math.min(32, (trackWidth - 50) / maxShow);
+    const offsetX = 20;
+
+    // Ticks and numbers
+    for (let i = 0; i <= maxShow; i++) {
+      const tick = document.createElement('div');
+      tick.className = 'nl-tick';
+      tick.style.left = (offsetX + i * unitPx) + 'px';
+      track.appendChild(tick);
+      const num = document.createElement('div');
+      num.className = 'nl-num';
+      num.style.left = (offsetX + i * unitPx) + 'px';
+      num.textContent = i;
+      track.appendChild(num);
+    }
+
+    // Jumper
+    const jumper = document.createElement('div');
+    jumper.className = 'nl-jumper';
+    jumper.textContent = '🐰';
+    jumper.style.left = (offsetX + nlCurrent * unitPx - 20) + 'px';
+    track.appendChild(jumper);
+
+    // Jump arcs
+    let pos = nlStart;
+    for (let i = 0; i < nlJumps; i++) {
+      const fromX = offsetX + pos * unitPx;
+      pos -= nlJump;
+      const toX = offsetX + pos * unitPx;
+      const arc = document.createElement('div');
+      arc.className = 'nl-arc show';
+      arc.style.left = toX + 'px';
+      arc.style.width = (fromX - toX) + 'px';
+      track.appendChild(arc);
+      const lbl = document.createElement('div');
+      lbl.className = 'nl-jump-label';
+      lbl.style.left = ((fromX + toX) / 2) + 'px';
+      lbl.textContent = `−${nlJump}`;
+      track.appendChild(lbl);
+    }
+
+    const status = document.getElementById('nl-status');
+    const maxJumps = Math.floor(nlStart / nlJump);
+    const remainder = nlStart % nlJump;
+    if (nlJumps === 0) {
+      status.textContent = `从 ${nlStart} 出发，每次往回跳 ${nlJump}，能跳几次?`;
+    } else if (nlCurrent >= nlJump) {
+      status.textContent = `已经跳了 ${nlJumps} 次，现在在 ${nlCurrent}，还能再跳!`;
+    } else {
+      status.innerHTML = `跳了 <b>${nlJumps}</b> 次，停在 <b>${nlCurrent}</b>。${remainder > 0 ? `余 ${remainder}，不够再跳一次!` : '正好跳完!'}`;
+    }
+
+    const btn = document.getElementById('nl-jump-btn');
+    btn.disabled = nlCurrent < nlJump;
+    btn.textContent = nlCurrent < nlJump ? '✅ 跳完了!' : '🐰 跳一次!';
+  }
+
+  function updateNLEquation() {
+    const { nlStart, nlJump, nlJumps } = state;
+    const remainder = nlStart % nlJump;
+    const eq = document.getElementById('eq-3');
+    if (nlJumps === 0) {
+      eq.innerHTML = `<span class="hi">${nlStart} ÷ ${nlJump}</span> = ? ... ?`;
+    } else if (remainder === 0 && nlStart === nlJumps * nlJump) {
+      eq.innerHTML = `<span class="hi">${nlStart} ÷ ${nlJump}</span> = <span class="res">${nlJumps}</span> (正好!)`;
+    } else {
+      eq.innerHTML = `<span class="hi">${nlStart} ÷ ${nlJump}</span> = <span class="res">${Math.floor(nlStart/nlJump)}</span> ... <span class="rem">余 ${remainder}</span>`;
+    }
+  }
+
+  // ===== CARD 4: Area Model =====
+  function renderArea() {
+    const { areaW, areaH } = state;
+    document.getElementById('aw-val').textContent = areaW;
+    document.getElementById('ah-val').textContent = areaH;
+
+    const area = areaW * areaH;
+    const grid = document.getElementById('area-grid');
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${areaW}, 28px)`;
+
+    for (let i = 0; i < area; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'area-cell known';
+      cell.style.animationDelay = (i * 0.01) + 's';
+      const row = Math.floor(i / areaW);
+      const col = i % areaW;
+      // Gradient color based on position
+      const hue = 160 + (row / areaH) * 40;
+      const sat = 60 + (col / areaW) * 20;
+      cell.style.background = `hsl(${hue}, ${sat}%, 55%)`;
+      grid.appendChild(cell);
+    }
+
+    const dims = document.getElementById('area-dims');
+    dims.innerHTML = '';
+    const wPill = document.createElement('div');
+    wPill.className = 'dim-pill';
+    wPill.innerHTML = `长 = <span class="num" style="color:var(--mint);">${areaW}</span>`;
+    dims.appendChild(wPill);
+
+    const areaPill = document.createElement('div');
+    areaPill.className = 'dim-pill area';
+    areaPill.innerHTML = `面积 = <span class="num">${area}</span>`;
+    dims.appendChild(areaPill);
+
+    const hPill = document.createElement('div');
+    hPill.className = 'dim-pill';
+    hPill.innerHTML = `宽 = <span class="num" style="color:var(--pink);">${areaH}</span>`;
+    dims.appendChild(hPill);
+
+    // Two equations showing inverse relationship
+    const eq = document.getElementById('eq-4');
+    eq.innerHTML = `
+      <span class="hi">${areaW} × ${areaH} = ${area}</span> &nbsp;&nbsp; ↔ &nbsp;&nbsp;
+      <span class="hi">${area} ÷ ${areaW} = <span class="res">${areaH}</span></span> &nbsp;&nbsp; ↔ &nbsp;&nbsp;
+      <span class="hi">${area} ÷ ${areaH} = <span class="res">${areaW}</span></span>
+    `;
+  }
+
+  // ===== CARD 5: Fraction Division =====
+  function renderFractionDiv() {
+    const { fracTotal, fracPart } = state;
+    document.getElementById('f-total').textContent = fracTotal;
+    document.getElementById('f-part').textContent = fracPart;
+
+    // fracTotal represents how many "1" units we have
+    // fracPart is the denominator: each part is 1/fracPart of a unit
+    // Question: how many (1/fracPart) are in fracTotal?
+    // Answer: fracTotal * fracPart
+
+    const partSize = 1 / fracPart;
+    const result = fracTotal * fracPart;
+
+    const container = document.getElementById('frac-bar-container');
+    container.innerHTML = '';
+
+    // Original bars
+    for (let u = 0; u < fracTotal; u++) {
+      const row = document.createElement('div');
+      row.className = 'frac-row';
+      const lbl = document.createElement('div');
+      lbl.className = 'frac-label';
+      lbl.textContent = u === 0 ? '单位 1' : '';
+      row.appendChild(lbl);
+      const track = document.createElement('div');
+      track.className = 'frac-track';
+      const bar = document.createElement('div');
+      bar.className = 'frac-bar whole';
+      bar.style.width = '100%';
+      bar.innerHTML = `<span>1</span>`;
+      track.appendChild(bar);
+      // Segment lines
+      for (let s = 1; s < fracPart; s++) {
+        const seg = document.createElement('div');
+        seg.className = 'frac-seg-line';
+        seg.style.left = (s / fracPart * 100) + '%';
+        track.appendChild(seg);
+        const snum = document.createElement('div');
+        snum.className = 'frac-seg-num';
+        snum.style.left = (s / fracPart * 100) + '%';
+        snum.textContent = s;
+        track.appendChild(snum);
+      }
+      row.appendChild(track);
+      container.appendChild(row);
+    }
+
+    // Arrow row
+    const arrowRow = document.createElement('div');
+    arrowRow.className = 'frac-row';
+    arrowRow.innerHTML = `
+      <div class="frac-label"></div>
+      <div style="flex:1;text-align:center;font-family:'ZCOOL KuaiLe',sans-serif;font-size:1.2rem;color:var(--ink);">
+        每 <span style="color:var(--sunset);font-weight:bold;">1/${fracPart}</span> 算一份，一共能分出 <span style="color:var(--coral);font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;">${result}</span> 份!
+      </div>
+    `;
+    container.appendChild(arrowRow);
+
+    // Result bars (showing the parts)
+    const resRow = document.createElement('div');
+    resRow.className = 'frac-row';
+    const resLbl = document.createElement('div');
+    resLbl.className = 'frac-label';
+    resLbl.textContent = '结果';
+    resRow.appendChild(resLbl);
+    const resTrack = document.createElement('div');
+    resTrack.className = 'frac-track';
+    resTrack.style.display = 'flex';
+    resTrack.style.gap = '2px';
+    for (let i = 0; i < result; i++) {
+      const part = document.createElement('div');
+      part.className = 'frac-bar parts';
+      part.style.position = 'relative';
+      part.style.width = `calc(${100/result}% - 2px)`;
+      part.style.minWidth = '20px';
+      part.innerHTML = `<span style="font-size:0.8rem;">1/${fracPart}</span>`;
+      resTrack.appendChild(part);
+    }
+    resRow.appendChild(resTrack);
+    container.appendChild(resRow);
+
+    // Concept box
+    const concept = document.getElementById('frac-concept');
+    concept.innerHTML = `
+      🧠 <b>核心发现</b>：除以 <span class="frac-formula">1/${fracPart}</span> = 乘以 <span class="frac-formula">${fracPart}</span><br>
+      <span style="font-size:0.95rem;color:var(--ink-soft);">
+        因为 1/${fracPart} 的"倒数"就是 ${fracPart}。
+        <b style="color:var(--coral);">除以一个分数 = 乘它的倒数!</b>
+      </span>
+    `;
+
+    const eq = document.getElementById('eq-5');
+    eq.innerHTML = `
+      <span class="hi">${fracTotal} ÷ <span style="display:inline-flex;flex-direction:column;vertical-align:middle;line-height:0.9;font-size:0.7em;"><span style="border-bottom:2px solid currentColor;padding:0 4px;">1</span><span style="padding-top:1px;">${fracPart}</span></span></span>
+      = <span class="hi">${fracTotal} × ${fracPart}</span>
+      = <span class="res">${result}</span>
+    `;
+  }
+
+  function renderAll() {
+    renderRemainder();
+    renderTwoFaces();
+    renderNumberLine();
+    updateNLEquation();
+    renderArea();
+    renderFractionDiv();
+  }
+
+  // Resize handler
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      renderNumberLine();
+    }, 200);
+  });
+
+  // ===== QUIZ =====
+  const quiz = {
+    questions: [],
+    idx: 0,
+    score: 0,
+    answered: false,
+    results: []
+  };
+
+  function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function makeOptions(correct, range) {
+    const opts = new Set([correct]);
+    let attempts = 0;
+    while (opts.size < 4 && attempts < 50) {
+      let delta = rand(-range, range);
+      if (delta === 0) delta = rand(1, range);
+      const v = correct + delta;
+      if (v >= 0) opts.add(v);
+      attempts++;
+    }
+    while (opts.size < 4) opts.add(correct + opts.size);
+    return shuffle([...opts]);
+  }
+
+  function makeQuestions() {
+    const qs = [];
+
+    // Q1: Remainder problem
+    {
+      const total = rand(10, 25);
+      const div = rand(3, 7);
+      const q = Math.floor(total / div);
+      const r = total % div;
+      const askQ = rand(0, 1);
+      qs.push({
+        tag: '🔄 余数',
+        text: `${total} ÷ ${div} = ? ... ?`,
+        answer: q,
+        options: makeOptions(q, Math.max(2, q)),
+        suffix: ` (余${r})`,
+        fullAnswer: `${q} ... ${r}`
+      });
+    }
+
+    // Q2: Two faces - equal division
+    {
+      const total = rand(12, 24);
+      const div = rand(2, 6);
+      const ans = Math.floor(total / div);
+      qs.push({
+        tag: '⚖️ 等分除',
+        text: `把 <span class="num">${total}</span> 个苹果平均分给 <span class="num">${div}</span> 个小朋友，每人几个?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(2, Math.floor(ans/2)+1)),
+        suffix: '个'
+      });
+    }
+
+    // Q3: Two faces - containment
+    {
+      const total = rand(15, 30);
+      const div = rand(3, 6);
+      const ans = Math.floor(total / div);
+      qs.push({
+        tag: '📦 包含除',
+        text: `<span class="num">${total}</span> 颗糖，每 <span class="num">${div}</span> 颗装一袋，能装几袋?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(2, Math.floor(ans/2)+1)),
+        suffix: '袋'
+      });
+    }
+
+    // Q4: Inverse relationship (area model)
+    {
+      const w = rand(3, 7);
+      const h = rand(2, 5);
+      const area = w * h;
+      qs.push({
+        tag: '📐 乘除互逆',
+        text: `一个长方形面积是 <span class="num">${area}</span>，长是 <span class="num">${w}</span>，宽是多少?`,
+        answer: h,
+        options: makeOptions(h, Math.max(2, h)),
+        suffix: ''
+      });
+    }
+
+    // Q5: Divide by fraction
+    {
+      const total = rand(2, 4);
+      const denom = rand(2, 4);
+      const ans = total * denom;
+      qs.push({
+        tag: '🔮 分数除法',
+        text: `<span class="num">${total}</span> ÷ 1/${denom} = ?`,
+        answer: ans,
+        options: makeOptions(ans, Math.max(3, Math.floor(ans/2))),
+        suffix: ''
+      });
+    }
+
+    return qs;
+  }
+
+  function renderQuiz() {
+    const progress = document.getElementById('quiz-progress');
+    progress.innerHTML = '';
+    for (let i = 0; i < quiz.questions.length; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'pip';
+      if (quiz.results[i] === 'correct') pip.classList.add('correct');
+      else if (quiz.results[i] === 'wrong') pip.classList.add('wrong');
+      else if (i === quiz.idx) pip.classList.add('current');
+      pip.textContent = (i + 1).toString();
+      progress.appendChild(pip);
+    }
+
+    const body = document.getElementById('quiz-body');
+
+    if (quiz.idx >= quiz.questions.length) {
+      const score = quiz.score;
+      const stars = score >= 5 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+      const trophies = ['😢', '🌱', '⭐', '🏆'];
+      const messages = [
+        '别灰心!再试一次吧~',
+        '不错!继续加油 💪',
+        '很棒!再来一次拿满分 ✨',
+        '完美!你是除法小冠军!🎉'
+      ];
+      let starsHtml = '';
+      for (let i = 0; i < 3; i++) {
+        const filled = i < stars;
+        starsHtml += `<span class="star ${filled ? 'filled' : 'empty'}" style="animation-delay:${i*0.2}s">${filled ? '⭐' : '☆'}</span>`;
+      }
+      body.innerHTML = `
+        <div class="quiz-result">
+          <div class="trophy">${trophies[stars]}</div>
+          <h3>挑战完成!</h3>
+          <div class="score">${score} / 5</div>
+          <div class="stars">${starsHtml}</div>
+          <div class="msg">${messages[stars]}</div>
+          <button id="quiz-restart">🔄 再玩一次</button>
+        </div>
+      `;
+      document.getElementById('quiz-restart').addEventListener('click', startQuiz);
+      return;
+    }
+
+    const q = quiz.questions[quiz.idx];
+    const letters = ['A', 'B', 'C', 'D'];
+    body.innerHTML = `
+      <div class="quiz-question">
+        <div class="quiz-tag">${q.tag} · 第 ${quiz.idx + 1} 题</div>
+        <div class="quiz-q-text">${q.text}</div>
+      </div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+    `;
+    const optsBox = document.getElementById('quiz-options');
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.dataset.value = opt;
+      const suffix = q.fullAnswer && opt === q.answer ? '' : q.suffix;
+      btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}${suffix}`;
+      btn.addEventListener('click', () => handleAnswer(btn, opt));
+      optsBox.appendChild(btn);
+    });
+    quiz.answered = false;
+  }
+
+  function handleAnswer(btn, value) {
+    if (quiz.answered) return;
+    quiz.answered = true;
+    const q = quiz.questions[quiz.idx];
+    const isCorrect = value === q.answer;
+    const feedback = document.getElementById('quiz-feedback');
+
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      b.disabled = true;
+      const v = parseInt(b.dataset.value);
+      if (v === q.answer) b.classList.add('correct');
+      else if (b === btn) b.classList.add('wrong');
+    });
+
+    if (isCorrect) {
+      quiz.score++;
+      quiz.results[quiz.idx] = 'correct';
+      feedback.className = 'quiz-feedback correct';
+      feedback.textContent = '🎉 答对啦!太棒了!';
+      launchConfetti(btn);
+    } else {
+      quiz.results[quiz.idx] = 'wrong';
+      feedback.className = 'quiz-feedback wrong';
+      const ansText = q.fullAnswer || (q.answer + q.suffix);
+      feedback.innerHTML = `差一点!正确答案是 <b>${ansText}</b>`;
+    }
+
+    const pips = document.querySelectorAll('#quiz-progress .pip');
+    pips[quiz.idx]?.classList.remove('current');
+    pips[quiz.idx]?.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    const next = document.createElement('button');
+    next.className = 'quiz-next';
+    next.textContent = quiz.idx === quiz.questions.length - 1 ? '🏁 看结果' : '👉 下一题';
+    next.addEventListener('click', () => {
+      quiz.idx++;
+      renderQuiz();
+    });
+    document.getElementById('quiz-body').appendChild(next);
+  }
+
+  function launchConfetti(originEl) {
+    const stage = document.querySelector('.quiz-stage');
+    const stageRect = stage.getBoundingClientRect();
+    const btnRect = originEl.getBoundingClientRect();
+    const ox = btnRect.left - stageRect.left + btnRect.width / 2;
+    const oy = btnRect.top  - stageRect.top  + btnRect.height / 2;
+    const colors = ['#FF5E5B', '#FFC93D', '#4ECDC4', '#9B5DE5', '#FF80B5', '#FF8C42', '#4D96FF'];
+    for (let i = 0; i < 24; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = ox + 'px';
+      c.style.top  = oy + 'px';
+      c.style.background = colors[i % colors.length];
+      c.style.borderRadius = (i % 3 === 0) ? '50%' : '2px';
+      const cx = (Math.random() - 0.5) * 360;
+      c.style.setProperty('--cx', cx + 'px');
+      c.style.animationDuration = (1 + Math.random() * 0.6) + 's';
+      stage.appendChild(c);
+      setTimeout(() => c.remove(), 2000);
+    }
+  }
+
+  function startQuiz() {
+    quiz.questions = makeQuestions();
+    quiz.idx = 0;
+    quiz.score = 0;
+    quiz.answered = false;
+    quiz.results = [];
+    renderQuiz();
+  }
+
+  renderAll();
+  startQuiz();
+</script>
+
+</body>
+</html>

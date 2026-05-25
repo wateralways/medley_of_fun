@@ -23,6 +23,7 @@ Visit: **https://wateralways.github.io/medley_of_fun/**
 | [physics-pinball.html](physics-pinball.html) | Draw-line physics pinball |
 | [multiplication-fun.html](multiplication-fun.html) | Multiplication learning game |
 | [sorting-fun.html](sorting-fun.html) | Adjacent-swap sorting game for kids |
+| [division-fun.html](division-fun.html) | Division learning — sharing, grouping, inverse, measurement, divide by fractions |
 | [schedule-planner.html](schedule-planner.html) | Drag-and-drop daily schedule builder |
 | [cambridge/](cambridge/) | Cambridge University interactive exploration — heroes, colleges, quiz |
 
