@@ -31,6 +31,7 @@ body{
   color:var(--text);
   font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
   overflow:hidden;
+  overscroll-behavior:none;
   -webkit-user-select:none; user-select:none;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
@@ -47,7 +48,11 @@ body{
   flex-direction:column;
   align-items:center;
   gap:7px;
-  padding:7px;
+  /* iPad 圆角屏 / 刘海屏：把安全区让出来，免得状态栏被遮 */
+  padding:calc(7px + env(safe-area-inset-top, 0px))
+          calc(7px + env(safe-area-inset-right, 0px))
+          calc(7px + env(safe-area-inset-bottom, 0px))
+          calc(7px + env(safe-area-inset-left, 0px));
   overflow:hidden;
 }
 .stage > *{ max-width:100%; }
@@ -113,8 +118,9 @@ body{
     0 0 70px rgba(40,120,220,.18) inset;
   background:#060a14;
 }
-/* 玩的时候隐藏系统光标，用 canvas 里画的自定义准星代替 */
-#game{ display:block; width:100%; height:100%; cursor:none; }
+/* 玩的时候隐藏系统光标，用 canvas 里画的自定义准星代替；
+   touch-action:none 同时干掉 iPad Safari 的双击缩放 */
+#game{ display:block; width:100%; height:100%; cursor:none; touch-action:none; }
 
 /* 连击徽章 */
 .combo{
@@ -307,13 +313,19 @@ body{
   transition:width .1s linear;
 }
 
-/* 窄屏：状态栏等分收缩，绝不能把容器撑破（否则画布会被裁切） */
-@media (hover:none), (max-width:760px){
+/* 触屏：按钮做大，手指好点（iPad 不受小屏压缩影响） */
+@media (hover:none){
+  .icon-btn{ width:48px; font-size:18px; }
+  .hud{ gap:7px; }
+}
+
+/* 窄屏才压缩状态栏 —— 绝不能把容器撑破，否则画布会被裁切 */
+@media (max-width:700px){
   .legend{ grid-template-columns:1fr 1fr; font-size:10px; }
   .stat{ flex:1 1 0; min-width:0; padding:4px 5px; }
-  .stat span{ font-size:9px; letter-spacing:.06em; }
+  .stat span{ font-size:9px; letter-spacing:.04em; }
   .hud{ gap:4px; }
-  .icon-btn{ width:32px; font-size:14px; }
+  .icon-btn{ width:36px; font-size:15px; }
 }
 @media (max-height:560px){
   .legend{ max-height:24vh; }
@@ -399,6 +411,19 @@ const MAX_SPEED     = 660;   // 绝对速度上限 px/s
 const ACCEL_TAU     = .09;   // 加速时间常数（秒）
 const BRAKE_TAU     = .13;   // 减速时间常数（秒）
 
+/* ---- 「到点导航」调参（触屏双击 / 鼠标双击） ----
+   给定一个固定目标点，蛇冲过去并在那里刹停。
+   速度 = (距离 - 到达半径) × NAV_GAIN，是一个指数利车曲线：
+   先全力加速，接近时自然平滑地减到 0。 */
+const NAV_GAIN    = 2.6;     // 到点降速比例（1/秒）
+const NAV_STOP    = 11;      // 到达判定半径（px）
+const NAV_INSET   = CELL;    // 目标点离墙的最小距离，防止双击墙边自杀
+const NAV_TAU     = .06;     // 导航时的加速时间常数（比手动模式更“窜”）
+const DBL_TAP_MS  = 340;     // 双击判定时间窗
+
+/* 背景细网格：按屏幕上约 18px 一格自动选档位，缩放后观感一致 */
+const GRID_CHOICES = [3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96];
+
 const EMOJI_FONT = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
 const BEST_KEY = 'neon-snake-best-v2';
 
@@ -439,7 +464,10 @@ const ctx     = canvas.getContext('2d');
 /* 渲染比例 = 设备像素 / 世界单位。画布多大就按多大开后备缓冲，放多大都不糊。
    注意：canvas 的 shadowBlur 不受变换矩阵影响，所以要手动乘上 blurK 补偿。 */
 let RS = 1;                              // device px per world unit
-let blurK = 1;                           // 发光半径补偿系数
+let blurK = 1;                           // 发光半径补偿系数（大画布补偿）
+let qualityK = 1;                        // 画质收敛系数（帧率低时自动降低）
+/** 发光半径总系数 */
+const glowK = () => blurK * qualityK;
 const view = { scale:1, offX:0, offY:0 };  // CSS 像素：世界 → 画布
 
 function resizeCanvas(){
@@ -474,6 +502,7 @@ function resizeCanvas(){
   view.offY  = offY / dpr;
   RS    = scale;
   blurK = Math.max(1, Math.min(scale, 2.4));
+  updateGridStep();
 }
 
 const el = {
@@ -530,6 +559,8 @@ const Sound = {
           this.tone({ freq:70,  dur:.42, type:'square',   vol:.16, slide:-30 }); },
   over(){ [520,392,311,196].forEach((f,i)=> this.tone({ freq:f, dur:.3, type:'sawtooth', vol:.16, delay:i*.14 })); },
   click(){ this.tone({ freq:740, dur:.06, type:'square', vol:.08 }); },
+  arrive(){ this.tone({ freq:880, dur:.09, type:'sine', vol:.10, slide:-120 });
+            this.tone({ freq:1180, dur:.08, type:'sine', vol:.07, delay:.06, slide:-160 }); },
 };
 
 /* ================= 状态 ================= */
@@ -540,6 +571,10 @@ const state = {
   speed:0,                      // 当前速度 px/s（带平滑）
   boost:0,                      // 0~1 的冲刺强度，驱动速度特效
   target:{ x:W/2 + 150, y:H/2 },// 鼠标目标点
+  dest:null,                    // 「到点导航」目标点 {x,y}，非空时优先于 target
+  inputMode:'mouse',            // mouse | touch
+  dragging:false,               // 触屏正在拖拽
+  showTouchHint:false,          // 触屏首次提示
   prevTarget:null,              // 上一帧目标点（用来算鼠标速度）
   pointerSpeed:0,               // 鼠标移动速度 px/s（平滑后）
   pointerOn:false,              // 鼠标是否在棋盘内
@@ -665,6 +700,8 @@ function reset(){
   state.combo = 0; state.comboTimer = 0;
   state.shield = 0; state.survived = 0;
   state.shake = 0; state.flash = 0; state.newBest = false;
+  state.dest = null; state.dragging = false;
+  state.prevTarget = null; state.pointerSpeed = 0;
   for (const k in BUFF_DEFS) state.buffs[k] = 0;
 
   updateBody();
@@ -738,11 +775,12 @@ function readyPanel(){
     <p class="sub">鼠标指到哪，蛇就游到哪　·　撞到自己 <em>不会死</em>，只有撞到边界才结束</p>
     <div class="legend">${legend}</div>
     <div class="tips">
-      <span>🎯 <b>光标越远，蛇越快</b>　—— 拉远赶路，收近微操</span>
-      <span>💨 <b>甩得越快，蛇越快</b>　—— 冲刺时有速度线</span>
+      <span>🖱️ <b>鼠标</b>：光标指到哪就游到哪　—— 拉远赶路，收近微操</span>
+      <span>👆 <b>触屏</b>：<b>双击</b>任意位置 → 蛇会冲过去并刹停在那里</span>
+      <span>💨 光标越远 / 甩得越快，蛇跑得越快，冲刺时会亮起速度线</span>
     </div>
     <button class="btn" data-act="start">开 始 游 戏</button>
-    <p class="hint">移动鼠标 / 手指拖动 控制方向　·　空格 暂停　·　R 重开　·　F 全屏</p>`;
+    <p class="hint">鼠标移动 / 触屏双击　·　空格 暂停　·　R 重开　·　F 全屏</p>`;
 }
 
 /* ================= 输入 ================= */
@@ -765,34 +803,87 @@ function parkTargetSafely(){
   t.y = clamp(t.y, S, Math.max(S, H - S));
 }
 
+/* ---------------- 鼠标：持续跟随 ----------------
+   手动跟随是鼠标的主模式（光标一直在，看得见）。
+   双击则切到「到点导航」；一旦真的移动鼠标就自动切回跟随。 */
+let lastMouse = null;
 canvas.addEventListener('mousemove', e => {
+  state.inputMode = 'mouse';
   const p = toWorld(e.clientX, e.clientY);
+  /* 双击时手会轻微抖动，小于 3px 的位移不当作“要手动接管” */
+  if (state.dest && lastMouse &&
+      Math.hypot(e.clientX - lastMouse.x, e.clientY - lastMouse.y) > 3){
+    state.dest = null;
+  }
+  lastMouse = { x: e.clientX, y: e.clientY };
   state.target = p;
   state.pointerOn = true;
 });
 canvas.addEventListener('mouseleave', () => {
   state.pointerOn = false;
-  parkTargetSafely();
+  if (!state.dest) parkTargetSafely();
 });
 canvas.addEventListener('mouseenter', e => {
   const p = toWorld(e.clientX, e.clientY);
   state.target = p;
   state.pointerOn = true;
 });
+canvas.addEventListener('dblclick', e => {
+  e.preventDefault();
+  state.inputMode = 'mouse';
+  setDestination(toWorld(e.clientX, e.clientY));
+});
 
-/* 触屏：手指按住拖动，目标点略高于手指，避免被手挡住 */
-let touching = false;
-function onTouch(e){
-  const t = e.changedTouches ? e.changedTouches[0] : e.touches[0];
+/* ---------------- 触屏：双击定位 + 拖拽跟随 ----------------
+   手指挡画面是硬伤，所以触屏的主模式是「双击一个固定点 → 冲过去 → 刹停」，
+   空闲时蛇完全静止。按住拖动仍然可用（带手指偏移量），松手后也会滑到该点停住。 */
+let tap = null;          // 本次按下 {sx, sy, t, moved}
+let lastTap = null;      // 上一次轻点（用来判双击）
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
   if (!t) return;
-  const p = toWorld(t.clientX, t.clientY);
-  state.target = { x: p.x, y: clamp(p.y - CELL * 1.8, 0, H) };
+  state.inputMode = 'touch';
   state.pointerOn = true;
-  touching = true;
-}
-canvas.addEventListener('touchstart', e => { e.preventDefault(); onTouch(e); }, { passive:false });
-canvas.addEventListener('touchmove',  e => { e.preventDefault(); onTouch(e); }, { passive:false });
-canvas.addEventListener('touchend',   e => { touching = false; parkTargetSafely(); }, { passive:true });
+  const p  = toWorld(t.clientX, t.clientY);
+  const now = performance.now();
+
+  tap = { sx:t.clientX, sy:t.clientY, t:now, moved:false };
+
+  /* 双击：时间够短 + 两个点离得够近 */
+  if (lastTap && now - lastTap.t < DBL_TAP_MS &&
+      Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < CELL * 2.5){
+    setDestination(p);
+    lastTap = null;
+  } else {
+    lastTap = { x:p.x, y:p.y, t:now };
+  }
+}, { passive:false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  if (!t || !tap) return;
+  if (Math.hypot(t.clientX - tap.sx, t.clientY - tap.sy) > 12) tap.moved = true;
+  if (!tap.moved) return;                 // 只是轻点抖动，不算拖拽
+  state.dest = null;                      // 拖拽 → 接管为手动
+  state.dragging = true;
+  const p = toWorld(t.clientX, t.clientY);
+  state.target = { x: p.x, y: clamp(p.y - CELL * 1.8, 0, H) };  // 抬高一点，别被手指挡住
+}, { passive:false });
+
+canvas.addEventListener('touchend', () => {
+  /* 拖拽松手：把最后位置当成到点目标，蛇会滑过去自己停住 */
+  if (tap && tap.moved) setDestination(state.target, { silent:true });
+  state.dragging = false;
+  tap = null;
+}, { passive:true });
+
+canvas.addEventListener('touchcancel', () => {
+  state.dragging = false;
+  tap = null;
+}, { passive:true });
 
 /* 键盘只保留暂停 / 重开 */
 window.addEventListener('keydown', e => {
@@ -914,6 +1005,55 @@ function updatePointerSpeed(dtSec){
   state.prevTarget = { x:t.x, y:t.y };
 }
 
+/* ---- 「到点导航」：双击一个固定点，蛇冲过去并刹停 ---- */
+
+/** 导航模式下的速度上限（吃满 BUFF 后比手柄模式略高） */
+function toppedSpeed(){
+  let v = baseSpeed() * 1.9;
+  if (state.buffs.speed > 0) v *= 1.45;
+  if (state.buffs.slow  > 0) v *= .62;
+  return Math.min(v, MAX_SPEED);
+}
+
+/** 到点速度：指数利车曲线 + 大转角时限速（否则会兜圈子） */
+function navSpeed(dist, angleErr){
+  const vMax   = toppedSpeed();
+  const arrive = clamp((dist - NAV_STOP) * NAV_GAIN, 0, vMax);
+  const align  = Math.max(0, Math.cos(angleErr));   // 1 正对目标，0 侧对，背对为负
+  const turnCap = vMax * (.35 + .65 * align);
+  return Math.min(arrive, turnCap);
+}
+
+/** 设定导航目标点（双击 / 拖拽结束时调用） */
+function setDestination(p, opts = {}){
+  const S = NAV_INSET;
+  state.dest = {
+    x: clamp(p.x, S, Math.max(S, W - S)),
+    y: clamp(p.y, S, Math.max(S, H - S)),
+  };
+  state.target = { ...state.dest };
+  state.pointerOn = true;
+  state.showTouchHint = false;
+  if (!opts.silent){
+    ring(state.dest.x, state.dest.y, CELL * 2.6, '#7ef9d8', 3);
+    burst(state.dest.x, state.dest.y, '#7ef9d8', 10, 110, { size:2 });
+    Sound.click();
+  }
+}
+
+/** 到站 */
+function arrive(){
+  const d = state.dest;
+  state.dest = null;
+  state.target = { x: state.head.x, y: state.head.y };
+  state.prevTarget = null;                 // 别把刹停算成“甩鼠标”
+  if (d){
+    ring(d.x, d.y, CELL * 2.2, '#7ef9d8', 3);
+    burst(d.x, d.y, '#7ef9d8', 8, 90, { size:2 });
+    Sound.arrive();
+  }
+}
+
 /** 当前该跑多快（未平滑的期望值） */
 function wantSpeed(dist){
   const distF  = clamp(SPD_DIST_NEAR + dist / SPD_DIST_FULL, SPD_DIST_NEAR, SPD_DIST_MAX);
@@ -928,30 +1068,47 @@ function wantSpeed(dist){
 let sparkCd = 0;
 
 function advance(dt){
-  const t = state.target;
-  const dx = t.x - state.head.x;
-  const dy = t.y - state.head.y;
+  const nav  = state.dest;                 // 「到点导航」目标（双击产生）
+  const aim  = nav || state.target;
+  const dx   = aim.x - state.head.x;
+  const dy   = aim.y - state.head.y;
   const dist = Math.hypot(dx, dy);
 
-  /* --- 速度：光标越远越快，甩鼠标也会更快；再平滑加减速 --- */
-  const want = wantSpeed(dist);
-  const tau  = want > state.speed ? ACCEL_TAU : BRAKE_TAU;
+  /* --- 先算朝向：朝目标转，但有最大角速度，于是走弧线 --- */
+  let angleErr = 0;
+  if (dist > .5){
+    const desired = Math.atan2(dy, dx);
+    const diff = wrapAngle(desired - state.angle);
+    const turnRate = TURN_RATE * (1 - .18 * clamp(state.speed / MAX_SPEED, 0, 1));
+    const maxTurn = turnRate * dt;
+    angleErr = diff;
+    if (Math.abs(diff) <= maxTurn || dist < HEAD_R) state.angle = desired;
+    else state.angle = wrapAngle(state.angle + Math.sign(diff) * maxTurn);
+  }
+
+  /* --- 目标速度 --- */
+  let want, tau;
+  if (nav){
+    if (dist < NAV_STOP){
+      arrive();                      // 到站：刹停并收尾
+      want = 0; tau = BRAKE_TAU;
+    } else {
+      want = navSpeed(dist, angleErr);
+      tau  = want > state.speed ? NAV_TAU : BRAKE_TAU;
+    }
+  } else if (state.inputMode === 'touch' && !state.dragging){
+    want = 0; tau = BRAKE_TAU;       // 触屏空闲：完全静止，等下一次双击
+  } else {
+    want = wantSpeed(dist);          // 鼠标跟随：越远越快，甩得快也快
+    tau  = want > state.speed ? ACCEL_TAU : BRAKE_TAU;
+  }
+
   state.speed += (want - state.speed) * (1 - Math.exp(-dt / tau));
+  if (state.speed < .4) state.speed = 0;      // 避免无限接近 0 的爬行
   const v = state.speed;
 
   /* 冲刺强度：驱动发光、速度线等特效 */
   state.boost = clamp((v / baseSpeed() - 1.1) / .9, 0, 1);
-
-  /* --- 转向：朝目标转，但有最大角速度，于是走弧线。
-         速度越快转向越钝 —— 飙车有风险 --- */
-  if (dist > .5){
-    const desired = Math.atan2(dy, dx);
-    const diff = wrapAngle(desired - state.angle);
-    const turnRate = TURN_RATE * (1 - .18 * clamp(v / MAX_SPEED, 0, 1));
-    const maxTurn = turnRate * dt;
-    if (Math.abs(diff) <= maxTurn || dist < HEAD_R) state.angle = desired;
-    else state.angle = wrapAngle(state.angle + Math.sign(diff) * maxTurn);
-  }
 
   state.head.x += Math.cos(state.angle) * v * dt;
   state.head.y += Math.sin(state.angle) * v * dt;
@@ -1169,7 +1326,23 @@ function update(dt){
 }
 
 /* ================= 渲染 ================= */
-const gridCol = 'rgba(130,200,255,.085)';
+const gridCol      = 'rgba(130,200,255,.055)';
+const gridMajorCol = 'rgba(130,200,255,.12)';
+
+/* 网格档位：让屏幕上的格间距稳定在 18px 左右，不管画布多大都一样细 */
+let gridStep = CELL;
+function updateGridStep(){
+  const want = 18 / Math.max(RS, .001);
+  let best = GRID_CHOICES[0], bd = Infinity;
+  for (const c of GRID_CHOICES){
+    const d = Math.abs(c - want);
+    if (d < bd){ bd = d; best = c; }
+  }
+  gridStep = best;
+}
+
+/** 把世界坐标对齐到设备像素中心，细网格才不会发糊 */
+const snapX = x => (Math.round(x * RS) + .5) / RS;
 
 function drawBackground(){
   const hue = 210 + (state.level - 1) * 13;
@@ -1187,11 +1360,26 @@ function drawBackground(){
   ctx.fillStyle = rg;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = gridCol;
+  /* 双层网格：细格 + 每 4 格一根粗线，像工程坐标纸 */
+  const minor = gridStep, major = gridStep * 4;
   ctx.lineWidth = 1;
+
+  ctx.strokeStyle = gridCol;
   ctx.beginPath();
-  for (let x = 0; x <= W; x += CELL){ ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, H); }
-  for (let y = 0; y <= H; y += CELL){ ctx.moveTo(0, y + .5); ctx.lineTo(W, y + .5); }
+  for (let x = minor; x < W - .5; x += minor){
+    if (Math.abs(x % major) < 1e-6) continue;
+    const px = snapX(x); ctx.moveTo(px, 0); ctx.lineTo(px, H);
+  }
+  for (let y = minor; y < H - .5; y += minor){
+    if (Math.abs(y % major) < 1e-6) continue;
+    const py = snapX(y); ctx.moveTo(0, py); ctx.lineTo(W, py);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = gridMajorCol;
+  ctx.beginPath();
+  for (let x = 0; x < W - .5; x += major){ const px = snapX(x); ctx.moveTo(px, 0); ctx.lineTo(px, H); }
+  for (let y = 0; y < H - .5; y += major){ const py = snapX(y); ctx.moveTo(0, py); ctx.lineTo(W, py); }
   ctx.stroke();
 }
 
@@ -1305,7 +1493,7 @@ function drawSnake(){
   for (let i = 1; i < b.length; i++) ctx.lineTo(b[i].x, b[i].y);
 
   ctx.shadowColor = rainbow ? `hsl(${hueBase} 95% 60%)` : 'rgba(56,240,190,.85)';
-  ctx.shadowBlur = (22 + state.boost * 26) * blurK;   // 越快越亮
+  ctx.shadowBlur = (22 + state.boost * 26) * glowK();  // 越快越亮
   ctx.strokeStyle = grad;
   ctx.lineWidth = CELL * .82;
   ctx.stroke();
@@ -1321,7 +1509,7 @@ function drawSnake(){
   const dx = Math.cos(state.angle), dy = Math.sin(state.angle);
   ctx.save();
   ctx.shadowColor = 'rgba(120,255,220,.95)';
-  ctx.shadowBlur = 20 * blurK;
+  ctx.shadowBlur = 20 * glowK();
   ctx.fillStyle = rainbow ? `hsl(${(hueBase + 40) % 360} 100% 88%)` : '#eafff8';
   ctx.beginPath(); ctx.arc(head.x, head.y, HEAD_R, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
@@ -1376,9 +1564,70 @@ function drawSpeedStreaks(){
   ctx.restore();
 }
 
+/* 「到点导航」的目标标记 + 引导虚线 */
+function drawDestination(){
+  const d = state.dest;
+  if (!d || state.mode !== 'playing') return;
+  const pulse = 1 + Math.sin(state.clock / 150) * .16;
+  const left  = Math.hypot(d.x - state.head.x, d.y - state.head.y);
+
+  ctx.save();
+  /* 引导虚线：让人一眼看出蛇要往哪拐 */
+  ctx.setLineDash([7, 11]);
+  ctx.lineDashOffset = -state.clock / 26;
+  ctx.strokeStyle = 'rgba(126,249,216,.30)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(state.head.x, state.head.y);
+  ctx.lineTo(d.x, d.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = 'rgba(126,249,216,.8)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(d.x, d.y, 15 * pulse, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 4; i++){
+    const a = i * Math.PI / 2 + state.clock / 520;
+    ctx.beginPath();
+    ctx.moveTo(d.x + Math.cos(a) * 21, d.y + Math.sin(a) * 21);
+    ctx.lineTo(d.x + Math.cos(a) * 29, d.y + Math.sin(a) * 29);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(126,249,216,.95)';
+  ctx.beginPath(); ctx.arc(d.x, d.y, 3.6, 0, Math.PI * 2); ctx.fill();
+
+  /* 剩余距离，方便判断还有多远 */
+  if (left > 40){
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = .55;
+    ctx.fillStyle = '#7ef9d8';
+    ctx.font = '600 13px "PingFang SC",system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(Math.round(left) + '', d.x, d.y + 40);
+  }
+  ctx.restore();
+}
+
+/* 触屏首次进入时的操作提示 */
+function drawTouchHint(){
+  if (!state.showTouchHint || state.mode !== 'playing') return;
+  const a = .35 + .3 * Math.sin(state.clock / 420);
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#7ef9d8';
+  ctx.font = `600 ${Math.round(CELL * .78)}px "PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.fillText('双击屏幕任意位置 → 蛇会冲过去停住', W / 2, H - CELL * 2.4);
+  ctx.restore();
+}
+
 /* 鼠标准星 */
 function drawReticle(){
-  if (state.mode !== 'playing' || !state.pointerOn) return;
+  if (state.mode !== 'playing' || !state.pointerOn || state.dest) return;
+  if (state.inputMode === 'touch' && !state.dragging) return;
   const { x, y } = state.target;
   const pulse = 1 + Math.sin(state.clock / 200) * .12;
   ctx.save();
@@ -1420,7 +1669,7 @@ function drawTexts(){
     ctx.globalAlpha = clamp(t.life * 1.6, 0, 1);
     ctx.font = `900 ${t.size}px "PingFang SC","Microsoft YaHei",system-ui,sans-serif`;
     ctx.shadowColor = t.color;
-    ctx.shadowBlur = 14 * blurK;
+    ctx.shadowBlur = 14 * glowK();
     ctx.fillStyle = t.color;
     ctx.fillText(t.text, t.x, t.y);
     ctx.shadowBlur = 0;
@@ -1442,9 +1691,11 @@ function render(){
   drawRings();
   drawSpeedStreaks();
   drawReticle();
+  drawDestination();
   drawSnake();
   drawParticles();
   drawTexts();
+  drawTouchHint();
   ctx.restore();
 
   if (state.flash > .001){
@@ -1503,12 +1754,23 @@ function renderBuffs(){
   });
 }
 
+/* ================= 自适应画质 =================
+   大画布上的 shadowBlur 很吃性能（iPad 尤其），
+   帧时间偏高时逐步收敛发光强度，宁可光晕淡一点也不卡顿。 */
+let frameAvg = 16.7;
+
+function tuneQuality(dtMs){
+  frameAvg += (dtMs - frameAvg) * .05;
+  if (frameAvg > 26)      qualityK = Math.max(.25, qualityK - .02);
+  else if (frameAvg < 17) qualityK = Math.min(1,   qualityK + .01);
+}
 /* ================= 主循环 ================= */
 let last = performance.now();
 function frame(now){
   /* 夹在 0~100ms：切标签页回来 / 时间戳非单调时都不会让蛇瞬移或卡死 */
   const dtMs = Math.max(0, Math.min(now - last, 100));
   last = now;
+  tuneQuality(dtMs);
   update(dtMs);
   render();
   requestAnimationFrame(frame);
@@ -1523,6 +1785,16 @@ if (typeof ResizeObserver !== 'undefined'){
 }
 window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 80));
 
+/* 开屏先猜一下输入方式：触屏设备默认「双击定位」模式，
+   蛇一开始就静止等着，不会在玩家还没搞清操作时就自己游向墙。 */
+{
+  const coarse = (window.matchMedia && window.matchMedia('(hover:none)').matches) ||
+                 ('ontouchstart' in window) ||
+                 (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0);
+  state.inputMode = coarse ? 'touch' : 'mouse';
+  state.showTouchHint = coarse;
+}
+
 loadBest();
 reset();
 lastW = W; lastH = H;
@@ -1534,7 +1806,9 @@ window.__snake = {
   state, FOOD_TYPES, BUFF_DEFS,
   start, pause, resume,
   updateBody, wantSpeed, baseSpeed, resizeCanvas,
-  world: () => ({ W, H, scale: RS, view }),
+  navSpeed, toppedSpeed, setDestination,
+  world: () => ({ W, H, scale: RS, view, gridStep }),
+  perf:  () => ({ frameAvg, qualityK, blurK }),
 };
 
 })();
