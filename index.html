@@ -25,49 +25,72 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body { height: 100%; }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   background: linear-gradient(135deg, #0f1923 0%, #1a1a2e 50%, #16213e 100%);
+  background-attachment: fixed;
   color: #e0e0e0;
-  min-height: 100vh;
-  padding: 2rem;
 }
 
 .container {
-  max-width: 800px;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 1440px;
   margin: 0 auto;
+  padding: clamp(10px, 2vh, 22px) clamp(12px, 2vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vh, 14px);
 }
 
+header { text-align: center; flex: 0 0 auto; }
+
 h1 {
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.3rem, 3.4vh, 2.2rem);
   background: linear-gradient(135deg, #f5af19, #f12711);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .subtitle {
-  text-align: center;
   color: #888;
-  margin-bottom: 3rem;
-  font-size: 1.1rem;
+  font-size: clamp(.72rem, 1.7vh, 1rem);
+  margin-top: 2px;
 }
 
-.card-list {
+/* 一屏网格：≥1200px 6 列 × 3 行；700–1199px 5 列 × 4 行 */
+.grid {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: clamp(8px, 1.4vh, 16px);
+}
+
+@media (min-width: 700px) and (max-width: 1199px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
 }
 
 .card {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 1.8rem;
+  border-radius: 14px;
+  padding: clamp(8px, 1.6vh, 18px);
   text-decoration: none;
   color: inherit;
-  transition: all 0.3s ease;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, .7vh, 8px);
+  overflow: hidden;
+  min-height: 0;
+  transition: background .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
 }
 
 .card:hover {
@@ -77,140 +100,182 @@ h1 {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
+.card:active { transform: scale(.97); }
+
+.card .icon { font-size: clamp(1.3rem, 3.4vh, 2.1rem); line-height: 1; }
+
 .card h2 {
-  font-size: 1.4rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(.82rem, 2vh, 1.1rem);
   color: #f5af19;
+  line-height: 1.25;
 }
 
 .card p {
-  color: #aaa;
-  line-height: 1.6;
+  color: #999;
+  line-height: 1.45;
+  font-size: clamp(.66rem, 1.55vh, .85rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .tag {
-  display: inline-block;
+  align-self: flex-start;
   background: rgba(245, 175, 25, 0.15);
   color: #f5af19;
-  padding: 0.2rem 0.7rem;
+  padding: .1rem .55rem;
   border-radius: 20px;
-  font-size: 0.8rem;
-  margin-top: 0.8rem;
+  font-size: clamp(.6rem, 1.4vh, .78rem);
 }
 
 footer {
+  flex: 0 0 auto;
   text-align: center;
-  margin-top: 4rem;
   color: #555;
-  font-size: 0.9rem;
+  font-size: clamp(.6rem, 1.4vh, .8rem);
+}
+
+/* 小屏（手机）：退回常规可滚动网格 */
+@media (max-width: 699px) {
+  .container { height: auto; min-height: 100dvh; }
+  .grid {
+    flex: none;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: minmax(120px, auto);
+  }
+  .card p { -webkit-line-clamp: 3; line-clamp: 3; }
 }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Medley of Fun</h1>
-  <p class="subtitle">趣味合集 — 科普知识、互动小游戏，尽在其中</p>
+  <header>
+    <h1>Medley of Fun</h1>
+    <p class="subtitle">趣味合集 — 科普知识、互动小游戏，尽在其中 · 每页都是独立 HTML，点开即玩</p>
+  </header>
 
-  <div class="card-list">
+  <div class="grid">
     <a class="card" href="bird-aerodynamics.html">
+      <span class="icon">🕊️</span>
       <h2>鸟类飞行空气动力学</h2>
       <p>探索鸟类翱翔天际的奥秘 — 升力、阻力、翼型原理的互动科普</p>
       <span class="tag">科普</span>
     </a>
 
     <a class="card" href="elsa-journey.html">
-      <h2>艾莎的冰雪传奇 — 成长之旅</h2>
+      <span class="icon">❄️</span>
+      <h2>艾莎的冰雪传奇</h2>
       <p>跟随艾莎的脚步，体验从恐惧到勇敢的冰雪成长故事</p>
       <span class="tag">故事</span>
     </a>
 
     <a class="card" href="solar-system.html">
-      <h2>太阳系 — 交互式探索</h2>
+      <span class="icon">🪐</span>
+      <h2>太阳系探索</h2>
       <p>漫游太阳系，近距离探索八大行星的奥秘</p>
       <span class="tag">科普</span>
     </a>
 
     <a class="card" href="periodic-table.html">
+      <span class="icon">🧪</span>
       <h2>交互式元素周期表</h2>
       <p>点击探索每个元素的属性、发现历史和用途</p>
       <span class="tag">科普</span>
     </a>
 
     <a class="card" href="fluid-simulation.html">
+      <span class="icon">🌊</span>
       <h2>流体模拟</h2>
       <p>指尖搅动流体，感受真实的流体力学效果</p>
       <span class="tag">模拟</span>
     </a>
 
     <a class="card" href="cloth-simulation.html">
+      <span class="icon">🧵</span>
       <h2>布料模拟</h2>
       <p>拖拽、撕扯，体验逼真的布料物理效果</p>
       <span class="tag">模拟</span>
     </a>
 
     <a class="card" href="particle-canvas.html">
+      <span class="icon">✨</span>
       <h2>粒子艺术画板</h2>
       <p>用粒子作画，创造绚丽的视觉艺术作品</p>
       <span class="tag">创意</span>
     </a>
 
     <a class="card" href="beat-sequencer.html">
+      <span class="icon">🥁</span>
       <h2>节拍工坊</h2>
       <p>鼓机 + 旋律编排，打造你的专属节拍</p>
       <span class="tag">音乐</span>
     </a>
 
     <a class="card" href="maze-game.html">
+      <span class="icon">🌀</span>
       <h2>迷宫闯关</h2>
       <p>挑战随机生成的迷宫，找到出口！</p>
       <span class="tag">游戏</span>
     </a>
 
     <a class="card" href="physics-pinball.html">
+      <span class="icon">⚡</span>
       <h2>画线物理弹球</h2>
       <p>画出线条作为障碍，弹球在物理世界中弹跳</p>
       <span class="tag">游戏</span>
     </a>
 
     <a class="card" href="neon-snake.html">
+      <span class="icon">🐍</span>
       <h2>霓虹贪吃蛇</h2>
-      <p>鼠标指到哪，蛇就游到哪 — 撞到自己不会死，只有撞到边界才算结束。13 种道具、连击、冲刺特效</p>
+      <p>鼠标指到哪蛇就游到哪，13 种道具、连击、冲刺特效</p>
       <span class="tag">游戏</span>
     </a>
 
     <a class="card" href="multiplication-fun.html">
+      <span class="icon">🔢</span>
       <h2>乘法的奇妙世界</h2>
-      <p>五个小秘密揭开乘法真相 — 方阵、交换律、体积、缩放，边玩边懂</p>
+      <p>五个小秘密揭开乘法真相 — 方阵、交换律、体积、缩放</p>
       <span class="tag">教育</span>
     </a>
 
     <a class="card" href="sorting-fun.html">
+      <span class="icon">👾</span>
       <h2>小怪兽排排站</h2>
-      <p>只能交换相邻两只，用最少步数把小怪兽从矮到高排好，猜对秒通关！</p>
+      <p>交换相邻小怪兽，用最少步数从矮到高排好</p>
       <span class="tag">教育</span>
     </a>
 
     <a class="card" href="division-fun.html">
+      <span class="icon">➗</span>
       <h2>除法的奇妙世界</h2>
-      <p>五个小秘密揭开除法真相 — 平均分、装箱、乘除互逆、测量、除以分数，边玩边懂</p>
+      <p>五个小秘密揭开除法真相 — 平均分、装箱、乘除互逆</p>
       <span class="tag">教育</span>
     </a>
 
     <a class="card" href="typing-fun.html">
+      <span class="icon">⌨️</span>
       <h2>打字小能手</h2>
-      <p>戳泡泡学键位 — 彩色键盘 + 手指指示 + 趣味音效，闯关解锁 26 个字母，边玩边练盲打</p>
+      <p>戳泡泡学键位 — 彩色键盘 + 手指指示 + 音效闯关</p>
       <span class="tag">教育</span>
     </a>
 
     <a class="card" href="schedule-planner.html">
+      <span class="icon">🗓️</span>
       <h2>日程积木</h2>
       <p>拖拽搭建每日学习日程，生成漂亮的日程卡片</p>
       <span class="tag">工具</span>
     </a>
 
     <a class="card" href="cambridge/">
+      <span class="icon">🎓</span>
       <h2>剑桥趣味探索</h2>
-      <p>走进剑桥大学 — 认识传奇英雄、探索古老学院、挑战知识问答</p>
+      <p>走进剑桥大学 — 认识传奇英雄、探索古老学院、知识问答</p>
       <span class="tag">探索</span>
     </a>
   </div>
