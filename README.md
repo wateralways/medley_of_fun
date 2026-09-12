@@ -21,6 +21,7 @@ Visit: **https://wateralways.github.io/medley_of_fun/**
 | [beat-sequencer.html](beat-sequencer.html) | Drum machine & melody beat sequencer |
 | [maze-game.html](maze-game.html) | Random maze challenge game |
 | [physics-pinball.html](physics-pinball.html) | Draw-line physics pinball |
+| [neon-snake.html](neon-snake.html) | Neon snake — cursor-following snake, wall is the only death, 13 power-ups |
 | [multiplication-fun.html](multiplication-fun.html) | Multiplication learning game |
 | [sorting-fun.html](sorting-fun.html) | Adjacent-swap sorting game for kids |
 | [division-fun.html](division-fun.html) | Division learning — sharing, grouping, inverse, measurement, divide by fractions |
