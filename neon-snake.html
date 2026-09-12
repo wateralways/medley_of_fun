@@ -252,6 +252,82 @@ body{
 }
 .tips b{ color:var(--cyan); font-weight:700; }
 
+/* 模式选择 */
+.modes{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin:0 0 10px;
+}
+.mode-btn{
+  appearance:none;
+  cursor:pointer;
+  padding:7px 20px;
+  border-radius:999px;
+  font-size:clamp(12px,2.6vmin,14px);
+  font-weight:600;
+  font-family:inherit;
+  color:rgba(219,234,254,.7);
+  background:rgba(20,34,60,.6);
+  border:1px solid var(--line);
+  transition:.18s;
+}
+.mode-btn:hover{ color:#dff1ff; border-color:rgba(126,249,216,.5); }
+.mode-btn.active{
+  color:#04140f;
+  background:linear-gradient(135deg,#5ef7d0,#42c8ff);
+  border-color:transparent;
+  box-shadow:0 0 20px rgba(62,240,200,.35);
+}
+
+/* 尾巴收藏 */
+.collect{
+  margin:0 0 18px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(10,18,34,.5);
+  border:1px solid var(--line);
+}
+.collect-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:11px;
+  color:var(--dim);
+  margin-bottom:8px;
+}
+.collect-head b{ color:var(--cyan); }
+.collect-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(38px, 1fr));
+  gap:5px;
+}
+.ci{
+  position:relative;
+  aspect-ratio:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  border-radius:9px;
+  background:rgba(30,52,92,.55);
+  border:1px solid rgba(126,249,216,.28);
+}
+.ci b{
+  position:absolute;
+  right:2px; bottom:1px;
+  font-size:10px;
+  font-weight:800;
+  color:#7ef9d8;
+  text-shadow:0 0 6px rgba(0,0,0,.9);
+}
+.ci.zero{
+  opacity:.28;
+  filter:grayscale(1);
+  border-color:var(--line);
+}
+
 /* 道具图鉴 */
 .legend{
   display:grid;
@@ -270,6 +346,7 @@ body{
 .lg > span{ font-size:15px; width:19px; text-align:center; flex:none; }
 .lg > b{ color:#dff1ff; font-weight:600; flex:none; }
 .lg > i{ color:rgba(219,234,254,.42); font-style:normal; font-size:10px; }
+.lg.dim{ opacity:.5; }
 
 /* ---------------- BUFF 条 ---------------- */
 .buffbar{
@@ -427,6 +504,38 @@ const GRID_CHOICES = [3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96];
 const EMOJI_FONT = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
 const BEST_KEY = 'neon-snake-best-v2';
 
+/* ---- 长按冲刺 ---- */
+const HOLD_MS     = 240;     // 按住多久算「冲刺」
+const SPRINT_MUL  = 1.28;    // 冲刺时的速度倍率
+const SPRINT_TURN = .5;      // 冲刺时转向能力打折（这就是代价）
+
+/* ---- 连击口号 ---- */
+const SHOUTS = [
+  { at: 2,  text:'NICE!',         color:'#7ef9d8' },
+  { at: 3,  text:'GREAT!',        color:'#5ef7d0' },
+  { at: 5,  text:'AWESOME!',      color:'#fde047' },
+  { at: 7,  text:'EXCELLENT!',    color:'#fbbf24' },
+  { at: 10, text:'UNBELIEVABLE!', color:'#ff5ec4' },
+];
+
+/* ---- 每日挑战用的可复现随机数（mulberry32） ---- */
+function makeRng(seed){
+  let s = seed >>> 0;
+  return function(){
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+let rng = Math.random;                       // 当前随机源
+const todaySeed = () => {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+};
+const dailyKey = () => `neon-snake-daily-${todaySeed()}`;
+const DISCOVER_KEY = 'neon-snake-discovered-v1';
+
 /* ---- 道具表 ----
    grow: 吃到后增加的体节数（可为负，节越长蛇越长）
    minLen: 蛇达到该长度后才会出现（避免新手被炸弹教做人） */
@@ -561,11 +670,32 @@ const Sound = {
   click(){ this.tone({ freq:740, dur:.06, type:'square', vol:.08 }); },
   arrive(){ this.tone({ freq:880, dur:.09, type:'sine', vol:.10, slide:-120 });
             this.tone({ freq:1180, dur:.08, type:'sine', vol:.07, delay:.06, slide:-160 }); },
+  /** 连击口号：档位越高音越亮 */
+  shout(tier){
+    const base = 520 + tier * 90;
+    [0, 4, 7].forEach((semi, i) =>
+      this.tone({ freq: base * Math.pow(2, semi / 12), dur:.13,
+                  type:'triangle', vol:.13, delay:i * .05 }));
+  },
+  /** 长按冲刺启动 */
+  sprint(){
+    this.tone({ freq:260, dur:.26, type:'sawtooth', vol:.13, slide:520 });
+    this.tone({ freq:520, dur:.22, type:'sine', vol:.07, delay:.03, slide:640 });
+  },
 };
 
 /* ================= 状态 ================= */
 const state = {
   mode:'ready',                 // ready | playing | paused | over
+  playMode:'free',              // free | daily
+  challenge:null,               // 每日挑战：{ seed, date }
+  sprint:false,                 // 长按冲刺中
+  holding:false,                // 手指 / 鼠标按着
+  holdSince:0,
+  collect:{},                   // 本局吃到的道具统计 id -> 次数
+  discovered:{},                // 历史解锁过的道具（持久化）
+  shout:null,                   // 当前连击口号 { text, color, life }
+  shoutTier:0,                  // 已播报到的连击档位
   head:{ x:W/2, y:H/2 },        // 蛇头
   angle:0,                      // 朝向（弧度）
   speed:0,                      // 当前速度 px/s（带平滑）
@@ -604,13 +734,26 @@ function rgba(hex, a){
 const wrapAngle = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 /* ================= 存档 ================= */
+/** 自由模式和每日挑战各存各的最高分 */
+const bestKeyFor = m => m === 'daily' ? dailyKey() : BEST_KEY;
+
 function loadBest(){
-  try { state.best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; }
+  try { state.best = parseInt(localStorage.getItem(bestKeyFor(state.playMode)) || '0', 10) || 0; }
   catch(e){ state.best = 0; }
 }
 function saveBest(){
-  try { localStorage.setItem(BEST_KEY, String(state.best)); } catch(e){}
+  try { localStorage.setItem(bestKeyFor(state.playMode), String(state.best)); } catch(e){}
 }
+
+/* 道具图鉴（跨局累积，解锁过的永久点亮） */
+function loadDiscovered(){
+  try { state.discovered = JSON.parse(localStorage.getItem(DISCOVER_KEY) || '{}') || {}; }
+  catch(e){ state.discovered = {}; }
+}
+function saveDiscovered(){
+  try { localStorage.setItem(DISCOVER_KEY, JSON.stringify(state.discovered)); } catch(e){}
+}
+const discoveredCount = () => FOOD_TYPES.filter(t => state.discovered[t.id]).length;
 
 /* ================= 特效原语 ================= */
 function burst(x, y, color, n, spd, opt = {}){
@@ -702,15 +845,25 @@ function reset(){
   state.shake = 0; state.flash = 0; state.newBest = false;
   state.dest = null; state.dragging = false;
   state.prevTarget = null; state.pointerSpeed = 0;
+  state.sprint = false; state.holdTimer = null;
+  state.collect = {}; state.shout = null; state.shoutTier = 0;
   for (const k in BUFF_DEFS) state.buffs[k] = 0;
+
+  /* 每日挑战：每次重开都用同一颗种子，保证所有人的布局一致 */
+  rng = state.challenge ? makeRng(state.challenge.seed) : Math.random;
 
   updateBody();
   for (let i = 0; i < 3; i++) spawnFood(true);
   hudSig = ''; buffSig = ''; updateHUD();
 }
 
-function start(){
+function start(mode){
   Sound.init();
+  if (mode) state.playMode = mode;
+  state.challenge = state.playMode === 'daily'
+    ? { seed: todaySeed(), date: new Date().toLocaleDateString('zh-CN') }
+    : null;
+  loadBest();
   reset();
   state.mode = 'playing';
   hideOverlay();
@@ -743,8 +896,20 @@ function gameOver(){
 
   if (state.score > state.best){ state.best = state.score; state.newBest = true; saveBest(); }
 
+  /* --- 尾巴收藏：本局尝过的道具，没吃到的按图鉴解锁情况显示 --- */
+  const kinds = FOOD_TYPES.filter(t => state.collect[t.id]).length;
+  const cells = FOOD_TYPES.map(t => {
+    const n = state.collect[t.id] || 0;
+    const known = state.discovered[t.id];
+    return `<div class="ci${n ? '' : ' zero'}" title="${t.name} ×${n}">
+              <span>${known ? t.icon : '❔'}</span>${n ? `<b>${n}</b>` : ''}
+            </div>`;
+  }).join('');
+
+  const title = state.challenge ? '每日挑战结束' : '撞墙了！';
+
   showOverlay(`
-    <h1 class="lose">撞墙了！</h1>
+    <h1 class="lose">${title}</h1>
     <div class="bigscore">${state.score}</div>
     ${state.newBest ? '<div class="newbest">★ 新纪录 ★</div>' : `<p class="sub">最高分 ${state.best}</p>`}
     <div class="stats">
@@ -752,6 +917,13 @@ function gameOver(){
       <div><b>${state.segCount}</b><span>最终长度</span></div>
       <div><b>Lv.${state.level}</b><span>等级</span></div>
       <div><b>${(state.survived/1000).toFixed(1)}s</b><span>存活</span></div>
+    </div>
+    <div class="collect">
+      <div class="collect-head">
+        <span>本局尝到 <b>${kinds}</b> / ${FOOD_TYPES.length} 种</span>
+        <span>图鉴已解锁 <b>${discoveredCount()}</b> / ${FOOD_TYPES.length}</span>
+      </div>
+      <div class="collect-grid">${cells}</div>
     </div>
     <button class="btn" data-act="start">再来一局</button>
     <p class="hint">按 R 或 回车 快速重开</p>`);
@@ -766,21 +938,42 @@ function showOverlay(html){
 function hideOverlay(){
   el.overlay.classList.remove('show');
 }
+/** 读某个模式的最高分（不改动当前 state） */
+function readBest(mode){
+  try { return parseInt(localStorage.getItem(bestKeyFor(mode)) || '0', 10) || 0; }
+  catch(e){ return 0; }
+}
+
 function readyPanel(){
   const legend = FOOD_TYPES
-    .map(t => `<div class="lg"><span>${t.icon}</span><b>${t.name}</b><i>${t.desc}</i></div>`)
+    .map(t => {
+      const got = state.discovered[t.id];
+      return `<div class="lg${got ? '' : ' dim'}"><span>${t.icon}</span><b>${t.name}</b><i>${t.desc}</i></div>`;
+    })
     .join('');
+
+  const daily = state.playMode === 'daily';
+  const today = new Date().toLocaleDateString('zh-CN');
+  const sub = daily
+    ? `今日 <em>${today}</em> 的固定布局　·　所有人看到的道具序列完全一样　·　今日最高 <em>${readBest('daily')}</em>`
+    : `图鉴已解锁 <em>${discoveredCount()}</em> / ${FOOD_TYPES.length} 种　·　自由模式最高 <em>${readBest('free')}</em>`;
+
   return `
     <h1>霓虹贪吃蛇</h1>
     <p class="sub">鼠标指到哪，蛇就游到哪　·　撞到自己 <em>不会死</em>，只有撞到边界才结束</p>
+    <div class="modes">
+      <button class="mode-btn${daily ? '' : ' active'}" data-mode="free">自由模式</button>
+      <button class="mode-btn${daily ? ' active' : ''}" data-mode="daily">每日挑战</button>
+    </div>
+    <p class="sub">${sub}</p>
     <div class="legend">${legend}</div>
     <div class="tips">
       <span>🖱️ <b>鼠标</b>：光标指到哪就游到哪　—— 拉远赶路，收近微操</span>
       <span>👆 <b>触屏</b>：<b>双击</b>任意位置 → 蛇会冲过去并刹停在那里</span>
-      <span>💨 光标越远 / 甩得越快，蛇跑得越快，冲刺时会亮起速度线</span>
+      <span>⚡ <b>按住不放</b>：全速冲刺，但转向会变钝</span>
     </div>
     <button class="btn" data-act="start">开 始 游 戏</button>
-    <p class="hint">鼠标移动 / 触屏双击　·　空格 暂停　·　R 重开　·　F 全屏</p>`;
+    <p class="hint">鼠标移动 / 触屏双击　·　长按冲刺　·　空格 暂停　·　R 重开　·　F 全屏</p>`;
 }
 
 /* ================= 输入 ================= */
@@ -803,6 +996,18 @@ function parkTargetSafely(){
   t.y = clamp(t.y, S, Math.max(S, H - S));
 }
 
+/* ---------------- 长按冲刺 -------------
+   按住不放 240ms 后进入冲刺：速度拉满，但转向能力打五折。
+   用游戏时钟计时而不是 setTimeout，方便测试也避免定时器泄漏。 */
+function beginHold(){
+  state.holding  = true;
+  state.holdSince = performance.now();
+}
+function endHold(){
+  state.holding = false;
+  state.sprint  = false;
+}
+
 /* ---------------- 鼠标：持续跟随 ----------------
    手动跟随是鼠标的主模式（光标一直在，看得见）。
    双击则切到「到点导航」；一旦真的移动鼠标就自动切回跟随。 */
@@ -821,6 +1026,7 @@ canvas.addEventListener('mousemove', e => {
 });
 canvas.addEventListener('mouseleave', () => {
   state.pointerOn = false;
+  endHold();
   if (!state.dest) parkTargetSafely();
 });
 canvas.addEventListener('mouseenter', e => {
@@ -833,6 +1039,8 @@ canvas.addEventListener('dblclick', e => {
   state.inputMode = 'mouse';
   setDestination(toWorld(e.clientX, e.clientY));
 });
+canvas.addEventListener('mousedown', e => { if (e.button === 0) beginHold(); });
+window.addEventListener('mouseup', () => endHold());
 
 /* ---------------- 触屏：双击定位 + 拖拽跟随 ----------------
    手指挡画面是硬伤，所以触屏的主模式是「双击一个固定点 → 冲过去 → 刹停」，
@@ -846,6 +1054,7 @@ canvas.addEventListener('touchstart', e => {
   if (!t) return;
   state.inputMode = 'touch';
   state.pointerOn = true;
+  beginHold();                       // 按住 = 待会儿冲刺
   const p  = toWorld(t.clientX, t.clientY);
   const now = performance.now();
 
@@ -877,11 +1086,13 @@ canvas.addEventListener('touchend', () => {
   /* 拖拽松手：把最后位置当成到点目标，蛇会滑过去自己停住 */
   if (tap && tap.moved) setDestination(state.target, { silent:true });
   state.dragging = false;
+  endHold();
   tap = null;
 }, { passive:true });
 
 canvas.addEventListener('touchcancel', () => {
   state.dragging = false;
+  endHold();
   tap = null;
 }, { passive:true });
 
@@ -902,9 +1113,18 @@ window.addEventListener('keydown', e => {
 
 /* 面板按钮 */
 el.panel.addEventListener('click', e => {
+  Sound.init();
+  const modeBtn = e.target.closest('[data-mode]');
+  if (modeBtn){
+    Sound.click();
+    state.playMode = modeBtn.dataset.mode;
+    loadBest();
+    showOverlay(readyPanel());
+    return;
+  }
   const btn = e.target.closest('[data-act]');
   if (!btn) return;
-  Sound.init(); Sound.click();
+  Sound.click();
   if (btn.dataset.act === 'start') start();
   else if (btn.dataset.act === 'resume') resume();
 });
@@ -941,21 +1161,22 @@ function maxFoods(){
 function spawnFood(initial = false){
   if (state.foods.length >= maxFoods()) return;
 
+  /* 注意：这里全部用 rng()，每日挑战才能做到所有人的布局一致 */
   const pool = FOOD_TYPES.filter(t => !t.minLen || state.segCount >= t.minLen);
   const total = pool.reduce((s, t) => s + t.weight, 0);
-  let r = Math.random() * total, type = pool[pool.length - 1];
+  let r = rng() * total, type = pool[pool.length - 1];
   for (const t of pool){ r -= t.weight; if (r <= 0){ type = t; break; } }
 
   const M = CELL * 1.8;
   let x = W / 2, y = H / 2, ok = false;
   for (let i = 0; i < 90 && !ok; i++){
-    x = rand(M, W - M);
-    y = rand(M, H - M);
+    x = M + rng() * (W - M * 2);
+    y = M + rng() * (H - M * 2);
     if (Math.hypot(x - state.head.x, y - state.head.y) < CELL * 3) continue;
     ok = !state.foods.some(f => Math.hypot(f.x - x, f.y - y) < CELL * 2.2);
   }
 
-  state.foods.push({ type, x, y, ttl: rand(13000, 21000), seed: Math.random() * 10 });
+  state.foods.push({ type, x, y, ttl: 13000 + rng() * 8000, seed: rng() * 10 });
   if (!initial){
     ring(x, y, CELL * 1.8, type.color, 2);
     burst(x, y, type.color, 6, 90, { size:2 });
@@ -965,6 +1186,23 @@ function spawnFood(initial = false){
 /* ================= 增益 ================= */
 function comboMult(){
   return state.combo > 1 ? Math.min(3, 1 + (state.combo - 1) * .25) : 1;
+}
+
+/** 连击升到新档位时喊一句（跨级也可以，比如一次从 4 跳到 7） */
+function announceCombo(combo){
+  let tier = 0, hit = null;
+  for (let i = 0; i < SHOUTS.length; i++){
+    if (combo >= SHOUTS[i].at){ tier = i + 1; hit = SHOUTS[i]; }
+  }
+  if (tier <= state.shoutTier){
+    state.shoutTier = tier;
+    return;
+  }
+  state.shoutTier = tier;
+  if (!hit) return;
+  state.shout = { text: hit.text, color: hit.color, life: 1 };
+  state.shake = Math.max(state.shake, 3 + tier * 1.6);
+  Sound.shout(tier);
 }
 
 function applyBuff(id, x, y){
@@ -1079,7 +1317,10 @@ function advance(dt){
   if (dist > .5){
     const desired = Math.atan2(dy, dx);
     const diff = wrapAngle(desired - state.angle);
-    const turnRate = TURN_RATE * (1 - .18 * clamp(state.speed / MAX_SPEED, 0, 1));
+    /* 速度越快转向越钝；冲刺时额外打对折 —— 冲出去就得自己承担后果 */
+    const turnRate = TURN_RATE
+      * (1 - .18 * clamp(state.speed / MAX_SPEED, 0, 1))
+      * (state.sprint ? SPRINT_TURN : 1);
     const maxTurn = turnRate * dt;
     angleErr = diff;
     if (Math.abs(diff) <= maxTurn || dist < HEAD_R) state.angle = desired;
@@ -1088,7 +1329,10 @@ function advance(dt){
 
   /* --- 目标速度 --- */
   let want, tau;
-  if (nav){
+  if (state.sprint){
+    want = Math.min(toppedSpeed() * SPRINT_MUL, MAX_SPEED);
+    tau  = want > state.speed ? NAV_TAU : BRAKE_TAU;
+  } else if (nav){
     if (dist < NAV_STOP){
       arrive();                      // 到站：刹停并收尾
       want = 0; tau = BRAKE_TAU;
@@ -1176,13 +1420,18 @@ function applyFood(idx){
 
   const px = f.x, py = f.y;
 
+  /* --- 图鉴 / 本局收集 --- */
+  state.collect[t.id] = (state.collect[t.id] || 0) + 1;
+  if (!state.discovered[t.id]){ state.discovered[t.id] = true; saveDiscovered(); }
+
   /* --- 连击 --- */
-  if (t.hazard){ state.combo = 0; state.comboTimer = 0; }
+  if (t.hazard){ state.combo = 0; state.comboTimer = 0; state.shoutTier = 0; }
   else {
     state.combo = state.comboTimer > 0 ? state.combo + 1 : 1;
     state.comboTimer = 2800;
   }
   const mult = comboMult();
+  if (!t.hazard) announceCombo(state.combo);
 
   /* --- 长度 --- */
   if (t.grow > 0) state.segCount += t.grow;
@@ -1282,10 +1531,26 @@ function update(dt){
 
   state.survived += dt;
 
+  /* 长按到点 → 进入冲刺 */
+  if (state.holding && !state.sprint && performance.now() - state.holdSince >= HOLD_MS){
+    state.sprint = true;
+    state.dest = null;
+    Sound.sprint();
+    ring(state.head.x, state.head.y, CELL * 3.2, '#fde047', 3);
+    addText(state.head.x, state.head.y - 30, '冲刺!', '#fde047', 18);
+    state.shake = Math.max(state.shake, 6);
+  }
+
   /* 连击衰减 */
   if (state.comboTimer > 0){
     state.comboTimer -= dt;
-    if (state.comboTimer <= 0){ state.combo = 0; hudSig = ''; }
+    if (state.comboTimer <= 0){ state.combo = 0; state.shoutTier = 0; hudSig = ''; }
+  }
+
+  /* 连击口号消失 */
+  if (state.shout){
+    state.shout.life -= dt / 1100;
+    if (state.shout.life <= 0) state.shout = null;
   }
 
   /* 食物寿命 */
@@ -1344,43 +1609,136 @@ function updateGridStep(){
 /** 把世界坐标对齐到设备像素中心，细网格才不会发糊 */
 const snapX = x => (Math.round(x * RS) + .5) / RS;
 
-function drawBackground(){
-  const hue = 210 + (state.level - 1) * 13;
-  const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, `hsl(${hue} 62% 6%)`);
-  g.addColorStop(.5, `hsl(${hue + 30} 55% 8%)`);
-  g.addColorStop(1, `hsl(${hue + 70} 60% 6%)`);
-  ctx.fillStyle = g;
-  ctx.fillRect(-60, -60, W + 120, H + 120);
+/* ================= 离屏缓存 =================
+   大画布上每帧都要重画「全屏线性渐变 + 两百多根网格线 + 每个食物一个径向渐变」，
+   在 iPad 上这是除 shadowBlur 之外最大的开销。凡是每帧不变的部分都烘焙成
+   离屏画布，只在尺寸 / 缩放 / 等级变化时重画一次。 */
+function makeLayer(w, h){
+  if (!(w > 0) || !(h > 0)) return null;
+  if (typeof document === 'undefined' || typeof document.createElement !== 'function') return null;
+  const c = document.createElement('canvas');
+  if (!c || typeof c.getContext !== 'function') return null;
+  c.width = Math.ceil(w); c.height = Math.ceil(h);
+  const g = c.getContext('2d');
+  if (!g) return null;
+  return { canvas:c, ctx:g };
+}
 
-  const pulse = .5 + .5 * Math.sin(state.clock / 1400);
-  const rg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W * .72);
-  rg.addColorStop(0, `hsla(${hue + 40},90%,60%,${.05 + pulse * .045})`);
-  rg.addColorStop(1, 'transparent');
-  ctx.fillStyle = rg;
-  ctx.fillRect(0, 0, W, H);
-
-  /* 双层网格：细格 + 每 4 格一根粗线，像工程坐标纸 */
+/** 双层网格：细格 + 每 4 格一根粗线，像工程坐标纸 */
+function drawGrid(g){
   const minor = gridStep, major = gridStep * 4;
-  ctx.lineWidth = 1;
+  g.lineWidth = 1;
 
-  ctx.strokeStyle = gridCol;
-  ctx.beginPath();
+  g.strokeStyle = gridCol;
+  g.beginPath();
   for (let x = minor; x < W - .5; x += minor){
     if (Math.abs(x % major) < 1e-6) continue;
-    const px = snapX(x); ctx.moveTo(px, 0); ctx.lineTo(px, H);
+    const px = snapX(x); g.moveTo(px, 0); g.lineTo(px, H);
   }
   for (let y = minor; y < H - .5; y += minor){
     if (Math.abs(y % major) < 1e-6) continue;
-    const py = snapX(y); ctx.moveTo(0, py); ctx.lineTo(W, py);
+    const py = snapX(y); g.moveTo(0, py); g.lineTo(W, py);
   }
-  ctx.stroke();
+  g.stroke();
 
-  ctx.strokeStyle = gridMajorCol;
-  ctx.beginPath();
-  for (let x = 0; x < W - .5; x += major){ const px = snapX(x); ctx.moveTo(px, 0); ctx.lineTo(px, H); }
-  for (let y = 0; y < H - .5; y += major){ const py = snapX(y); ctx.moveTo(0, py); ctx.lineTo(W, py); }
-  ctx.stroke();
+  g.strokeStyle = gridMajorCol;
+  g.beginPath();
+  for (let x = 0; x < W - .5; x += major){ const px = snapX(x); g.moveTo(px, 0); g.lineTo(px, H); }
+  for (let y = 0; y < H - .5; y += major){ const py = snapX(y); g.moveTo(0, py); g.lineTo(W, py); }
+  g.stroke();
+}
+
+function drawBgBase(g){
+  const hue = 210 + (state.level - 1) * 13;
+  const lg = g.createLinearGradient(0, 0, W, H);
+  lg.addColorStop(0, `hsl(${hue} 62% 6%)`);
+  lg.addColorStop(.5, `hsl(${hue + 30} 55% 8%)`);
+  lg.addColorStop(1, `hsl(${hue + 70} 60% 6%)`);
+  g.fillStyle = lg;
+  g.fillRect(0, 0, W, H);
+  drawGrid(g);
+}
+
+let bgLayer = null, bgSig = '';
+function ensureBackground(){
+  const sig = `${W}x${H}|${RS.toFixed(3)}|${state.level}|${gridStep}`;
+  if (bgLayer && bgSig === sig) return bgLayer;
+  const layer = makeLayer(W * RS, H * RS);
+  if (!layer) return null;
+  layer.ctx.setTransform(RS, 0, 0, RS, 0, 0);
+  drawBgBase(layer.ctx);
+  bgLayer = layer; bgSig = sig;
+  return bgLayer;
+}
+
+/* 呼吸光晕：颜色只跟等级有关，烘焙成精灵，每帧只改透明度 */
+let glowLayer = null, glowSig = '';
+function ensureGlowSprite(hue){
+  const sig = 'glow|' + hue;
+  if (glowLayer && glowSig === sig) return glowLayer;
+  const S = 256;
+  const layer = makeLayer(S, S);
+  if (!layer) return null;
+  const g = layer.ctx;
+  const rg = g.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  rg.addColorStop(0, `hsla(${hue + 40},90%,60%,1)`);
+  rg.addColorStop(1, `hsla(${hue + 60},90%,60%,0)`);
+  g.fillStyle = rg;
+  g.fillRect(0, 0, S, S);
+  glowLayer = layer; glowSig = sig;
+  return glowLayer;
+}
+
+/* 食物光晕：每种道具一张精灵，省掉每帧每食物一个 createRadialGradient */
+const foodSpriteCache = {};
+function ensureFoodSprite(type){
+  if (foodSpriteCache[type.id]) return foodSpriteCache[type.id];
+  const R = 64;
+  const layer = makeLayer(R * 2, R * 2);
+  if (!layer) return null;
+  const g = layer.ctx;
+  const rg = g.createRadialGradient(R, R, 0, R, R, R);
+  rg.addColorStop(0,  rgba(type.color, .48));
+  rg.addColorStop(.45, rgba(type.color, .17));
+  rg.addColorStop(1,  rgba(type.color, 0));
+  g.fillStyle = rg;
+  g.beginPath(); g.arc(R, R, R, 0, Math.PI * 2); g.fill();
+  foodSpriteCache[type.id] = layer;
+  return layer;
+}
+
+function drawBackground(){
+  const hue = 210 + (state.level - 1) * 13;
+
+  const bg = ensureBackground();
+  if (bg) ctx.drawImage(bg.canvas, 0, 0, W, H);
+  else {
+    const lg = ctx.createLinearGradient(0, 0, W, H);
+    lg.addColorStop(0, `hsl(${hue} 62% 6%)`);
+    lg.addColorStop(.5, `hsl(${hue + 30} 55% 8%)`);
+    lg.addColorStop(1, `hsl(${hue + 70} 60% 6%)`);
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, 0, W, H);
+    drawGrid(ctx);
+  }
+
+  /* 呼吸光晕：每帧都在动，所以单独叠加 */
+  const pulse = .5 + .5 * Math.sin(state.clock / 1400);
+  const R = W * .72;
+  const sp = ensureGlowSprite(hue);
+  if (sp){
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = .05 + pulse * .045;
+    ctx.drawImage(sp.canvas, W/2 - R, H/2 - R, R * 2, R * 2);
+    ctx.restore();
+  } else {
+    const rg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, R);
+    rg.addColorStop(0, `hsla(${hue + 40},90%,60%,${.05 + pulse * .045})`);
+    rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 /* 贴近边界时的红色脉冲预警 */
@@ -1426,12 +1784,16 @@ function drawFoods(){
     ctx.globalAlpha = blink ? .32 : 1;
 
     const R = CELL * (t.hazard ? 1.6 : 1.4) * pulse;
-    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, R);
-    g.addColorStop(0, rgba(t.color, .48));
-    g.addColorStop(.45, rgba(t.color, .17));
-    g.addColorStop(1, rgba(t.color, 0));
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(f.x, f.y, R, 0, Math.PI * 2); ctx.fill();
+    const sp = ensureFoodSprite(t);
+    if (sp) ctx.drawImage(sp.canvas, f.x - R, f.y - R, R * 2, R * 2);
+    else {
+      const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, R);
+      g.addColorStop(0, rgba(t.color, .48));
+      g.addColorStop(.45, rgba(t.color, .17));
+      g.addColorStop(1, rgba(t.color, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(f.x, f.y, R, 0, Math.PI * 2); ctx.fill();
+    }
 
     /* 深色底盘，让 emoji 在光晕里依旧清晰 */
     ctx.fillStyle = 'rgba(5,9,18,.62)';
@@ -1525,6 +1887,20 @@ function drawSnake(){
     ctx.beginPath(); ctx.arc(ox + dx * 1.6, oy + dy * 1.6, HEAD_R * .10, 0, Math.PI * 2); ctx.fill();
   }
 
+  /* 冲刺光环 */
+  if (state.sprint){
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const p = 1 + Math.sin(state.clock / 90) * .1;
+    ctx.strokeStyle = 'rgba(253,224,71,.75)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(head.x, head.y, HEAD_R * 1.75 * p, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(head.x, head.y, HEAD_R * 2.1 * p, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+
   /* 护盾光环 */
   if (state.shield > 0){
     ctx.save();
@@ -1554,8 +1930,10 @@ function drawSpeedStreaks(){
     const x = h.x + px * off - dx * 16;
     const y = h.y + py * off - dy * 16;
     ctx.globalAlpha = (.13 + state.boost * .38) * (1 - Math.abs(k) * .8);
-    ctx.strokeStyle = i % 3 === 0 ? '#ffffff' : '#7ef9d8';
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = state.sprint
+      ? (i % 3 === 0 ? '#ffffff' : '#fde047')      // 冲刺时换成金色
+      : (i % 3 === 0 ? '#ffffff' : '#7ef9d8');
+    ctx.lineWidth = state.sprint ? 2.8 : 2.2;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x - dx * len, y - dy * len);
@@ -1607,6 +1985,54 @@ function drawDestination(){
     ctx.textBaseline = 'middle';
     ctx.fillText(Math.round(left) + '', d.x, d.y + 40);
   }
+  ctx.restore();
+}
+
+/* 每日挑战角标 */
+function drawDailyBadge(){
+  if (!state.challenge || state.mode === 'ready') return;
+  const label = '每日挑战 ' + state.challenge.date;
+  ctx.save();
+  ctx.font = '600 13px "PingFang SC",system-ui,sans-serif';
+  const w = ctx.measureText(label).width + 22;
+  ctx.globalAlpha = .85;
+  ctx.fillStyle = 'rgba(10,18,34,.7)';
+  ctx.strokeStyle = 'rgba(126,249,216,.45)';
+  ctx.lineWidth = 1;
+  const x = 12, y = 12, h = 24, r = 12;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+  else ctx.rect(x, y, w, h);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#7ef9d8';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x + 11, y + h / 2 + .5);
+  ctx.restore();
+}
+
+/* 连击口号：从蛇头位置弹出来，放大 → 回落 → 淡出 */
+function drawShout(){
+  const s = state.shout;
+  if (!s) return;
+  const age = 1 - clamp(s.life, 0, 1);                 // 0 → 1
+  const pop = age < .18 ? age / .18 : 1;               // 弹出
+  const scale = .55 + pop * .55 - Math.max(0, age - .18) * .12;
+  const alpha = s.life > .35 ? 1 : s.life / .35;
+  const size = Math.round(CELL * 1.45 * scale);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${size}px "PingFang SC",system-ui,sans-serif`;
+  ctx.shadowColor = s.color;
+  ctx.shadowBlur = 24 * glowK();
+  ctx.fillStyle = s.color;
+  ctx.fillText(s.text, W / 2, H * .26);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.fillText(s.text, W / 2, H * .26);
   ctx.restore();
 }
 
@@ -1695,6 +2121,8 @@ function render(){
   drawSnake();
   drawParticles();
   drawTexts();
+  drawShout();
+  drawDailyBadge();
   drawTouchHint();
   ctx.restore();
 
@@ -1796,6 +2224,7 @@ window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 80))
 }
 
 loadBest();
+loadDiscovered();
 reset();
 lastW = W; lastH = H;
 showOverlay(readyPanel());
@@ -1804,9 +2233,10 @@ requestAnimationFrame(frame);
 /* 折腾用：控制台里 __snake.state.score = 9999 随便玩 */
 window.__snake = {
   state, FOOD_TYPES, BUFF_DEFS,
-  start, pause, resume,
+  start, pause, resume, reset,
   updateBody, wantSpeed, baseSpeed, resizeCanvas,
-  navSpeed, toppedSpeed, setDestination,
+  navSpeed, toppedSpeed, setDestination, announceCombo,
+  readyPanel, discoveredCount, makeRng, todaySeed,
   world: () => ({ W, H, scale: RS, view, gridStep }),
   perf:  () => ({ frameAvg, qualityK, blurK }),
 };
