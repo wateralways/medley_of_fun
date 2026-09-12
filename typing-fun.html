@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⌨️ 打字小能手 — 键盘打字练习游戏</title>
+<meta name="description" content="给小朋友的键盘打字练习游戏：完整键盘、彩色手指指示、趣味音效、闯关冒险，边玩边学会盲打！">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700;900&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky1: #6EC6FF;
+    --sky2: #C9F0FF;
+    --grass1: #7ED957;
+    --grass2: #4CAF50;
+    --cream: #FFF9E8;
+    --ink: #2A2A4A;
+    --ink-soft: #4A4A6A;
+    --skin: #FFC9A3;
+    --skin-hi: #FFDCBE;
+    --thumb: #FFB35C;
+    --f0: #FF6B9D;  /* 左手小指 */
+    --f1: #FFA94D;  /* 左手无名指 */
+    --f2: #FFD43B;  /* 左手中指 */
+    --f3: #51CF66;  /* 左手食指 */
+    --f4: #22B8CF;  /* 右手食指 */
+    --f5: #4DABF7;  /* 右手中指 */
+    --f6: #9775FA;  /* 右手无名指 */
+    --f7: #E64980;  /* 右手小指 */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: "ZCOOL KuaiLe", "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 55%, var(--grass1) 55.2%, var(--grass2) 100%);
+    background-attachment: fixed;
+    user-select: none;
+  }
+
+  /* ===================== 天空装饰 ===================== */
+  .sun {
+    position: fixed; top: 22px; right: 36px;
+    width: 76px; height: 76px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFF3B0, #FFD93D 60%, #FFB302);
+    box-shadow: 0 0 60px 20px rgba(255, 217, 61, 0.55);
+    animation: sunSpin 20s linear infinite;
+    pointer-events: none; z-index: 1;
+  }
+  @keyframes sunSpin {
+    0%, 100% { box-shadow: 0 0 60px 20px rgba(255,217,61,.55); }
+    50%      { box-shadow: 0 0 80px 34px rgba(255,217,61,.75); }
+  }
+  .cloud {
+    position: fixed;
+    background: #fff;
+    border-radius: 50px;
+    opacity: .9;
+    pointer-events: none;
+    z-index: 1;
+    animation: cloudDrift linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: ""; position: absolute; background: #fff; border-radius: 50%;
+  }
+  .cloud.c1 { width: 100px; height: 34px; top: 52px; left: -120px; animation-duration: 55s; }
+  .cloud.c1::before { width: 46px; height: 46px; top: -22px; left: 16px; }
+  .cloud.c1::after  { width: 32px; height: 32px; top: -14px; left: 52px; }
+  .cloud.c2 { width: 80px; height: 28px; top: 122px; left: -100px; animation-duration: 75s; animation-delay: -30s; }
+  .cloud.c2::before { width: 38px; height: 38px; top: -18px; left: 12px; }
+  .cloud.c2::after  { width: 26px; height: 26px; top: -12px; left: 42px; }
+  .cloud.c3 { width: 120px; height: 38px; top: 24px; left: -140px; animation-duration: 95s; animation-delay: -60s; }
+  .cloud.c3::before { width: 52px; height: 52px; top: -26px; left: 20px; }
+  .cloud.c3::after  { width: 36px; height: 36px; top: -16px; left: 62px; }
+  @keyframes cloudDrift {
+    from { transform: translateX(0); }
+    to   { transform: translateX(calc(100vw + 280px)); }
+  }
+
+  /* ===================== 顶栏 HUD ===================== */
+  .hud {
+    position: relative; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center; justify-content: center;
+    padding: 10px 10px 2px;
+  }
+  .pill {
+    background: rgba(255,255,255,.92);
+    border-radius: 40px;
+    padding: 6px 16px;
+    font-size: 1rem;
+    box-shadow: 0 3px 0 rgba(42,42,74,.15);
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .pill b { font-family: "Fredoka", "Noto Sans SC", sans-serif; font-size: 1.1rem; }
+  .pill .combo-hot { color: #FF5E5B; animation: pulse .5s ease infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.18); } }
+
+  .progress-wrap {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center;
+    margin: 6px auto 0;
+    padding: 0 14px;
+  }
+  .progress {
+    width: min(520px, 92vw); height: 20px;
+    background: rgba(255,255,255,.75);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(42,42,74,.2);
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #FFD43B, #FF8C42);
+    border-radius: 20px;
+    transition: width .35s ease;
+  }
+  .progress-stars {
+    position: absolute; inset: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 6px; font-size: .8rem;
+  }
+
+  /* ===================== 泡泡区 ===================== */
+  .sky-area {
+    position: relative; z-index: 5;
+    height: clamp(140px, 22vh, 220px);
+    margin: 2px auto 0;
+    max-width: 980px;
+  }
+  .bubble {
+    position: absolute;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fredoka", "Noto Sans SC", sans-serif;
+    font-size: 2rem; font-weight: 700; color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,.25);
+    cursor: pointer;
+    background: radial-gradient(circle at 30% 28%, rgba(255,255,255,.95), var(--bc, #4DABF7) 55%);
+    box-shadow: inset -4px -6px 10px rgba(0,0,0,.12), 0 6px 14px rgba(42,42,74,.18);
+    animation: bob var(--bobT, 3.4s) ease-in-out var(--bobD, 0s) infinite;
+    transition: transform .15s ease;
+  }
+  .bubble::after {
+    content: ""; position: absolute; top: 10px; left: 14px;
+    width: 18px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,.85); transform: rotate(-25deg);
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-16px) rotate(3deg); }
+  }
+  .bubble.target {
+    transform: scale(1.22);
+    box-shadow: inset -4px -6px 10px rgba(0,0,0,.12), 0 0 0 5px #fff, 0 0 26px 8px var(--bc, #4DABF7);
+    animation: bob var(--bobT, 3.4s) ease-in-out var(--bobD, 0s) infinite, targetBounce .6s ease infinite alternate;
+    z-index: 6;
+  }
+  @keyframes targetBounce {
+    from { transform: scale(1.22) rotate(-2deg); }
+    to   { transform: scale(1.32) rotate(2deg); }
+  }
+  .bubble .tag-arrow {
+    position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
+    font-size: 1.5rem; animation: arrowDown .6s ease infinite alternate;
+  }
+  @keyframes arrowDown { from { transform: translate(-50%, 0); } to { transform: translate(-50%, 8px); } }
+  .bubble.popping {
+    animation: popAnim .28s ease-out forwards !important;
+  }
+  @keyframes popAnim {
+    0%   { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+  .bubble.shake { animation: shakeX .35s ease !important; }
+  @keyframes shakeX {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); } 75% { transform: translateX(8px); }
+  }
+
+  .float-score {
+    position: absolute;
+    font-family: "Fredoka", "Noto Sans SC", sans-serif;
+    font-size: 1.3rem; font-weight: 700; color: #FF8C42;
+    text-shadow: 0 2px 0 #fff;
+    pointer-events: none; z-index: 20;
+    animation: floatUp 1s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-70px) scale(1.4); }
+  }
+
+  /* ===================== 提示条 ===================== */
+  .hint-bar {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    flex-wrap: wrap;
+    margin: 4px auto 2px;
+    padding: 0 12px;
+  }
+  .target-card {
+    min-width: 78px; height: 78px;
+    background: #fff;
+    border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 6px 0 rgba(42,42,74,.15);
+    border: 4px solid var(--tc, #4DABF7);
+    animation: cardPulse 1s ease infinite alternate;
+  }
+  @keyframes cardPulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+  .target-card .big-letter {
+    font-family: "Fredoka", sans-serif;
+    font-size: 2.3rem; font-weight: 700; line-height: 1;
+    color: var(--tc, #4DABF7);
+  }
+  .target-card .big-upper { font-size: .95rem; color: #999; font-family: "Noto Sans SC", sans-serif; }
+  .finger-chip {
+    background: rgba(255,255,255,.92);
+    border-radius: 40px;
+    padding: 11px 20px;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 0 rgba(42,42,74,.15);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .finger-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--fc, #4DABF7);
+    box-shadow: 0 0 0 4px rgba(255,255,255,.9), 0 0 14px var(--fc, #4DABF7);
+    animation: pulse .5s ease infinite alternate;
+  }
+  .cheer {
+    font-size: 1.1rem; color: #fff;
+    background: rgba(255,94,91,.9);
+    padding: 8px 18px; border-radius: 30px;
+    box-shadow: 0 4px 0 rgba(42,42,74,.15);
+    min-width: 150px; text-align: center;
+    transition: transform .15s ease;
+  }
+  .cheer.zoom { transform: scale(1.15); }
+
+  /* ===================== 键盘（完整主键区，大屏幕占比） ===================== */
+  .keyboard-wrap {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center;
+    margin-top: 6px;
+    padding: 0 6px;
+  }
+  .keyboard {
+    width: min(96vw, 1080px);
+    background: rgba(42,42,74,.9);
+    border-radius: 20px;
+    padding: 12px 14px 16px;
+    box-shadow: 0 10px 26px rgba(42,42,74,.4);
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .krow { display: flex; gap: 7px; }
+  /* 真实键盘的阶梯错位（按 13 键宽度比例缩进） */
+  .krow.r2 { padding-left: 5.6%; padding-right: 5.6%; }
+  .krow.r3 { padding-left: 11.2%; padding-right: 11.2%; }
+  .key {
+    flex: 1 1 0;
+    height: clamp(42px, 6.2vh, 58px);
+    min-width: 0;
+    border-radius: 10px;
+    background: #fff;
+    border: none;
+    border-bottom: 5px solid rgba(42,42,74,.28);
+    font-family: "Fredoka", sans-serif;
+    font-size: clamp(1rem, 2.6vh, 1.5rem);
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .key::before {
+    content: ""; position: absolute; top: 4px; left: 7px; right: 7px; height: 6px;
+    border-radius: 4px; background: var(--kc, #ddd); opacity: .9;
+  }
+  .key .sub { font-size: .62rem; color: #a5a5c0; font-family: "Noto Sans SC", sans-serif; line-height: 1; margin-top: 1px; }
+  .key.pressed { transform: translateY(4px); border-bottom-width: 1px; }
+  .key.key-target {
+    background: var(--kc, #4DABF7);
+    color: #fff;
+    text-shadow: 0 2px 3px rgba(0,0,0,.3);
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px #fff, 0 0 22px 6px var(--kc, #4DABF7);
+    z-index: 2;
+    animation: keyGlow .7s ease infinite alternate;
+  }
+  .key.key-target::before { background: rgba(255,255,255,.55); }
+  .key.key-target .sub { color: rgba(255,255,255,.9); }
+  @keyframes keyGlow {
+    from { box-shadow: 0 0 0 4px #fff, 0 0 14px 3px var(--kc, #4DABF7); }
+    to   { box-shadow: 0 0 0 4px #fff, 0 0 30px 10px var(--kc, #4DABF7); }
+  }
+  .krow.space-row { justify-content: center; margin-top: 2px; }
+  .key.space {
+    flex: 0 0 58%;
+    background: linear-gradient(180deg, var(--skin-hi), var(--thumb));
+    color: #7a4a12;
+    font-family: "ZCOOL KuaiLe", "Noto Sans SC", sans-serif;
+    font-size: clamp(.9rem, 2.2vh, 1.15rem);
+    letter-spacing: .2em;
+  }
+  .key.space::before { background: rgba(255,255,255,.5); }
+
+  /* ===================== 完整双手 ===================== */
+  .hands-wrap {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: clamp(50px, 15vw, 210px);
+    margin-top: 10px;
+    padding-bottom: 28px;
+  }
+  .hand {
+    position: relative;
+    width: clamp(160px, 21vw, 240px);
+    height: clamp(110px, 15vw, 165px);
+    transition: transform .2s ease;
+  }
+  .hand.left  { transform: rotate(-3deg); }
+  .hand.right { transform: rotate(3deg); }
+  .palm {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 60%;
+    background: linear-gradient(180deg, var(--skin-hi), var(--skin));
+    border-radius: 38% 38% 32% 32% / 55% 55% 30% 30%;
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,.08), 0 8px 14px rgba(42,42,74,.2);
+  }
+  .palm::before, .palm::after {
+    content: ""; position: absolute; border-radius: 50%;
+    background: rgba(0,0,0,.05);
+  }
+  .palm::before { width: 30%; height: 34%; left: 14%; top: 34%; }
+  .palm::after  { width: 26%; height: 30%; right: 14%; top: 40%; }
+  .fingers {
+    position: absolute; top: 0; left: 5%; right: 5%;
+    display: flex; align-items: flex-end; gap: 6%;
+    height: 62%;
+  }
+  .finger {
+    flex: 1;
+    height: 100%;
+    border-radius: 14px 14px 8px 8px;
+    background: var(--fc);
+    opacity: .55;
+    position: relative;
+    box-shadow: inset 0 -7px 0 rgba(0,0,0,.14), 0 4px 6px rgba(42,42,74,.15);
+    transition: all .15s ease;
+  }
+  .finger .nail {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 46%; height: 11px; border-radius: 8px;
+    background: rgba(255,255,255,.7);
+  }
+  /* 真实手型：小指最短、中指最长 */
+  .finger.f0, .finger.f7 { height: 66%; }
+  .finger.f1, .finger.f6 { height: 84%; }
+  .finger.f2, .finger.f5 { height: 100%; }
+  .finger.f3, .finger.f4 { height: 92%; }
+  .finger.active {
+    opacity: 1;
+    transform: translateY(-12px) scale(1.1);
+    box-shadow: inset 0 -7px 0 rgba(0,0,0,.14), 0 0 0 4px #fff, 0 0 24px 8px var(--fc);
+    animation: fingerWave .55s ease infinite alternate;
+    z-index: 2;
+  }
+  @keyframes fingerWave { from { transform: translateY(-12px) scale(1.1); } to { transform: translateY(-2px) scale(1.1); } }
+  .finger.pressing { transform: translateY(2px) scale(1.04) !important; animation: none; opacity: 1; }
+  .thumb {
+    position: absolute;
+    bottom: 6%;
+    width: 27%;
+    height: 58%;
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--skin-hi), var(--thumb));
+    opacity: .85;
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,.12), 0 4px 6px rgba(42,42,74,.15);
+    transition: all .15s ease;
+  }
+  .hand.left .thumb  { right: -10%; transform: rotate(38deg); transform-origin: bottom left; }
+  .hand.right .thumb { left: -10%; transform: rotate(-38deg); transform-origin: bottom right; }
+  .hand.left .thumb.thumb-press  { transform: rotate(38deg) translateY(6px); }
+  .hand.right .thumb.thumb-press { transform: rotate(-38deg) translateY(6px); }
+
+  /* ===================== 覆盖层（开始/胜利） ===================== */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(42,42,74,.72);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    transition: opacity .3s ease;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .panel {
+    background: var(--cream);
+    border-radius: 30px;
+    padding: 34px 38px;
+    max-width: 560px; width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    animation: panelIn .45s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes panelIn { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .panel h1 { font-size: 2.2rem; margin-bottom: 6px; }
+  .panel .sub { color: #888; margin-bottom: 18px; font-size: 1.05rem; }
+  .howto {
+    text-align: left;
+    background: #fff;
+    border-radius: 18px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: .98rem;
+    line-height: 1.9;
+    color: var(--ink-soft);
+  }
+  .howto b { color: var(--ink); }
+  .btn {
+    font-family: inherit;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 44px;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(135deg, #FF8C42, #FF5E5B);
+    box-shadow: 0 6px 0 #D63C39, 0 10px 24px rgba(255,94,91,.4);
+    transition: transform .1s ease, box-shadow .1s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #D63C39; }
+  .btn.mint { background: linear-gradient(135deg, #4ECDC4, #38A3A5); box-shadow: 0 6px 0 #2B7F81, 0 10px 24px rgba(78,205,196,.4); }
+  .btn.mint:active { box-shadow: 0 2px 0 #2B7F81; }
+  .mode-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .mode-btn {
+    font-family: inherit; font-size: 1.05rem;
+    border: 3px solid #FFD43B; background: #fff;
+    border-radius: 40px; padding: 10px 22px; cursor: pointer;
+    color: var(--ink); transition: all .15s ease;
+  }
+  .mode-btn.selected { background: #FFD43B; transform: scale(1.06); box-shadow: 0 4px 0 rgba(42,42,74,.15); }
+  .btn-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .win-stats { font-size: 1.2rem; margin: 14px 0 22px; line-height: 2; }
+  .win-stats b { font-family: "Fredoka", sans-serif; color: #FF5E5B; font-size: 1.5rem; }
+
+  /* ===================== 彩带 & 其他 ===================== */
+  .confetti {
+    position: fixed; top: -20px; z-index: 200;
+    width: 12px; height: 18px;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: .9; }
+  }
+  .kbd-note {
+    position: fixed; bottom: 6px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,.9); font-size: .8rem; z-index: 10;
+    text-shadow: 0 1px 2px rgba(0,0,0,.3);
+    white-space: nowrap;
+  }
+  .sound-btn {
+    position: fixed; top: 14px; left: 14px; z-index: 60;
+    width: 48px; height: 48px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,.92);
+    font-size: 1.4rem; cursor: pointer;
+    box-shadow: 0 4px 0 rgba(42,42,74,.15);
+    transition: transform .1s ease;
+  }
+  .sound-btn:active { transform: scale(.9); }
+
+  .banner {
+    position: fixed; top: 36%; left: 50%; z-index: 150;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #FFD43B, #FF8C42);
+    color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.2);
+    font-size: clamp(1.5rem, 4.6vw, 2.4rem);
+    padding: 22px 46px; border-radius: 30px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.3), 0 0 0 6px #fff;
+    pointer-events: none;
+    transition: transform .4s cubic-bezier(.2,1.6,.4,1);
+    white-space: nowrap;
+  }
+  .banner.show { transform: translate(-50%, -50%) scale(1); }
+
+  @media (max-width: 640px) {
+    .target-card { min-width: 64px; height: 64px; }
+    .target-card .big-letter { font-size: 1.8rem; }
+    .finger-chip { font-size: 1rem; padding: 9px 14px; }
+    .hands-wrap { gap: 40px; }
+    .panel { padding: 26px 20px; }
+    .cheer { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 天空装饰 -->
+<div class="sun"></div>
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+
+<button class="sound-btn" id="soundBtn" title="声音开关">🔊</button>
+
+<!-- 顶栏 -->
+<div class="hud">
+  <div class="pill">🏅 关卡 <b id="hudLevel">1</b></div>
+  <div class="pill">⭐ 得分 <b id="hudScore">0</b></div>
+  <div class="pill">🔥 连击 <b id="hudCombo">0</b></div>
+  <div class="pill">🎈 已戳破 <b id="hudPops">0</b></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress">
+    <div class="progress-fill" id="progressFill"></div>
+    <div class="progress-stars" id="progressStars"></div>
+  </div>
+</div>
+
+<!-- 泡泡区 -->
+<div class="sky-area" id="skyArea"></div>
+
+<!-- 提示条 -->
+<div class="hint-bar">
+  <div class="target-card" id="targetCard">
+    <div class="big-letter" id="targetLetter">F</div>
+    <div class="big-upper" id="targetUpper">f</div>
+  </div>
+  <div class="finger-chip" id="fingerChip">
+    <span class="finger-dot" id="fingerDot"></span>
+    <span id="fingerName">左手食指</span>
+  </div>
+  <div class="cheer" id="cheer">准备好了吗？</div>
+</div>
+
+<!-- 键盘 -->
+<div class="keyboard-wrap">
+  <div class="keyboard" id="keyboard"></div>
+</div>
+
+<!-- 完整双手 -->
+<div class="hands-wrap" id="handsWrap">
+  <div class="hand left" id="handL"></div>
+  <div class="hand right" id="handR"></div>
+</div>
+
+<div class="kbd-note">⌨️ 用电脑键盘玩最棒！按对应的字母 / 数字键戳破泡泡</div>
+
+<!-- 开始面板 -->
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <h1>⌨️ 打字小能手</h1>
+    <p class="sub">戳泡泡 · 学键位 · 练盲打</p>
+    <div class="howto">
+      <b>怎么玩？</b><br>
+      🎈 天上会飘起带字符的泡泡，发光的大泡泡就是要戳的目标<br>
+      👀 看下方<b>大键盘</b>和<b>两只小手</b> —— 颜色相同的键和手指是一对！<br>
+      ⌨️ 移动对应的手指按下那个键，戳破泡泡得分（空格用两只大拇指）<br>
+      🔥 连续戳中会触发连击加分，攒满星星就升级，逐步解锁 26 个字母 + 10 个数字！
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn selected" data-mode="level">🚀 闯关模式</button>
+      <button class="mode-btn" data-mode="free">🌈 自由练习</button>
+    </div>
+    <button class="btn" id="startBtn">开 始 游 戏 🎮</button>
+  </div>
+</div>
+
+<!-- 胜利面板 -->
+<div class="overlay hidden" id="winOverlay">
+  <div class="panel">
+    <h1>🏆 太了不起了！</h1>
+    <p class="sub">你学会了全部 26 个字母和 10 个数字的键位！</p>
+    <div class="win-stats">
+      总得分：<b id="winScore">0</b><br>
+      戳破泡泡：<b id="winPops">0</b> 个<br>
+      最高连击：<b id="winCombo">0</b>
+    </div>
+    <div class="btn-row">
+      <button class="btn mint" id="freePlayBtn">🌈 自由练习</button>
+      <button class="btn" id="againBtn">🔄 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<div class="banner" id="banner"></div>
+
+<script>
+"use strict";
+
+/* ==================== 数据：完整主键区布局 & 手指分区 ==================== */
+const ROWS = [
+  ["1","2","3","4","5","6","7","8","9","0","-","="],
+  ["q","w","e","r","t","y","u","i","o","p","[","]"],
+  ["a","s","d","f","g","h","j","k","l",";","'"],
+  ["z","x","c","v","b","n","m",",",".","/"]
+];
+
+/* 手指编号 0-7，颜色与 :root 中 --f0..--f7 对应 */
+const FINGERS = [
+  { name: "左手小指",   short: "左小" },
+  { name: "左手无名指", short: "左无" },
+  { name: "左手中指",   short: "左中" },
+  { name: "左手食指",   short: "左食" },
+  { name: "右手食指",   short: "右食" },
+  { name: "右手中指",   short: "右中" },
+  { name: "右手无名指", short: "右无" },
+  { name: "右手小指",   short: "右小" }
+];
+
+/* 标准指法分区（ANSI）：数字行 + 四行字母 + 符号 */
+const FINGER_OF = {
+  "1":0, "q":0, "a":0, "z":0, "-":7, "=":7,
+  "2":1, "w":1, "s":1, "x":1,
+  "3":2, "e":2, "d":2, "c":2,
+  "4":3, "r":3, "f":3, "v":3, "5":3, "t":3, "g":3, "b":3,
+  "6":4, "y":4, "h":4, "n":4, "7":4, "u":4, "j":4, "m":4,
+  "8":5, "i":5, "k":5, ",":5,
+  "9":6, "o":6, "l":6, ".":6,
+  "0":7, "p":7, ";":7, "'":7, "/":7, "[":7, "]":7
+};
+
+/* 教学顺序：先基准行字母 → 逐步扩展 → 最后数字 */
+const LEARN_ORDER = ["f","j","d","k","s","l","a","g","h","e","i","r","u","w","o","q","p","t","y","v","n","c","m","x","b","z",
+                     "1","2","3","4","5","6","7","8","9","0"];
+
+const CHEERS = ["太棒了！🌟", "好厉害！🎉", "真了不起！✨", "继续加油！💪", "戳得好！🎈", "你是小天才！🦄", "哇，好快！⚡", "完美！🌈"];
+const TRY_AGAIN = ["没关系，再试试！🍀", "加油，你可以的！🌻", "小失误，继续！🐣", "慢一点，看准颜色哦！👀"];
+
+const POPS_PER_LEVEL = 8;
+const MAX_BUBBLES = 6;
+const TARGET_RE = /^[a-z0-9]$/;   // 字母和数字是练习目标，符号键只做指示
+
+/* ==================== 音效引擎（Web Audio，无外部文件） ==================== */
+let audioCtx = null;
+let soundOn = true;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function tone(freq, dur, type, vol, when, slideTo) {
+  if (!soundOn || !audioCtx) return;
+  const t0 = audioCtx.currentTime + (when || 0);
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.setValueAtTime(freq, t0);
+  if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  gain.gain.setValueAtTime(vol || 0.15, t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+const SFX = {
+  click()  { tone(520 + Math.random() * 80, 0.05, "square", 0.045); },
+  pop()    { tone(420, 0.14, "sine", 0.22, 0, 950); tone(900, 0.1, "triangle", 0.1, 0.03, 1400); },
+  wrong()  { tone(200, 0.22, "sawtooth", 0.12, 0, 120); },
+  cheer()  { tone(660, 0.12, "triangle", 0.14); tone(880, 0.18, "triangle", 0.14, 0.1); },
+  levelup(){ [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, "triangle", 0.16, i * 0.12)); },
+  win()    { [523, 587, 659, 784, 880, 1047, 1319].forEach((f, i) => tone(f, 0.26, "triangle", 0.16, i * 0.13)); }
+};
+
+/* ==================== 游戏状态 ==================== */
+const state = {
+  running: false,
+  mode: "level",            // level | free
+  level: 1,
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  totalPops: 0,
+  popsInLevel: 0,
+  pool: [],
+  target: null,
+  targetLetter: null
+};
+
+/* ==================== DOM ==================== */
+const $ = id => document.getElementById(id);
+const skyArea = $("skyArea"), keyboard = $("keyboard");
+const targetCard = $("targetCard"), targetLetterEl = $("targetLetter"), targetUpperEl = $("targetUpper");
+const fingerDot = $("fingerDot"), fingerNameEl = $("fingerName"), cheerEl = $("cheer");
+const handL = $("handL"), handR = $("handR");
+const banner = $("banner");
+
+const FINGER_COLOR = i => getComputedStyle(document.documentElement).getPropertyValue("--f" + i).trim();
+
+/* ==================== 构建键盘 ==================== */
+const keyEls = {};
+ROWS.forEach((row, ri) => {
+  const rowEl = document.createElement("div");
+  rowEl.className = "krow r" + ri;
+  row.forEach(ch => {
+    const f = FINGER_OF[ch];
+    const key = document.createElement("button");
+    key.className = "key";
+    key.dataset.key = ch;
+    key.style.setProperty("--kc", FINGER_COLOR(f));
+    key.innerHTML = `<span>${ch}</span><span class="sub">${FINGERS[f].short}</span>`;
+    key.addEventListener("pointerdown", () => handleInput(ch));
+    rowEl.appendChild(key);
+    keyEls[ch] = key;
+  });
+  keyboard.appendChild(rowEl);
+});
+/* 空格行：两只大拇指 */
+const spaceRow = document.createElement("div");
+spaceRow.className = "krow space-row";
+const spaceKey = document.createElement("button");
+spaceKey.className = "key space";
+spaceKey.textContent = "👍👍 空 格";
+spaceKey.addEventListener("pointerdown", () => {
+  ensureAudio();
+  SFX.click();
+  spaceKey.classList.add("pressed");
+  setTimeout(() => spaceKey.classList.remove("pressed"), 120);
+  document.querySelectorAll(".thumb").forEach(t => {
+    t.classList.add("thumb-press");
+    setTimeout(() => t.classList.remove("thumb-press"), 150);
+  });
+});
+spaceRow.appendChild(spaceKey);
+keyboard.appendChild(spaceRow);
+
+/* ==================== 构建完整双手 ==================== */
+const fingerEls = {};
+function buildHand(handEl, fingerIds, isRight) {
+  const fingersBox = document.createElement("div");
+  fingersBox.className = "fingers";
+  const ids = isRight ? [...fingerIds].reverse() : fingerIds;
+  ids.forEach(f => {
+    const d = document.createElement("div");
+    d.className = `finger f${f}`;
+    d.dataset.finger = f;
+    d.style.setProperty("--fc", FINGER_COLOR(f));
+    d.innerHTML = `<div class="nail"></div>`;
+    fingersBox.appendChild(d);
+    fingerEls[f] = d;
+  });
+  const palm = document.createElement("div");
+  palm.className = "palm";
+  const thumb = document.createElement("div");
+  thumb.className = "thumb";
+  handEl.appendChild(fingersBox);
+  handEl.appendChild(palm);
+  handEl.appendChild(thumb);
+}
+buildHand(handL, [0, 1, 2, 3], false);
+buildHand(handR, [4, 5, 6, 7], true);
+
+/* ==================== 泡泡 ==================== */
+function randomPos() {
+  const w = skyArea.clientWidth, h = skyArea.clientHeight;
+  return {
+    x: 20 + Math.random() * Math.max(40, w - 110),
+    y: 12 + Math.random() * Math.max(20, h - 105)
+  };
+}
+
+function spawnBubble(letter) {
+  const ch = letter || state.pool[Math.floor(Math.random() * state.pool.length)];
+  const pos = randomPos();
+  const f = FINGER_OF[ch];
+  const b = document.createElement("div");
+  b.className = "bubble";
+  b.textContent = ch;
+  b.dataset.letter = ch;
+  b.style.setProperty("--bc", FINGER_COLOR(f));
+  b.style.setProperty("--bobT", (2.8 + Math.random() * 1.6) + "s");
+  b.style.setProperty("--bobD", (-Math.random() * 2) + "s");
+  b.style.left = pos.x + "px";
+  b.style.top = pos.y + "px";
+  skyArea.appendChild(b);
+  return b;
+}
+
+function fillBubbles() {
+  while (skyArea.querySelectorAll(".bubble").length < MAX_BUBBLES) spawnBubble();
+}
+
+/* ==================== 目标管理 ==================== */
+function setTarget(bubble) {
+  if (state.target) {
+    state.target.classList.remove("target");
+    const arrow = state.target.querySelector(".tag-arrow");
+    if (arrow) arrow.remove();
+  }
+  state.target = bubble;
+  if (!bubble) return;
+  const ch = bubble.dataset.letter;
+  state.targetLetter = ch;
+  bubble.classList.add("target");
+  bubble.insertAdjacentHTML("beforeend", `<div class="tag-arrow">👇</div>`);
+
+  const f = FINGER_OF[ch];
+  const color = FINGER_COLOR(f);
+  targetLetterEl.textContent = TARGET_RE.test(ch) && /[a-z]/.test(ch) ? ch.toUpperCase() : ch;
+  targetUpperEl.textContent = /[a-z]/.test(ch) ? ch : "数字";
+  targetCard.style.setProperty("--tc", color);
+  fingerDot.style.setProperty("--fc", color);
+  fingerNameEl.textContent = FINGERS[f].name;
+
+  Object.values(keyEls).forEach(k => k.classList.remove("key-target"));
+  keyEls[ch].classList.add("key-target");
+
+  Object.values(fingerEls).forEach(el => el.classList.remove("active", "pressing"));
+  fingerEls[f].classList.add("active");
+}
+
+function pickTarget() {
+  const bubbles = [...skyArea.querySelectorAll(".bubble")];
+  if (!bubbles.length) return;
+  let candidates = bubbles.filter(b => b !== state.target);
+  if (!candidates.length) candidates = bubbles;
+  setTarget(candidates[Math.floor(Math.random() * candidates.length)]);
+}
+
+/* ==================== 反馈 ==================== */
+let cheerTimer = null;
+function showCheer(text) {
+  cheerEl.textContent = text;
+  cheerEl.classList.remove("zoom");
+  void cheerEl.offsetWidth;
+  cheerEl.classList.add("zoom");
+  clearTimeout(cheerTimer);
+  cheerTimer = setTimeout(() => cheerEl.classList.remove("zoom"), 300);
+}
+
+function floatScore(bubble, text) {
+  const r = bubble.getBoundingClientRect();
+  const sr = skyArea.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = "float-score";
+  el.textContent = text;
+  el.style.left = (r.left - sr.left + r.width / 2 - 20) + "px";
+  el.style.top = (r.top - sr.top) + "px";
+  skyArea.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function updateHUD() {
+  $("hudLevel").textContent = state.mode === "free" ? "∞" : state.level;
+  $("hudScore").textContent = state.score;
+  $("hudCombo").textContent = state.combo;
+  $("hudCombo").classList.toggle("combo-hot", state.combo >= 5);
+  $("hudPops").textContent = state.totalPops;
+  const pct = state.mode === "free" ? (state.totalPops % POPS_PER_LEVEL) / POPS_PER_LEVEL * 100
+                                   : Math.min(100, state.popsInLevel / POPS_PER_LEVEL * 100);
+  $("progressFill").style.width = pct + "%";
+  renderProgressStars();
+}
+
+function renderProgressStars() {
+  const box = $("progressStars");
+  box.innerHTML = "";
+  for (let i = 0; i < POPS_PER_LEVEL; i++) {
+    const s = document.createElement("span");
+    s.textContent = i < state.popsInLevel ? "⭐" : "☆";
+    box.appendChild(s);
+  }
+}
+
+function showBanner(text, holdMs) {
+  banner.textContent = text;
+  banner.classList.add("show");
+  setTimeout(() => banner.classList.remove("show"), holdMs || 1600);
+}
+
+function confetti(n) {
+  const colors = ["#FF6B9D", "#FFD43B", "#51CF66", "#4DABF7", "#9775FA", "#FF8C42", "#22B8CF"];
+  for (let i = 0; i < (n || 60); i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[i % colors.length];
+    c.style.borderRadius = Math.random() > 0.5 ? "50%" : "3px";
+    c.style.animationDuration = (1.6 + Math.random() * 1.8) + "s";
+    c.style.animationDelay = (Math.random() * 0.5) + "s";
+    c.style.width = (8 + Math.random() * 8) + "px";
+    c.style.height = (10 + Math.random() * 10) + "px";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4200);
+  }
+}
+
+/* ==================== 关卡 ==================== */
+function levelPoolSize() { return Math.min(4 + (state.level - 1) * 3, LEARN_ORDER.length); }
+
+function applyLevel() {
+  state.pool = LEARN_ORDER.slice(0, levelPoolSize());
+  state.popsInLevel = 0;
+  $("hudLevel").textContent = state.level;
+  updateHUD();
+}
+
+function advanceLevel() {
+  if (state.mode === "free") {
+    SFX.cheer();
+    confetti(25);
+    showBanner("🎉 太厉害了！", 1300);
+    state.popsInLevel = 0;
+    updateHUD();
+    return;
+  }
+  if (state.pool.length >= LEARN_ORDER.length) { winGame(); return; }
+  state.level++;
+  SFX.levelup();
+  confetti(55);
+  applyLevel();
+  const news = state.pool.slice(-3).map(c => /[a-z]/.test(c) ? c.toUpperCase() : c).join(" ");
+  showBanner(`🎊 第 ${state.level} 关！新键：${news}`, 2000);
+  [...skyArea.querySelectorAll(".bubble")].forEach(b => b.remove());
+  fillBubbles();
+  pickTarget();
+}
+
+function winGame() {
+  state.running = false;
+  SFX.win();
+  confetti(140);
+  $("winScore").textContent = state.score;
+  $("winPops").textContent = state.totalPops;
+  $("winCombo").textContent = state.maxCombo;
+  setTimeout(() => $("winOverlay").classList.remove("hidden"), 900);
+}
+
+/* ==================== 核心输入 ==================== */
+function handleInput(ch) {
+  if (!state.running) return;
+  if (!TARGET_RE.test(ch)) return;   // 符号键不参与戳泡泡
+  ensureAudio();
+  SFX.click();
+
+  const key = keyEls[ch];
+  if (key) {
+    key.classList.add("pressed");
+    setTimeout(() => key.classList.remove("pressed"), 120);
+  }
+  const f = FINGER_OF[ch];
+  if (f !== undefined && fingerEls[f]) {
+    const fe = fingerEls[f];
+    fe.classList.add("pressing");
+    setTimeout(() => fe.classList.remove("pressing"), 140);
+  }
+
+  if (!state.targetLetter) return;
+
+  if (ch === state.targetLetter) {
+    /* ---- 戳中 ---- */
+    state.combo++;
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
+    const gained = 10 + Math.min(state.combo, 10) * 2;
+    state.score += gained;
+    state.totalPops++;
+    state.popsInLevel++;
+
+    const bubble = state.target;
+    SFX.pop();
+    setTimeout(() => SFX.cheer(), 90);
+    floatScore(bubble, "+" + gained);
+    if (state.combo > 0 && state.combo % 10 === 0) {
+      showBanner(`🔥 ${state.combo} 连击！`, 1000);
+      confetti(18);
+    }
+    showCheer(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
+
+    bubble.classList.add("popping");
+    const popped = bubble;
+    state.target = null;
+    state.targetLetter = null;
+    setTimeout(() => popped.remove(), 280);
+
+    setTimeout(() => {
+      spawnBubble();
+      fillBubbles();
+      pickTarget();
+    }, 160);
+
+    updateHUD();
+
+    if (state.popsInLevel >= POPS_PER_LEVEL) {
+      setTimeout(() => advanceLevel(), 450);
+    }
+  } else {
+    /* ---- 按错 ---- */
+    state.combo = 0;
+    SFX.wrong();
+    showCheer(TRY_AGAIN[Math.floor(Math.random() * TRY_AGAIN.length)]);
+    if (state.target) {
+      state.target.classList.add("shake");
+      setTimeout(() => state.target && state.target.classList.remove("shake"), 380);
+    }
+    updateHUD();
+  }
+}
+
+/* ==================== 开始 / 重开 ==================== */
+function startGame(mode) {
+  state.mode = mode;
+  state.running = true;
+  state.level = 1;
+  state.score = 0;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.totalPops = 0;
+  state.popsInLevel = 0;
+  state.pool = mode === "free" ? LEARN_ORDER.slice() : LEARN_ORDER.slice(0, levelPoolSize());
+  [...skyArea.querySelectorAll(".bubble")].forEach(b => b.remove());
+  fillBubbles();
+  pickTarget();
+  updateHUD();
+  cheerEl.textContent = "戳破这个泡泡！🎈";
+  $("startOverlay").classList.add("hidden");
+  $("winOverlay").classList.add("hidden");
+  ensureAudio();
+  SFX.levelup();
+}
+
+/* ==================== 事件绑定 ==================== */
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const ch = e.key.toLowerCase();
+  if (TARGET_RE.test(ch)) {
+    e.preventDefault();
+    if (!e.repeat) handleInput(ch);
+  }
+});
+
+$("startBtn").addEventListener("click", () => startGame(state.mode));
+$("againBtn").addEventListener("click", () => startGame("level"));
+$("freePlayBtn").addEventListener("click", () => startGame("free"));
+
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    state.mode = btn.dataset.mode;
+    ensureAudio();
+    SFX.click();
+  });
+});
+
+$("soundBtn").addEventListener("click", () => {
+  soundOn = !soundOn;
+  $("soundBtn").textContent = soundOn ? "🔊" : "🔇";
+  ensureAudio();
+  if (soundOn) SFX.pop();
+});
+
+window.addEventListener("resize", () => {
+  [...skyArea.querySelectorAll(".bubble")].forEach(b => {
+    const x = parseFloat(b.style.left), y = parseFloat(b.style.top);
+    b.style.left = Math.min(x, Math.max(0, skyArea.clientWidth - 90)) + "px";
+    b.style.top = Math.min(y, Math.max(0, skyArea.clientHeight - 90)) + "px";
+  });
+});
+
+/* 首次交互解锁音频 */
+document.addEventListener("pointerdown", ensureAudio, { once: true });
+</script>
+</body>
+</html>
